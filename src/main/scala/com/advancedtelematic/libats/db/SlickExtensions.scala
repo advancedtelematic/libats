@@ -24,9 +24,7 @@ object SlickExtensions {
   implicit val UriColumnType = MappedColumnType.base[Uri, String](_.toString(), Uri.apply)
 
   implicit val uuidColumnType = MappedColumnType.base[UUID, String]( _.toString(), UUID.fromString )
-  /**
-    * Define how to store a [[java.time.Instant]] in the SQL database.
-    */
+
   implicit val javaInstantMapping = {
     MappedColumnType.base[Instant, Timestamp](
       dt => Timestamp.from(dt),
