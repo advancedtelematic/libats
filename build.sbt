@@ -1,5 +1,5 @@
 name := "libats"
-organization := "com.advancedtelematic.com"
+organization := "com.advancedtelematic"
 scalaVersion := "2.11.8"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
@@ -27,9 +27,8 @@ lazy val libats = (project in file("."))
 
     Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaV,
-      "com.typesafe.akka" %% "akka-stream" % akkaV,
       "com.typesafe.akka" %% "akka-http" % akkaHttpV,
-      "com.typesafe.akka" %% "akka-slf4j" % akkaV,
+      "com.typesafe.akka" %% "akka-stream" % akkaV,
 
       "de.heikoseeberger" %% "akka-http-circe" % "1.7.0",
 
@@ -43,9 +42,9 @@ lazy val libats = (project in file("."))
       "io.circe" %% "circe-parser" % circeV,
       "io.circe" %% "circe-java8" % circeV,
 
-      "com.typesafe.slick" %% "slick" % slickV,
-      "com.typesafe.slick" %% "slick-hikaricp" % slickV,
-      "org.flywaydb" % "flyway-core" % "4.0.3",
+      "com.typesafe.slick" %% "slick" % slickV % "provided",
+      "com.typesafe.slick" %% "slick-hikaricp" % slickV % "provided",
+      "org.flywaydb" % "flyway-core" % "4.0.3" % "provided",
 
       "org.scalatest"     %% "scalatest" % scalaTestV % "provided"
     )
