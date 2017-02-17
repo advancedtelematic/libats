@@ -12,6 +12,7 @@ import io.circe._
 import io.circe.{Decoder, Encoder}
 import java.time.Instant
 import java.time.format.{DateTimeFormatter, DateTimeParseException}
+import java.time.temporal.{ChronoField, TemporalField}
 import java.util.UUID
 
 trait AkkaCirce {
@@ -44,8 +45,14 @@ trait AkkaCirce {
   implicit val javaUuidEncoder : Encoder[UUID] = Encoder[String].contramap(_.toString)
   implicit val javaUuidDecoder : Decoder[UUID] = Decoder[String].map(UUID.fromString)
 
-  implicit val dateTimeEncoder : Encoder[Instant] =
-    Encoder.instance[Instant]( x =>  Json.fromString( x.toString) )
+  implicit val dateTimeEncoder : Encoder[Instant] = Encoder.instance[Instant] { instant =>
+    Json.fromString {
+      instant
+        .`with`(ChronoField.MILLI_OF_SECOND, 0)
+        .`with`(ChronoField.NANO_OF_SECOND, 0)
+        .toString
+    }
+  }
 
   implicit val dateTimeDecoder : Decoder[Instant] = Decoder.instance { c =>
     c.focus.asString match {
