@@ -18,7 +18,13 @@ import slick.driver.MySQLDriver.api._
 import slick.lifted.{AbstractTable, Rep}
 
 import scala.concurrent.ExecutionContext
+import scala.language.implicitConversions
 import scala.util.{Failure, Success}
+
+object SlickPipeToUnit {
+  // TODO: Do not use this, still figuring out if this is a good idea
+  implicit def pipeToUnit(value: DBIO[Any])(implicit ec: ExecutionContext): DBIO[Unit] = value.map(_ => ())
+}
 
 object SlickExtensions {
   implicit val UriColumnType = MappedColumnType.base[Uri, String](_.toString(), Uri.apply)
