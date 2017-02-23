@@ -19,8 +19,8 @@ object Errors {
   import ErrorRepresentation._
 
   import scala.language.existentials
-  case class MissingEntity(name: Class[_]) extends Throwable with NoStackTrace
-  case class EntityAlreadyExists(name: Class[_]) extends Throwable with NoStackTrace
+  case class MissingEntity(name: Class[_]) extends Throwable(s"Missing entity: ${name.getSimpleName}") with NoStackTrace
+  case class EntityAlreadyExists(name: Class[_]) extends Throwable(s"Entity already exists: ${name.getSimpleName}") with NoStackTrace
 
   case class RawError(code: ErrorCode,
                       responseCode: StatusCode,
