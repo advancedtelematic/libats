@@ -6,6 +6,7 @@ package com.advancedtelematic.libats.codecs
 
 import eu.timepit.refined.api.{Refined, Validate}
 import slick.driver.MySQLDriver.api._
+import scala.language.higherKinds
 
 /**
   * Map refined types to their underlaying types when interacting with
