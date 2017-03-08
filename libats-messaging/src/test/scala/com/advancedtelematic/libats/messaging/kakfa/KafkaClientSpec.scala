@@ -3,7 +3,7 @@
  * License: MPL-2.0
  */
 
-package org.genivi.sota.messaging.kakfa
+package com.advancedtelematic.libats.messaging.kakfa
 
 import java.time.Instant
 
@@ -13,9 +13,9 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
 import cats.data.Xor
+import com.advancedtelematic.libats.messaging.kafka.KafkaClient
 import org.genivi.sota.data.{Namespace, Uuid}
-import org.genivi.sota.messaging.Messages.DeviceSeen
-import org.genivi.sota.messaging.kafka.KafkaClient
+import com.advancedtelematic.libats.messaging.Messages.DeviceSeen
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike, ShouldMatchers}

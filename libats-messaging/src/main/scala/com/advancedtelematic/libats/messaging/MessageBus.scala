@@ -1,15 +1,15 @@
-package org.genivi.sota.messaging
+package com.advancedtelematic.libats.messaging
 
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
-import cats.data.Xor
+import cats.syntax.either._
+import com.advancedtelematic.libats.messaging.kafka.KafkaClient
 import com.typesafe.config.ConfigException.Missing
 import com.typesafe.config.Config
-import org.genivi.sota.messaging.Messages._
-import org.genivi.sota.messaging.kafka.KafkaClient
-import org.genivi.sota.messaging.kafka.MessageListener.{CommittableMsg, KafkaMsg, NatsMsg}
-import org.genivi.sota.messaging.nats.NatsClient
+import com.advancedtelematic.libats.messaging.Messages._
+import MessageListener.{CommittableMsg, KafkaMsg, NatsMsg}
+import com.advancedtelematic.libats.messaging.nats.NatsClient
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -59,7 +59,7 @@ object MessageBus {
   lazy val log = LoggerFactory.getLogger(this.getClass)
 
   def subscribe[T](system: ActorSystem, config: Config)
-                  (implicit messageLike: MessageLike[T]): Throwable Xor Source[T, NotUsed] = {
+                  (implicit messageLike: MessageLike[T]): Throwable Either Source[T, NotUsed] = {
     config.getString("messaging.mode").toLowerCase().trim match {
       case "nats" =>
         log.info("Starting messaging mode: NATS")
@@ -71,9 +71,9 @@ object MessageBus {
         KafkaClient.source(system, config)(messageLike)
       case "local" | "test" =>
         log.info("Using local event bus")
-        Xor.right(LocalMessageBus.subscribe(system)(messageLike))
+        Either.right(LocalMessageBus.subscribe(system)(messageLike))
       case mode =>
-        Xor.left(new Missing(s"Unknown messaging mode specified ($mode)"))
+        Either.left(new Missing(s"Unknown messaging mode specified ($mode)"))
     }
   }
 
@@ -85,15 +85,15 @@ object MessageBus {
         log.info("Starting messaging mode: NATS")
         log.info(s"Using subject name: ${messageLike.streamName}")
         NatsClient.source(system, config, messageLike.streamName)(messageLike.decoder) match {
-          case Xor.Right(s) => s.map(msg => new NatsMsg[T](msg))
-          case Xor.Left(err) => throw err
+          case Right(s) => s.map(msg => new NatsMsg[T](msg))
+          case Left(err) => throw err
         }
       case "kafka" =>
         log.info("Starting messaging mode: Kafka")
         log.info(s"Using stream name: ${messageLike.streamName}")
         KafkaClient.committableSource[T](config)(messageLike, system) match {
-          case Xor.Right(s) => s.map(msg => new KafkaMsg(msg))
-          case Xor.Left(err) => throw err
+          case Right(s) => s.map(msg => new KafkaMsg(msg))
+          case Left(err) => throw err
         }
       case "local" | "test" =>
         log.info("Using local event bus")
@@ -103,7 +103,7 @@ object MessageBus {
     }
   }
 
-  def publisher(system: ActorSystem, config: Config): Throwable Xor MessageBusPublisher = {
+  def publisher(system: ActorSystem, config: Config): Throwable Either MessageBusPublisher = {
     config.getString("messaging.mode").toLowerCase().trim match {
       case "nats" =>
         log.info("Starting messaging mode: NATS")
@@ -113,9 +113,9 @@ object MessageBus {
         KafkaClient.publisher(system, config)
       case "local" | "test" =>
         log.info("Using local message bus")
-        Xor.right(LocalMessageBus.publisher(system))
+        Either.right(LocalMessageBus.publisher(system))
       case mode =>
-        Xor.left(new Missing(s"Unknown messaging mode specified ($mode)"))
+        Either.left(new Missing(s"Unknown messaging mode specified ($mode)"))
     }
   }
 }

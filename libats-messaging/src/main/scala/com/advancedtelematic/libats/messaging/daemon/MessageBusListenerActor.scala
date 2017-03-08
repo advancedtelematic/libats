@@ -1,16 +1,17 @@
-package org.genivi.sota.messaging.daemon
+package com.advancedtelematic.libats.messaging.daemon
 
 import akka.{Done, NotUsed}
 import akka.actor.Status.Failure
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
-import org.genivi.sota.messaging.Messages.MessageLike
-import org.genivi.sota.messaging.daemon.MessageBusListenerActor.Subscribe
+import com.advancedtelematic.libats.messaging.Messages.MessageLike
+import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor.Subscribe
 
 import scala.concurrent.duration._
 import scala.util.Try
 import akka.pattern.pipe
+import com.advancedtelematic.libats.messaging.Messages.MessageLike
 
 class MessageBusListenerActor[M](source: Source[M, NotUsed])(implicit messageLike: MessageLike[M])
   extends Actor with ActorLogging {

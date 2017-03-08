@@ -3,14 +3,16 @@
  * License: MPL-2.0
  */
 
-package org.genivi.sota.messaging
+package com.advancedtelematic.libats.messaging
 
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
-import org.genivi.sota.messaging.Messages.MessageLike
-import org.genivi.sota.messaging.kafka.MessageListener.CommittableMsg
+import com.advancedtelematic.libats.messaging.Messages.MessageLike
+import MessageListener.CommittableMsg
+import com.advancedtelematic.libats.messaging.Messages.MessageLike
+import MessageListener.CommittableMsg
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try

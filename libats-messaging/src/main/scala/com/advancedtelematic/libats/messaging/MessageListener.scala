@@ -1,13 +1,12 @@
-package org.genivi.sota.messaging.kafka
+package com.advancedtelematic.libats.messaging
 
 import akka.NotUsed
 import akka.actor.{ActorSystem, Props}
 import akka.kafka.ConsumerMessage.CommittableMessage
 import akka.stream.scaladsl.Source
+import com.advancedtelematic.libats.messaging.Messages.MessageLike
+import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor
 import com.typesafe.config.Config
-import org.genivi.sota.messaging.MessageBus
-import org.genivi.sota.messaging.Messages.MessageLike
-import org.genivi.sota.messaging.daemon.MessageBusListenerActor
 
 import scala.concurrent.{ExecutionContext, Future}
 

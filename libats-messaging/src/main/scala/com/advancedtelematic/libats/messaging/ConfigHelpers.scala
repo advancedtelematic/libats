@@ -1,4 +1,4 @@
-package org.genivi.sota.messaging
+package com.advancedtelematic.libats.messaging
 
 import com.typesafe.config.{Config, ConfigException}
 import cats.syntax.either._

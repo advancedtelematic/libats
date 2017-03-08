@@ -3,12 +3,12 @@
  *  License: MPL-2.0
  */
 
-package org.genivi.sota.messaging.kafka
+package com.advancedtelematic.libats.messaging.kafka
 
 import java.nio.ByteBuffer
 import java.util
 
-import cats.data.Xor
+import cats.syntax.either._
 import io.circe.Decoder
 import io.circe.jawn._
 import org.apache.kafka.common.serialization.Deserializer
@@ -26,8 +26,8 @@ class JsonDeserializer[T](decoder: Decoder[T]) extends Deserializer[T] {
     val msgXor = parseByteBuffer(buffer).flatMap(_.as[T](decoder))
 
     msgXor match {
-      case Xor.Right(v) => v
-      case Xor.Left(ex) => throw new JsonDeserializerException(s"Could not parse msg from $topic: ${ex.getMessage}")
+      case Right(v) => v
+      case Left(ex) => throw new JsonDeserializerException(s"Could not parse msg from $topic: ${ex.getMessage}")
     }
   }
 
