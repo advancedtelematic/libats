@@ -1,11 +1,5 @@
 package com.advancedtelematic.libats.messaging
 
-import java.time.Instant
-import java.util.UUID
-
-import akka.http.scaladsl.model.Uri
-import cats.syntax.either._
-import cats.syntax.show._
 import io.circe.generic.decoding.DerivedDecoder
 import io.circe.generic.encoding.DerivedObjectEncoder
 import io.circe.{Decoder, Encoder}

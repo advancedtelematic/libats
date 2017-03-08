@@ -12,20 +12,25 @@ import akka.kafka.ConsumerMessage.CommittableOffsetBatch
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
-import cats.data.Xor
+import com.advancedtelematic.libats.messaging.Messages.MessageLike
 import com.advancedtelematic.libats.messaging.kafka.KafkaClient
-import org.genivi.sota.data.{Namespace, Uuid}
-import com.advancedtelematic.libats.messaging.Messages.DeviceSeen
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
 import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatest.{BeforeAndAfterAll, FunSuiteLike, ShouldMatchers}
+import org.scalatest.{BeforeAndAfterAll, FunSuiteLike, Matchers}
 
 import scala.concurrent.duration._
 import scala.concurrent.Future
 
-class KafkaClientSpec extends TestKit(ActorSystem("KafkaClientSpec"))
+
+case class KafkaSpecMessage(id: Int, payload: String)
+
+object KafkaSpecMessage {
+  implicit val messageLike = MessageLike[KafkaSpecMessage](_.id.toString)
+}
+
+class KafkaClientIntegrationSpec extends TestKit(ActorSystem("KafkaClientSpec"))
   with FunSuiteLike
-  with ShouldMatchers
+  with Matchers
   with BeforeAndAfterAll
   with ScalaFutures
   with PatienceConfiguration  {
@@ -36,22 +41,22 @@ class KafkaClientSpec extends TestKit(ActorSystem("KafkaClientSpec"))
   override implicit def patienceConfig = PatienceConfig(timeout = Span(30, Seconds), interval = Span(500, Millis))
 
   val publisher = KafkaClient.publisher(system, system.settings.config) match {
-    case Xor.Right(p) => p
-    case Xor.Left(ex) => throw ex
+    case Right(p) => p
+    case Left(ex) => throw ex
   }
 
   test("can send an event to bus") {
-    val testMsg = DeviceSeen(Namespace("ns"), Uuid.generate(), Instant.now)
+    val testMsg = KafkaSpecMessage(1, Instant.now.toString)
     val f = publisher.publish(testMsg).map(_ => 0)
     f.futureValue shouldBe 0
   }
 
   test("can send-receive events from bus") {
-    val testMsg = DeviceSeen(Namespace("ns"), Uuid.generate(), Instant.now)
+    val testMsg = KafkaSpecMessage(2, Instant.now.toString)
 
-    val source = KafkaClient.source[DeviceSeen](system, system.settings.config) match {
-      case Xor.Right(s) => s
-      case Xor.Left(ex) => throw ex
+    val source = KafkaClient.source[KafkaSpecMessage](system, system.settings.config) match {
+      case Right(s) => s
+      case Left(ex) => throw ex
     }
 
     val msgFuture = source.groupedWithin(10, 5.seconds).runWith(Sink.head)
@@ -65,11 +70,11 @@ class KafkaClientSpec extends TestKit(ActorSystem("KafkaClientSpec"))
   }
 
   test("can send-receive and commit events from bus") {
-    val testMsg = DeviceSeen(Namespace("ns"), Uuid.generate(), Instant.now)
+    val testMsg = KafkaSpecMessage(3, Instant.now.toString)
 
-    val source = KafkaClient.committableSource[DeviceSeen](system.settings.config) match {
-      case Xor.Right(s) => s
-      case Xor.Left(ex) => throw ex
+    val source = KafkaClient.committableSource[KafkaSpecMessage](system.settings.config) match {
+      case Right(s) => s
+      case Left(ex) => throw ex
     }
 
     val msgFuture = source
@@ -85,5 +90,4 @@ class KafkaClientSpec extends TestKit(ActorSystem("KafkaClientSpec"))
 
     msgFuture.futureValue should contain(testMsg)
   }
-
 }

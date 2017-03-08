@@ -3,6 +3,7 @@ lazy val commonDeps = libraryDependencies ++= {
   val akkaHttpV = "10.0.3"
   val akkaHttpCirceV = "1.12.0"
   val circeV = "0.7.0"
+  val scalaTestV = "3.0.0"
 
   Seq(
     "com.typesafe.akka" %% "akka-actor" % akkaV,
@@ -11,7 +12,10 @@ lazy val commonDeps = libraryDependencies ++= {
 
     "de.heikoseeberger" %% "akka-http-circe" % akkaHttpCirceV,
 
-    "eu.timepit" %% "refined" % "0.3.1",
+    "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % "provided",
+    "org.scalatest"     %% "scalatest" % scalaTestV % "test,provided",
+
+  "eu.timepit" %% "refined" % "0.3.1",
 
     "io.circe" %% "circe-core" % circeV,
     "io.circe" %% "circe-generic" % circeV,
