@@ -15,7 +15,7 @@ lazy val commonDeps = libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % "provided",
     "org.scalatest"     %% "scalatest" % scalaTestV % "test,provided",
 
-  "eu.timepit" %% "refined" % "0.3.1",
+    "eu.timepit" %% "refined" % "0.3.1",
 
     "io.circe" %% "circe-core" % circeV,
     "io.circe" %% "circe-generic" % circeV,
@@ -47,7 +47,6 @@ lazy val libats_messaging = (project in file("libats-messaging"))
   .configs(commonConfigs:_*)
   .settings(commonSettings)
   .settings(Publish.settings)
-  .dependsOn(libats)
 
 lazy val root = (project in file("."))
   .settings(Publish.disable)
