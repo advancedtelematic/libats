@@ -1,14 +1,15 @@
 lazy val commonDeps = libraryDependencies ++= {
   val akkaV = "2.4.17"
   val akkaHttpV = "10.0.3"
-  val circeV = "0.4.1"
+  val akkaHttpCirceV = "1.12.0"
+  val circeV = "0.7.0"
 
   Seq(
     "com.typesafe.akka" %% "akka-actor" % akkaV,
     "com.typesafe.akka" %% "akka-http" % akkaHttpV,
     "com.typesafe.akka" %% "akka-stream" % akkaV,
 
-    "de.heikoseeberger" %% "akka-http-circe" % "1.7.0",
+    "de.heikoseeberger" %% "akka-http-circe" % akkaHttpCirceV,
 
     "eu.timepit" %% "refined" % "0.3.1",
 
@@ -46,4 +47,4 @@ lazy val libats_messaging = (project in file("libats-messaging"))
 
 lazy val root = (project in file("."))
   .settings(Publish.disable)
-   .aggregate(libats, libats_messaging)
+  .aggregate(libats, libats_messaging)
