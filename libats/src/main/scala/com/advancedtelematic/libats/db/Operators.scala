@@ -6,6 +6,7 @@
 package com.advancedtelematic.libats.db
 
 import slick.driver.MySQLDriver.api._
+import scala.language.higherKinds
 
 /**
   * Some database operators are shared between the core and the

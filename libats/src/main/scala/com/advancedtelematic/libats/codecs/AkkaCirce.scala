@@ -5,14 +5,14 @@
 package com.advancedtelematic.libats.codecs
 
 import akka.http.scaladsl.model.Uri
-import cats.data.Xor
+import cats.syntax.either._
 import eu.timepit.refined.api.{Refined, Validate}
 import eu.timepit.refined.refineV
 import io.circe._
 import io.circe.{Decoder, Encoder}
 import java.time.Instant
 import java.time.format.{DateTimeFormatter, DateTimeParseException}
-import java.time.temporal.{ChronoField, TemporalField}
+import java.time.temporal.ChronoField
 import java.util.UUID
 
 trait AkkaCirce {
@@ -33,11 +33,11 @@ trait AkkaCirce {
   }
 
   implicit val uriDecoder : Decoder[Uri] = Decoder.instance { c =>
-    c.focus.asObject match {
-      case None      => Xor.left(DecodingFailure("Uri", c.history))
+    c.focus.flatMap(_.asObject) match {
+      case None      => Either.left(DecodingFailure("Uri", c.history))
       case Some(obj) => obj.toMap.get("uri").flatMap(_.asString) match {
-        case None      => Xor.left(DecodingFailure("Uri", c.history))
-        case Some(uri) => Xor.right(Uri(uri))
+        case None      => Either.left(DecodingFailure("Uri", c.history))
+        case Some(uri) => Either.right(Uri(uri))
       }
     }
   }
@@ -55,16 +55,16 @@ trait AkkaCirce {
   }
 
   implicit val dateTimeDecoder : Decoder[Instant] = Decoder.instance { c =>
-    c.focus.asString match {
-      case None       => Xor.left(DecodingFailure("DataTime", c.history))
+    c.focus.flatMap(_.asString) match {
+      case None       => Either.left(DecodingFailure("DataTime", c.history))
       case Some(date) =>
         try {
           val fmt = DateTimeFormatter.ISO_OFFSET_DATE_TIME
           val nst = Instant.from(fmt.parse(date))
-          Xor.right(nst)
+          Either.right(nst)
         } catch {
           case t: DateTimeParseException =>
-            Xor.left(DecodingFailure("DateTime", c.history))
+            Either.left(DecodingFailure("DateTime", c.history))
         }
     }
   }
