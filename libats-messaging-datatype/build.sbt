@@ -1,0 +1,1 @@
+name := "libats-messaging-datatype"
