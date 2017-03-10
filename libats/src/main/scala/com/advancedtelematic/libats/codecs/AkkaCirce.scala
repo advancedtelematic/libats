@@ -28,20 +28,6 @@ trait AkkaCirce {
         case Right(r) => r
       })
 
-  implicit val uriEncoder : Encoder[Uri] = Encoder.instance { uri =>
-    Json.obj(("uri", Json.fromString(uri.toString())))
-  }
-
-  implicit val uriDecoder : Decoder[Uri] = Decoder.instance { c =>
-    c.focus.flatMap(_.asObject) match {
-      case None      => Either.left(DecodingFailure("Uri", c.history))
-      case Some(obj) => obj.toMap.get("uri").flatMap(_.asString) match {
-        case None      => Either.left(DecodingFailure("Uri", c.history))
-        case Some(uri) => Either.right(Uri(uri))
-      }
-    }
-  }
-
   implicit val javaUuidEncoder : Encoder[UUID] = Encoder[String].contramap(_.toString)
   implicit val javaUuidDecoder : Decoder[UUID] = Decoder[String].map(UUID.fromString)
 
