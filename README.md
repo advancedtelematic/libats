@@ -5,9 +5,11 @@ akka http server with a sql database.
 
 ## Usage
 
-Add to build.sbt:
+Choose the modules you need and add them to your `build.sbt`.
 
-    libraryDependencies += "com.advancedtelematic" %% "libtuf" % "version"
+    libraryDependencies += "com.advancedtelematic" %% "libats" % "version"
+    libraryDependencies += "com.advancedtelematic" %% "libats" % "version"
+    libraryDependencies += "com.advancedtelematic" %% "libats-messaging-datatype" % "version"
     
 Check the [blueprint](https://github.com/advancedtelematic/service-blueprint) for more details.
 
@@ -20,10 +22,12 @@ develop without having to run `publishLocal` all the time.
 You can add the following to build.sbt:
 
     lazy val libats = (ProjectRef(file("<absolute local path to this repo>"), "libats"))
+    
+    lazy val libats_messaging = (ProjectRef(file("<absolute local path to this repo>"), "libats-messaging"))
 
 And then add `.dependsOn(libats)` to your project definition, for example:
 
-    lazy val libtuf = (project in file("libtuf")).dependsOn(libats)
+    lazy val libtuf = (project in file("libtuf")).dependsOn(libats).dependsOn(libats_messaging)
     
 ## Publish
 
