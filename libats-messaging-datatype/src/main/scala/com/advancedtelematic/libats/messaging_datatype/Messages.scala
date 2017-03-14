@@ -27,7 +27,6 @@ object MessageCodecs {
 }
 
 object Messages {
-
   import MessageCodecs._
 
   final case class UserCreated(id: String)
