@@ -101,7 +101,7 @@ object KafkaClient {
       topicFn <- topic(cfg)
     } yield {
       val subscription = Subscriptions.topics(topicFn(ml.streamName))
-      consumerFn(cfgSettings, subscription).mapMaterializedValue { _ => NotUsed }
+      consumerFn(cfgSettings, subscription).mapMaterializedValue { _ => NotUsed }.filter(_ != null)
     }
 
   private[this] def topic(config: Config): ConfigException Either (String => String) =

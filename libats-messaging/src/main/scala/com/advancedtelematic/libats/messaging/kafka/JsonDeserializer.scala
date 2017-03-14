@@ -12,12 +12,12 @@ import cats.syntax.either._
 import io.circe.Decoder
 import io.circe.jawn._
 import org.apache.kafka.common.serialization.Deserializer
+import org.slf4j.LoggerFactory
 
 import scala.util.control.NoStackTrace
 
-class JsonDeserializerException(msg: String) extends Exception(msg) with NoStackTrace
-
 class JsonDeserializer[T](decoder: Decoder[T]) extends Deserializer[T] {
+  private lazy val _logger = LoggerFactory.getLogger(this.getClass)
 
 
   override def deserialize(topic: String, data: Array[Byte]): T = {
@@ -27,7 +27,9 @@ class JsonDeserializer[T](decoder: Decoder[T]) extends Deserializer[T] {
 
     msgXor match {
       case Right(v) => v
-      case Left(ex) => throw new JsonDeserializerException(s"Could not parse msg from $topic: ${ex.getMessage}")
+      case Left(ex) =>
+        _logger.error(s"Could not parse msg from $topic", ex)
+        null.asInstanceOf[T]
     }
   }
 
