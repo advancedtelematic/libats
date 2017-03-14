@@ -12,6 +12,7 @@ import akka.http.scaladsl.server.{Directives, ExceptionHandler, _}
 import io.circe.Json
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
+import scala.reflect.ClassTag
 import scala.util.control.NoStackTrace
 
 object Errors {
@@ -19,8 +20,14 @@ object Errors {
   import ErrorRepresentation._
 
   import scala.language.existentials
-  case class MissingEntity(name: Class[_]) extends Throwable(s"Missing entity: ${name.getSimpleName}") with NoStackTrace
-  case class EntityAlreadyExists(name: Class[_]) extends Throwable(s"Entity already exists: ${name.getSimpleName}") with NoStackTrace
+
+  trait Error[T] extends NoStackTrace {
+    implicit val ct: ClassTag[T]
+    def name = ct.runtimeClass.getSimpleName
+  }
+
+  case class MissingEntity[T]()(implicit val ct: ClassTag[T]) extends Throwable(s"Missing entity: ${ct.runtimeClass.getSimpleName}") with Error[T]
+  case class EntityAlreadyExists[T]()(implicit val ct: ClassTag[T]) extends Throwable(s"Entity already exists: ${ct.runtimeClass.getSimpleName}") with Error[T]
 
   case class RawError(code: ErrorCode,
                       responseCode: StatusCode,
@@ -34,15 +41,15 @@ object Errors {
   }
 
   private val onMissingEntity: PF = {
-    case MissingEntity(name) =>
+    case me @ MissingEntity() =>
       complete(StatusCodes.NotFound ->
-        ErrorRepresentation(ErrorCodes.MissingEntity, s"${name.getSimpleName} not found"))
+        ErrorRepresentation(ErrorCodes.MissingEntity, s"${me.name} not found"))
   }
 
   private val onConflictingEntity: PF = {
-    case EntityAlreadyExists(name) =>
+    case eae @ EntityAlreadyExists() =>
       complete(StatusCodes.Conflict ->
-        ErrorRepresentation(ErrorCodes.ConflictingEntity, s"${name.getSimpleName} already exists"))
+        ErrorRepresentation(ErrorCodes.ConflictingEntity, s"${eae.name} already exists"))
   }
 
   private val onIntegrityViolationError: PF = {
