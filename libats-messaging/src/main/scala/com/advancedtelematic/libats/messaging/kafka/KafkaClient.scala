@@ -67,7 +67,7 @@ object KafkaClient {
                             (implicit ml: MessageLike[T], system: ActorSystem): Throwable Either Source[T, NotUsed] = {
     buildSource(config) { (cfgSettings: ConsumerSettings[Array[Byte], T], subscriptions) =>
       val settings = cfgSettings.withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
-      Consumer.plainSource(settings, subscriptions).map(_.value())
+      Consumer.plainSource(settings, subscriptions).map(_.value()).filter(_ != null)
     }
   }
 
@@ -75,7 +75,7 @@ object KafkaClient {
                           (implicit ml: MessageLike[T], system: ActorSystem)
   : Throwable Either Source[CommittableMessage[Array[Byte], T], NotUsed] =
     buildSource(config) { (cfgSettings: ConsumerSettings[Array[Byte], T], subscriptions) =>
-      Consumer.committableSource(cfgSettings, subscriptions)
+      Consumer.committableSource(cfgSettings, subscriptions).filter(_.record.value() != null)
     }
 
   private def consumerSettings[T](system: ActorSystem, config: Config)
