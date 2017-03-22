@@ -111,6 +111,16 @@ object SlickExtensions {
 
       DBIOOps(dbio).failIfNone(t)
     }
+
+    def failIfEmpty(t: Throwable)
+                   (implicit ec: ExecutionContext): DBIO[Seq[T]] = {
+      io.flatMap { result =>
+        if(result.isEmpty)
+          DBIO.failed(t)
+        else
+          DBIO.successful(result)
+      }
+    }
   }
 
   implicit class InsertOrUpdateWithKeyOps[Q <: AbstractTable[_], E](tableQuery: TableQuery[Q])
