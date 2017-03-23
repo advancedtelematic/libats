@@ -100,17 +100,17 @@ object SlickExtensions {
   }
 
   implicit class DBIOSeqOps[+T](io: DBIO[Seq[T]]) {
-    def failIfNotSingle(t: Throwable)
-                       (implicit ec: ExecutionContext): DBIO[T] = {
-      val dbio = io.flatMap { result =>
+    def failIfMany()(implicit ec: ExecutionContext): DBIO[Option[T]] =
+      io.flatMap { result =>
         if(result.size > 1)
           DBIO.failed(Errors.TooManyElements)
         else
           DBIO.successful(result.headOption)
       }
 
-      DBIOOps(dbio).failIfNone(t)
-    }
+    def failIfNotSingle(t: Throwable)
+                       (implicit ec: ExecutionContext): DBIO[T] =
+      DBIOOps(failIfMany()).failIfNone(t)
 
     def failIfEmpty(t: Throwable)
                    (implicit ec: ExecutionContext): DBIO[Seq[T]] = {
