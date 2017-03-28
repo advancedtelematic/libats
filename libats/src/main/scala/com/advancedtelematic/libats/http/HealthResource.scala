@@ -18,6 +18,8 @@ import com.advancedtelematic.libats.codecs.AkkaCirce._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import io.circe.syntax._
 
+import scala.util.Failure
+
 class HealthResource(db: Database, versionRepr: Map[String, Any] = Map.empty)
                     (implicit val ec: ExecutionContext) {
   import Directives._
@@ -35,10 +37,16 @@ class HealthResource(db: Database, versionRepr: Map[String, Any] = Map.empty)
   }
 
   val route =
-    (get & pathPrefix("health")) {
+    (get & pathPrefix("health") & extractLog) { logger =>
       pathEnd {
         val query = sql"SELECT 1 FROM dual ".as[Int]
-        val f = db.run(query).map(_ => Map("status" -> "OK"))
+        val f = db
+          .run(query)
+          .map(_ => Map("status" -> "OK"))
+          .andThen {
+            case Failure(ex) =>
+              logger.error(ex, "Could not connect to db")
+          }
         complete(f)
       } ~
       path("version") {
