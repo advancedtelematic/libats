@@ -1,5 +1,7 @@
+
 package com.advancedtelematic.libats.messaging_datatype
 
+import java.time.Instant
 import java.util.UUID
 
 import akka.http.scaladsl.model.Uri
