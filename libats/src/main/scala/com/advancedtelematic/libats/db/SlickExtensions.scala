@@ -10,6 +10,7 @@ import java.util.UUID
 import akka.http.scaladsl.model.Uri
 import java.time.Instant
 
+import com.advancedtelematic.libats.data.PaginationResult
 import com.advancedtelematic.libats.http.Errors
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.Uuid
@@ -50,17 +51,37 @@ object SlickExtensions {
   implicit def uuidToJava(refined: Refined[String, Uuid]): Rep[UUID] =
     UUID.fromString(refined.get).bind
 
-  implicit class DbioPaginateExtensions[E, U, A](action: Query[E, U, Seq]) {
+  implicit class DbioPaginateExtensions[E, U](action: Query[E, U, Seq]) {
     def paginateAndSort[T <% slick.lifted.Ordered](fn: E => T, offset: Long, limit: Long): Query[E, U, Seq] = {
       action
         .sortBy(fn)
         .drop(offset)
         .take(limit)
     }
+
     def paginate(offset: Long, limit: Long): Query[E, U, Seq] = {
       action
         .drop(offset)
         .take(limit)
+    }
+
+    def paginateAndSortResult[T <% slick.lifted.Ordered](fn: E => T, offset: Long, limit: Long)
+                             (implicit ec: ExecutionContext): DBIO[PaginationResult[U]] = {
+      val tot = action.length.result
+      val pag = action.paginateAndSort(fn, offset, limit).result
+
+      tot.zip(pag).map{ case (total, values) =>
+        PaginationResult(total = total, limit = limit, offset = offset, values = values)
+      }
+    }
+
+    def paginateResult(offset: Long, limit: Long)(implicit ec: ExecutionContext): DBIO[PaginationResult[U]] = {
+      val tot = action.length.result
+      val pag = action.paginate(offset, limit).result
+
+      tot.zip(pag).map{ case (total, values) =>
+        PaginationResult(total = total, limit = limit, offset = offset, values = values)
+      }
     }
   }
 
