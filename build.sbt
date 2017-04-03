@@ -13,7 +13,7 @@ lazy val commonDeps = libraryDependencies ++= {
     "de.heikoseeberger" %% "akka-http-circe" % akkaHttpCirceV,
 
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % "provided",
-    "org.scalatest"     %% "scalatest" % scalaTestV % "test,provided",
+    "org.scalatest" %% "scalatest" % scalaTestV % "test,provided",
 
     "eu.timepit" %% "refined" % "0.3.1",
 
@@ -38,22 +38,35 @@ lazy val commonSettings = Seq(
 
 lazy val libats = (project in file("libats"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
-  .configs(commonConfigs:_*)
+  .configs(commonConfigs: _*)
   .settings(commonSettings)
   .settings(Publish.settings)
 
 lazy val libats_messaging = (project in file("libats-messaging"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
-  .configs(commonConfigs:_*)
+  .configs(commonConfigs: _*)
   .settings(commonSettings)
   .settings(Publish.settings)
 
 lazy val libats_messaging_datatype = (project in file("libats-messaging-datatype"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
-  .configs(commonConfigs:_*)
+  .configs(commonConfigs: _*)
   .settings(commonSettings)
   .settings(Publish.settings)
   .dependsOn(libats_messaging)
+
+lazy val libats_metrics = (project in file("libats-metrics"))
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(Publish.settings)
+
+lazy val libats_metrics_kafka = (project in file("libats-metrics-kafka"))
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(Publish.settings).dependsOn(libats_metrics)
+
 
 lazy val root = (project in file("."))
   .settings(Publish.disable)
