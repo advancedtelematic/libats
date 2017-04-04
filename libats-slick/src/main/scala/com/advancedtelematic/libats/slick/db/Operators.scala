@@ -3,9 +3,10 @@
  * License: MPL-2.0
  */
 
-package com.advancedtelematic.libats.db
+package com.advancedtelematic.libats.slick.db
 
 import slick.driver.MySQLDriver.api._
+
 import scala.language.higherKinds
 
 /**

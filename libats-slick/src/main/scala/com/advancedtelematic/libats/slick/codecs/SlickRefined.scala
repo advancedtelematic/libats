@@ -2,10 +2,11 @@
  * Copyright: Copyright (C) 2016, Jaguar Land Rover
  * License: MPL-2.0
  */
-package com.advancedtelematic.libats.codecs
+package com.advancedtelematic.libats.slick.codecs
 
 import eu.timepit.refined.api.{Refined, Validate}
 import slick.driver.MySQLDriver.api._
+
 import scala.language.higherKinds
 
 /**

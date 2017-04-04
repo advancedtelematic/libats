@@ -3,11 +3,13 @@
  *  License: MPL-2.0
  */
 
-package com.advancedtelematic.libats.db
+package com.advancedtelematic.libats.slick.db
 
 import java.util.UUID
+
 import shapeless.{::, Generic, HNil}
 import slick.driver.MySQLDriver.api._
+
 import scala.reflect.ClassTag
 
 object SlickAnyVal {

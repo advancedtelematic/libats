@@ -2,14 +2,13 @@
  * Copyright: Copyright (C) 2016, ATS Advanced Telematic Systems GmbH
  * License: MPL-2.0
  */
-package com.advancedtelematic.libats.db
+package com.advancedtelematic.libats.slick.db
 
 import java.sql.{BatchUpdateException, SQLIntegrityConstraintViolationException, Timestamp}
+import java.time.Instant
 import java.util.UUID
 
 import akka.http.scaladsl.model.Uri
-import java.time.Instant
-
 import com.advancedtelematic.libats.data.PaginationResult
 import com.advancedtelematic.libats.http.Errors
 import eu.timepit.refined.api.Refined

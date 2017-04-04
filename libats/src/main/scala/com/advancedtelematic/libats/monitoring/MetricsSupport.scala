@@ -7,12 +7,10 @@ package com.advancedtelematic.libats.monitoring
 
 import java.util.concurrent.TimeUnit
 
-import com.advancedtelematic.libats.db.DatabaseConfig
 import com.codahale.metrics.jvm.{GarbageCollectorMetricSet, MemoryUsageGaugeSet}
 
 import scala.collection.JavaConverters._
 import com.codahale.metrics._
-import slick.jdbc.hikaricp.HikariCPJdbcDataSource
 
 object MetricsSupport {
   lazy val metricRegistry = new MetricRegistry()
@@ -50,8 +48,4 @@ trait MetricsSupport {
   reporter.start(1, TimeUnit.MINUTES)
 }
 
-trait DatabaseMetrics {
-  self: MetricsSupport with DatabaseConfig =>
 
-  db.source.asInstanceOf[HikariCPJdbcDataSource].ds.setMetricRegistry(metricRegistry)
-}
