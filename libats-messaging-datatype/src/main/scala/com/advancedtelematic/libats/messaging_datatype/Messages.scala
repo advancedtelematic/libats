@@ -62,7 +62,9 @@ object Messages {
 
   case class DeltaRequest(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, timestamp: Instant = Instant.now)
 
-  case class GeneratedDelta(namespace: Namespace, from: Commit, to: Commit, summary: OstreeSummary, uri: Uri, size: Long)
+  case class GeneratedDelta(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, summary: OstreeSummary, uri: Uri, size: Long)
+
+  case class DeltaGenerationFailed(id: DeltaRequestId, namespace: Namespace, error: Option[Json] = None)
 
   implicit val userCreatedMessageLike = MessageLike[UserCreated](_.id)
 
@@ -70,5 +72,7 @@ object Messages {
 
   implicit val staticDeltaRequestMessageLike = MessageLike[DeltaRequest](_.id.uuid.toString)
 
-  implicit val staticDeltaResponseMessageLike = MessageLike[GeneratedDelta](_.namespace.get)
+  implicit val staticDeltaResponseMessageLike = MessageLike[GeneratedDelta](_.id.uuid.toString)
+
+  implicit val deltaGenerationFailedMessageLike = MessageLike[DeltaGenerationFailed](_.id.uuid.toString)
 }
