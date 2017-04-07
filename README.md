@@ -8,6 +8,8 @@ akka http server with a sql database.
 Choose the modules you need and add them to your `build.sbt`.
 
     libraryDependencies += "com.advancedtelematic" %% "libats" % "version"
+    libraryDependencies += "com.advancedtelematic" %% "libats-auth" % "version"
+    libraryDependencies += "com.advancedtelematic" %% "libats-slick" % "version"
     libraryDependencies += "com.advancedtelematic" %% "libats-messaging" % "version"
     libraryDependencies += "com.advancedtelematic" %% "libats-messaging-datatype" % "version"
     

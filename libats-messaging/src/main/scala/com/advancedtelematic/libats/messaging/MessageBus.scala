@@ -71,9 +71,9 @@ object MessageBus {
         KafkaClient.source(system, config)(messageLike)
       case "local" | "test" =>
         log.info("Using local event bus")
-        Either.right(LocalMessageBus.subscribe(system)(messageLike))
+        Right(LocalMessageBus.subscribe(system)(messageLike))
       case mode =>
-        Either.left(new Missing(s"Unknown messaging mode specified ($mode)"))
+        Left(new Missing(s"Unknown messaging mode specified ($mode)"))
     }
   }
 
@@ -113,9 +113,9 @@ object MessageBus {
         KafkaClient.publisher(system, config)
       case "local" | "test" =>
         log.info("Using local message bus")
-        Either.right(LocalMessageBus.publisher(system))
+        Right(LocalMessageBus.publisher(system))
       case mode =>
-        Either.left(new Missing(s"Unknown messaging mode specified ($mode)"))
+        Left(new Missing(s"Unknown messaging mode specified ($mode)"))
     }
   }
 }
