@@ -3,7 +3,7 @@
  * License: MPL-2.0
  */
 
-package com.advancedtelematic.libats.db
+package com.advancedtelematic.libats.slick.db
 
 import com.advancedtelematic.libats.http.BootApp
 import com.typesafe.config.ConfigFactory

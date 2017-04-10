@@ -1,4 +1,4 @@
-package com.advancedtelematic.libats.db
+package com.advancedtelematic.libats.slick.db
 
 import akka.http.scaladsl.model.Uri
 import slick.driver.MySQLDriver.api._

@@ -3,7 +3,7 @@
  *  License: MPL-2.0
  */
 
-package com.advancedtelematic.libats.codecs
+package com.advancedtelematic.libats.slick.codecs
 
 import slick.driver.MySQLDriver.api._
 
