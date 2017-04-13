@@ -85,4 +85,4 @@ lazy val libats_auth = (project in file("libats-auth"))
 
 lazy val root = (project in file("."))
   .settings(Publish.disable)
-  .aggregate(libats, libats_messaging, libats_messaging_datatype, libats_slick, libats_auth)
+  .aggregate(libats, libats_messaging, libats_messaging_datatype, libats_slick, libats_auth, libats_metrics, libats_metrics_kafka)
