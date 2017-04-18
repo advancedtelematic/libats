@@ -53,22 +53,39 @@ object InfluxDbMetricsReporter {
     case _ => value.toString
   }
 
+  private def appendMetered(metric: Metered)(sb: StringBuilder): StringBuilder = {
+    sb.append("count=").append(metric.getCount)
+    sb.append(",rateMean=").append(metric.getMeanRate)
+    sb.append(",rate1=").append(metric.getOneMinuteRate)
+    sb.append(",rate5=").append(metric.getFiveMinuteRate)
+    sb.append(",rate15=").append(metric.getFifteenMinuteRate)
+  }
+
+  private def appendSnapshot(s: Snapshot)(sb: StringBuilder): StringBuilder = {
+    sb.append("p50=").append(s.getMedian)
+    sb.append(",p75=").append(s.get75thPercentile())
+    sb.append(",p95=").append(s.get98thPercentile())
+    sb.append(",p98=").append(s.get98thPercentile())
+    sb.append(",p99=").append(s.get99thPercentile())
+    sb.append(",p999=").append(s.get999thPercentile())
+    sb.append(",p9999=").append(s.getValue(0.9999))
+    sb.append(",min=").append(s.getMin)
+    sb.append(",max=").append(s.getMax)
+  }
+
+  private def `,`(sb: StringBuilder): StringBuilder = sb.append(",")
+
   private def appendMetricValues(metric: Metric)(sb: StringBuilder): StringBuilder = metric match {
     case x: NamedMetric[_] => appendMetricValues(x.metric)(sb)
     case x: Counter        => sb.append("value=").append(x.getCount)
     case x: Gauge[_] =>
       sb.append("value=").append(formatValue(x.getValue))
     case x: Histogram =>
-      val s = x.getSnapshot
-      sb.append("p50=").append(s.getMedian)
-      sb.append(",p75=").append(s.get75thPercentile())
-      sb.append(",p95=").append(s.get98thPercentile())
-      sb.append(",p98=").append(s.get98thPercentile())
-      sb.append(",p99=").append(s.get99thPercentile())
-      sb.append(",p999=").append(s.get999thPercentile())
-      sb.append(",p9999=").append(s.getValue(0.9999))
-      sb.append(",min=").append(s.getMin)
-      sb.append(",max=").append(s.getMax)
+      appendSnapshot(x.getSnapshot)(sb)
+    case x: Timer =>
+      (appendMetered(x) _ andThen `,` andThen appendSnapshot(x.getSnapshot))(sb)
+    case x: Metered =>
+      appendMetered(x)(sb)
   }
 
   def formatMetrics(registry: MetricRegistry, appendCommonTags: StringBuilder => StringBuilder): String = {
