@@ -76,6 +76,12 @@ lazy val libats_metrics_kafka = (project in file("libats-metrics-kafka"))
   .settings(commonSettings)
   .settings(Publish.settings).dependsOn(libats_metrics)
 
+lazy val libats_metrics_akka = (project in file("libats-metrics-akka"))
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(Publish.settings).dependsOn(libats_metrics)
+
 lazy val libats_auth = (project in file("libats-auth"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
@@ -85,4 +91,4 @@ lazy val libats_auth = (project in file("libats-auth"))
 
 lazy val root = (project in file("."))
   .settings(Publish.disable)
-  .aggregate(libats, libats_messaging, libats_messaging_datatype, libats_slick, libats_auth, libats_metrics, libats_metrics_kafka)
+  .aggregate(libats, libats_messaging, libats_messaging_datatype, libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka)

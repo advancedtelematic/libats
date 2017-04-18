@@ -3,6 +3,9 @@ Sends dropwizard metrics to InfluxDB
 
 Usage:
 ```scala
+libraryDependencies += "com.advancedtelematic" %% "libats-metrics" % "version"
+libraryDependencies += "com.advancedtelematic" %% "libats-metrics-akka" % "version"
+
 import com.advancedtelematic.metrics.InfluxDbMetricsReporter
 import com.advancedtelematic.metrics.{ AkkaHttpMetricsSink, DropwizardMetrics, InfluxDbMetricsReporter, InfluxDbMetricsReporterSettings }
 val cfg: InfluxDbMetricsReporterSettings = ???
