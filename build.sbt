@@ -1,28 +1,35 @@
-lazy val commonDeps = libraryDependencies ++= {
-  val akkaV = "2.4.17"
-  val akkaHttpV = "10.0.3"
-  val akkaHttpCirceV = "1.12.0"
-  val circeV = "0.7.0"
-  val scalaTestV = "3.0.0"
+val Library = new {
+  object Version {
+    val akka = "2.4.17"
+    val akkaHttp = "10.0.3"
+    val akkaHttpCirce = "1.12.0"
+    val circe = "0.7.0"
+    val refined = "0.3.1"
+    val scalaTest = "3.0.0"
+  }
 
-  Seq(
-    "com.typesafe.akka" %% "akka-actor" % akkaV,
-    "com.typesafe.akka" %% "akka-http" % akkaHttpV,
-    "com.typesafe.akka" %% "akka-stream" % akkaV,
+  val akkaStream = "com.typesafe.akka" %% "akka-stream" % Version.akka
 
-    "de.heikoseeberger" %% "akka-http-circe" % akkaHttpCirceV,
-
-    "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % "provided",
-    "org.scalatest" %% "scalatest" % scalaTestV % "test,provided",
-
-    "eu.timepit" %% "refined" % "0.3.1",
-
-    "io.circe" %% "circe-core" % circeV,
-    "io.circe" %% "circe-generic" % circeV,
-    "io.circe" %% "circe-parser" % circeV,
-    "io.circe" %% "circe-java8" % circeV
+  val akkaHttp = Seq(
+    "com.typesafe.akka" %% "akka-http" % Version.akkaHttp,
+    "de.heikoseeberger" %% "akka-http-circe" % Version.akkaHttpCirce,
+    "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp % "provided"
   )
+
+  val circe = Seq(
+    "io.circe" %% "circe-core",
+    "io.circe" %% "circe-generic",
+    "io.circe" %% "circe-parser",
+    "io.circe" %% "circe-java8"
+  ).map(_ % Version.circe)
+
+  val refined = "eu.timepit" %% "refined" % Version.refined
+
+  val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test,provided"
 }
+
+lazy val commonDeps =
+  libraryDependencies ++= Library.akkaHttp ++ Library.circe ++ Seq(Library.refined, Library.scalatest)
 
 lazy val commonConfigs = Seq.empty
 
@@ -34,17 +41,19 @@ lazy val commonSettings = Seq(
   resolvers += "ATS Snapshots" at "http://nexus.prod01.internal.advancedtelematic.com:8081/content/repositories/snapshots",
   resolvers += "version99 Empty loggers" at "http://version99.qos.ch",
   buildInfoOptions += BuildInfoOption.ToMap,
-  buildInfoOptions += BuildInfoOption.BuildTime) ++ Versioning.settings ++ commonDeps
+  buildInfoOptions += BuildInfoOption.BuildTime) ++ Versioning.settings
 
 lazy val libats = (project in file("libats"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
+  .settings(commonDeps)
   .settings(commonSettings)
   .settings(Publish.settings)
 
 lazy val libats_slick = (project in file("libats-slick"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
+  .settings(commonDeps)
   .settings(commonSettings)
   .settings(Publish.settings)
   .dependsOn(libats)
@@ -52,6 +61,7 @@ lazy val libats_slick = (project in file("libats-slick"))
 lazy val libats_messaging = (project in file("libats-messaging"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
+  .settings(commonDeps)
   .settings(commonSettings)
   .settings(Publish.settings)
   .dependsOn(libats)
@@ -60,6 +70,7 @@ lazy val libats_messaging_datatype = (project in file("libats-messaging-datatype
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
   .settings(commonSettings)
+  .settings(commonDeps)
   .settings(Publish.settings)
   .dependsOn(libats)
   .dependsOn(libats_messaging)
@@ -68,6 +79,7 @@ lazy val libats_metrics = (project in file("libats-metrics"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
   .settings(commonSettings)
+  .settings(libraryDependencies ++= Library.circe :+ Library.akkaStream)
   .settings(Publish.settings)
 
 lazy val libats_metrics_kafka = (project in file("libats-metrics-kafka"))
@@ -80,12 +92,14 @@ lazy val libats_metrics_akka = (project in file("libats-metrics-akka"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
   .settings(commonSettings)
+  .settings(libraryDependencies ++= Library.akkaHttp)
   .settings(Publish.settings).dependsOn(libats_metrics)
 
 lazy val libats_auth = (project in file("libats-auth"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
   .settings(commonSettings)
+  .settings(commonDeps)
   .settings(Publish.settings)
   .dependsOn(libats)
 
