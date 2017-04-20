@@ -28,6 +28,12 @@ final case class InfluxDbMetricsReporterSettings(host: String,
                                                  credentials: Option[UsernamePassword],
                                                  retentionPolicy: Option[String])
 
+object InfluxDbMetricsReporterSettings {
+  private implicit val DurationDecoder: Decoder[FiniteDuration] = Decoders.durationDecoder.map(x => Duration(x))
+
+  val DecoderInstance: Decoder[InfluxDbMetricsReporterSettings] = io.circe.generic.semiauto.deriveDecoder
+}
+
 object InfluxDbMetricsReporter {
 
   case object Tick
