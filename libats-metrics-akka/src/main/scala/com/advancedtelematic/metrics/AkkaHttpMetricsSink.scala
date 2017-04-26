@@ -50,7 +50,7 @@ object AkkaHttpMetricsSink {
       .map(_._1)
       .to(Sink.foreach {
         case Success(r @ HttpResponse(StatusCodes.NoContent, _, _, _)) =>
-          log.info("Metrics reported.")
+          log.debug("Metrics reported.")
           r.entity.discardBytes()
 
         case Success(r @ HttpResponse(status, _, entity, _)) =>

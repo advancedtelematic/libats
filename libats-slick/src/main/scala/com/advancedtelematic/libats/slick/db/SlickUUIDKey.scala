@@ -8,7 +8,7 @@ import slick.ast.BaseTypedType
 import slick.jdbc.JdbcType
 
 import scala.reflect.ClassTag
-import slick.driver.MySQLDriver.api._
+import slick.jdbc.MySQLProfile.api._
 import shapeless._
 
 object SlickUUIDKey {

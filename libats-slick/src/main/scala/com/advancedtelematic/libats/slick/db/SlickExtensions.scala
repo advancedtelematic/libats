@@ -14,7 +14,7 @@ import com.advancedtelematic.libats.http.Errors
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.Uuid
 import slick.ast.{Node, TypedType}
-import slick.driver.MySQLDriver.api._
+import slick.jdbc.MySQLProfile.api._
 import slick.lifted.{AbstractTable, Rep}
 
 import scala.concurrent.ExecutionContext
@@ -48,7 +48,7 @@ object SlickExtensions {
   implicit def mappedColumnExtensions(c: Rep[_]) : MappedExtensionMethods = new MappedExtensionMethods(c.toNode)
 
   implicit def uuidToJava(refined: Refined[String, Uuid]): Rep[UUID] =
-    UUID.fromString(refined.get).bind
+    UUID.fromString(refined.value).bind
 
   implicit class DbioPaginateExtensions[E, U](action: Query[E, U, Seq]) {
     def paginateAndSort[T <% slick.lifted.Ordered](fn: E => T, offset: Long, limit: Long): Query[E, U, Seq] = {

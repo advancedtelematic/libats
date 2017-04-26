@@ -82,5 +82,5 @@ object Messages {
 
   implicit val imageStorageMessageLike = MessageLike[ImageStorageUsage](_.namespace.get)
 
-  implicit val treeHubCommitMessageLike = MessageLike[TreehubCommit](_.commit.get)
+  implicit val treeHubCommitMessageLike = MessageLike[TreehubCommit](_.commit.value)
 }

@@ -3,7 +3,7 @@ package com.advancedtelematic.libats.slick.db
 import cats.syntax.either._
 import io.circe.Json
 import io.circe.syntax._
-import slick.driver.MySQLDriver.api._
+import slick.jdbc.MySQLProfile.api._
 
 import scala.reflect.ClassTag
 

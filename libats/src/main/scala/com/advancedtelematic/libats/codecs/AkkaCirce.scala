@@ -18,7 +18,7 @@ import java.util.UUID
 trait AkkaCirce {
 
   implicit def refinedEncoder[T, P](implicit encoder: Encoder[T]): Encoder[Refined[T, P]] =
-    encoder.contramap(_.get)
+    encoder.contramap(_.value)
 
   implicit def refinedDecoder[T, P](implicit decoder: Decoder[T], p: Validate.Plain[T, P]): Decoder[Refined[T, P]] =
     decoder.map(t =>
