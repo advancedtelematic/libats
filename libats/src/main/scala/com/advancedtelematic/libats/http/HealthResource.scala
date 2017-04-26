@@ -12,7 +12,7 @@ import com.advancedtelematic.libats.monitoring.MetricsSupport
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import com.advancedtelematic.libats.codecs.AkkaCirce._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.syntax._
 
 trait HealthCheck {

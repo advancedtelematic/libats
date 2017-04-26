@@ -8,8 +8,7 @@ import com.advancedtelematic.libats.messaging.kafka.KafkaClient
 import com.typesafe.config.ConfigException.Missing
 import com.typesafe.config.Config
 import com.advancedtelematic.libats.messaging.Messages._
-import MessageListener.{CommittableMsg, KafkaMsg, NatsMsg}
-import com.advancedtelematic.libats.messaging.nats.NatsClient
+import MessageListener.{CommittableMsg, KafkaMsg}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -61,10 +60,6 @@ object MessageBus {
   def subscribe[T](system: ActorSystem, config: Config)
                   (implicit messageLike: MessageLike[T]): Throwable Either Source[T, NotUsed] = {
     config.getString("messaging.mode").toLowerCase().trim match {
-      case "nats" =>
-        log.info("Starting messaging mode: NATS")
-        log.info(s"Using subject name: ${messageLike.streamName}")
-        NatsClient.source(system, config, messageLike.streamName)(messageLike.decoder)
       case "kafka" =>
         log.info("Starting messaging mode: Kafka")
         log.info(s"Using stream name: ${messageLike.streamName}")
@@ -81,13 +76,6 @@ object MessageBus {
                                            (implicit messageLike: MessageLike[T], system: ActorSystem)
   : Source[CommittableMsg[T], NotUsed] = {
     config.getString("messaging.mode").toLowerCase().trim match {
-      case "nats" =>
-        log.info("Starting messaging mode: NATS")
-        log.info(s"Using subject name: ${messageLike.streamName}")
-        NatsClient.source(system, config, messageLike.streamName)(messageLike.decoder) match {
-          case Right(s) => s.map(msg => new NatsMsg[T](msg))
-          case Left(err) => throw err
-        }
       case "kafka" =>
         log.info("Starting messaging mode: Kafka")
         log.info(s"Using stream name: ${messageLike.streamName}")
@@ -105,9 +93,6 @@ object MessageBus {
 
   def publisher(system: ActorSystem, config: Config): Throwable Either MessageBusPublisher = {
     config.getString("messaging.mode").toLowerCase().trim match {
-      case "nats" =>
-        log.info("Starting messaging mode: NATS")
-        NatsClient.publisher(system, config)
       case "kafka" =>
         log.info("Starting messaging mode: Kafka")
         KafkaClient.publisher(system, config)
