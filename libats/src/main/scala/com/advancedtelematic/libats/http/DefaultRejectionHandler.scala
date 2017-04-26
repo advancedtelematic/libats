@@ -10,7 +10,7 @@ import akka.http.scaladsl.server._
 import com.advancedtelematic.libats.codecs.{DeserializationException, RefinementError}
 import io.circe.generic.auto._
 import com.advancedtelematic.libats.codecs.AkkaCirce._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 
 /**
   * When validation, JSON deserialisation fail or a duplicate entry

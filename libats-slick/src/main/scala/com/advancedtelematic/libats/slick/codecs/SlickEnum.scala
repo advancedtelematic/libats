@@ -5,7 +5,7 @@
 
 package com.advancedtelematic.libats.slick.codecs
 
-import slick.driver.MySQLDriver.api._
+import slick.jdbc.MySQLProfile.api._
 
 trait SlickEnum {
   self: Enumeration =>

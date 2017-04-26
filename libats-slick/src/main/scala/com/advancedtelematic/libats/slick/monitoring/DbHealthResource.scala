@@ -3,14 +3,14 @@ package com.advancedtelematic.libats.slick.monitoring
 import java.lang.management.ManagementFactory
 import javax.management.{JMX, ObjectName}
 
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import akka.event.LoggingAdapter
 import com.advancedtelematic.libats.http.{HealthCheck, HealthResource}
-import com.zaxxer.hikari.pool.HikariPoolMBean
+import com.zaxxer.hikari.HikariPoolMXBean
 import io.circe.Json
 
 import scala.concurrent.{ExecutionContext, Future}
-import slick.driver.MySQLDriver.api._
+import slick.jdbc.MySQLProfile.api._
 import io.circe.syntax._
 
 import scala.util.Failure
@@ -42,7 +42,7 @@ class DbHealthResource(healthChecks: Seq[HealthCheck], versionRepr: Map[String, 
   private lazy val mBeanServer = ManagementFactory.getPlatformMBeanServer
   // TODO: Use proper db name after upgrading slick (https://github.com/slick/slick/issues/1326)
   private lazy val poolName = new ObjectName("com.zaxxer.hikari:type=Pool (database)")
-  private lazy val poolProxy = JMX.newMXBeanProxy(mBeanServer, poolName, classOf[HikariPoolMBean])
+  private lazy val poolProxy = JMX.newMXBeanProxy(mBeanServer, poolName, classOf[HikariPoolMXBean])
 
   private def dbVersion(): Future[String] = {
     val query = sql"SELECT VERSION()".as[String].head

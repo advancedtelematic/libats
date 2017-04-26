@@ -34,7 +34,7 @@ object TokenValidator {
 }
 
 class TokenValidator(implicit system: ActorSystem, mat: Materializer) {
-  import de.heikoseeberger.akkahttpcirce.CirceSupport._
+  import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
   import Directives._
   import Json._
 

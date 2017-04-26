@@ -5,7 +5,7 @@
 
 package com.advancedtelematic.libats.slick.db
 
-import slick.driver.MySQLDriver.api._
+import slick.jdbc.MySQLProfile.api._
 
 import scala.language.higherKinds
 

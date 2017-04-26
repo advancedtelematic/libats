@@ -1,10 +1,10 @@
 val Library = new {
   object Version {
     val akka = "2.4.17"
-    val akkaHttp = "10.0.3"
-    val akkaHttpCirce = "1.12.0"
-    val circe = "0.7.0"
-    val refined = "0.3.1"
+    val akkaHttp = "10.0.5"
+    val akkaHttpCirce = "1.15.0"
+    val circe = "0.7.1"
+    val refined = "0.8.0"
     val scalaTest = "3.0.0"
   }
 
@@ -36,6 +36,7 @@ lazy val commonConfigs = Seq.empty
 lazy val commonSettings = Seq(
   organization := "com.advancedtelematic",
   scalaVersion := "2.11.11",
+  crossScalaVersions := Seq("2.11.11", "2.12.2"),
   scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature"),
   resolvers += "ATS Releases" at "http://nexus.prod01.internal.advancedtelematic.com:8081/content/repositories/releases",
   resolvers += "ATS Snapshots" at "http://nexus.prod01.internal.advancedtelematic.com:8081/content/repositories/snapshots",
@@ -103,12 +104,8 @@ lazy val libats_auth = (project in file("libats-auth"))
   .settings(Publish.settings)
   .dependsOn(libats)
 
-val metrics_root = project
-  .settings(Publish.disable)
-  .settings(scalaVersion := "2.11.11")
-  .settings(crossScalaVersions := Seq("2.11.11", "2.12.2"))
-  .aggregate(libats_metrics, libats_metrics_kafka, libats_metrics_akka)
-
 lazy val libats_root = (project in file("."))
   .settings(Publish.disable)
-  .aggregate(libats, libats_messaging, libats_messaging_datatype, libats_slick, libats_auth)
+  .settings(scalaVersion := "2.11.11")
+  .settings(  crossScalaVersions := Seq("2.11.11", "2.12.2"))
+  .aggregate(libats, libats_messaging, libats_messaging_datatype, libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka)
