@@ -38,8 +38,8 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.11.11",
   crossScalaVersions := Seq("2.11.11", "2.12.2"),
   scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature"),
-  resolvers += "ATS Releases" at "http://nexus.prod01.internal.advancedtelematic.com:8081/content/repositories/releases",
-  resolvers += "ATS Snapshots" at "http://nexus.prod01.internal.advancedtelematic.com:8081/content/repositories/snapshots",
+  resolvers += "ATS Releases" at "http://nexus.advancedtelematic.com:8081/content/repositories/releases",
+  resolvers += "ATS Snapshots" at "http://nexus.advancedtelematic.com:8081/content/repositories/snapshots",
   resolvers += "version99 Empty loggers" at "http://version99.qos.ch",
   buildInfoOptions += BuildInfoOption.ToMap,
   buildInfoOptions += BuildInfoOption.BuildTime) ++ Versioning.settings
@@ -96,6 +96,13 @@ lazy val libats_metrics_akka = (project in file("libats-metrics-akka"))
   .settings(libraryDependencies ++= Library.akkaHttp)
   .settings(Publish.settings).dependsOn(libats_metrics)
 
+lazy val libats_metrics_finagle = (project in file("libats-metrics-finagle"))
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(libraryDependencies ++= Library.circe :+ Library.akkaStream)
+  .settings(Publish.settings).dependsOn(libats_metrics)
+
 lazy val libats_auth = (project in file("libats-auth"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
@@ -108,4 +115,4 @@ lazy val libats_root = (project in file("."))
   .settings(Publish.disable)
   .settings(scalaVersion := "2.11.11")
   .settings(  crossScalaVersions := Seq("2.11.11", "2.12.2"))
-  .aggregate(libats, libats_messaging, libats_messaging_datatype, libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka)
+  .aggregate(libats, libats_messaging, libats_messaging_datatype, libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka, libats_metrics_finagle)
