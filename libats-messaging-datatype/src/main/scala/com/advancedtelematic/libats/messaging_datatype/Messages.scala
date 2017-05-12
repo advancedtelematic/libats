@@ -8,8 +8,8 @@ import akka.http.scaladsl.model.Uri
 import com.advancedtelematic.libats.data.Namespace
 import com.advancedtelematic.libats.messaging.Messages.MessageLike
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
-import com.advancedtelematic.libats.messaging_datatype.DataType.{Commit, DeltaRequestId, PackageId}
-import com.advancedtelematic.libats.messaging_datatype.Messages.{CampaignLaunched, DeltaRequest, GeneratedDelta, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.DataType.{BsDiffRequestId, Commit, DeltaRequestId, PackageId}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffRequest, CampaignLaunched, DeltaRequest, GeneratedDelta, UserCreated}
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.semiauto._
 
@@ -37,6 +37,9 @@ object MessageCodecs {
 
   implicit val generatedDeltaEncoder: Encoder[GeneratedDelta] = deriveEncoder
   implicit val generatedDeltaDecoder: Decoder[GeneratedDelta] = deriveDecoder
+
+  implicit val bsDiffRequestIdEncoder: Encoder[BsDiffRequest] = deriveEncoder
+  implicit val bsDiffRequestIdDecoder: Decoder[BsDiffRequest] = deriveDecoder
 }
 
 object Messages {
@@ -51,6 +54,8 @@ object Messages {
                                     pkg: PackageId, pkgSize: Long, pkgChecksum: String)
 
   case class DeltaRequest(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, timestamp: Instant = Instant.now)
+
+  case class BsDiffRequest(id: BsDiffRequestId, from: Uri, to: Uri, timestamp: Instant = Instant.now)
 
   case class GeneratedDelta(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, uri: Uri, size: Long)
 
@@ -73,6 +78,8 @@ object Messages {
   implicit val campaignLaunchedMessageLike = MessageLike[CampaignLaunched](_.updateId.toString)
 
   implicit val staticDeltaRequestMessageLike = MessageLike[DeltaRequest](_.id.uuid.toString)
+
+  implicit val bsDiffRequestMessageLike = MessageLike[BsDiffRequest](_.id.uuid.toString)
 
   implicit val staticDeltaResponseMessageLike = MessageLike[GeneratedDelta](_.id.uuid.toString)
 
