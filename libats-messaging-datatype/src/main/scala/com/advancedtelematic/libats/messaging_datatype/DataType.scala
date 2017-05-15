@@ -34,4 +34,42 @@ object DataType {
       hash => s"$hash is not a sha-256 commit hash",
       ValidCommit()
     )
+
+  final case class ValidEcuSerial()
+  type EcuSerial = Refined[String, ValidEcuSerial]
+
+  implicit val validEcuSerial: Validate.Plain[String, ValidEcuSerial] =
+    validInBetween(min = 1, max = 64, ValidEcuSerial())
+
+  case class DeviceId(uuid: UUID) extends UUIDKey
+  object DeviceId extends UUIDKeyObj[DeviceId]
+
+  case class UpdateId(uuid: UUID) extends UUIDKey
+  object UpdateId extends UUIDKeyObj[UpdateId]
+
+  case class ValidTargetFilename()
+  type TargetFilename = Refined[String, ValidTargetFilename]
+
+  implicit val validTargetFilename: Validate.Plain[String, ValidTargetFilename] =
+    Validate.fromPredicate(
+      f => f.nonEmpty && f.length < 254,
+      _ => "TargetFilename cannot be empty or bigger than 254 chars",
+      ValidTargetFilename()
+    )
+
+  object HashMethod extends CirceEnum {
+    type HashMethod = Value
+
+    val SHA256 = Value("sha256")
+  }
+
+  case class ValidChecksum()
+
+  implicit val validChecksum: Validate.Plain[String, ValidChecksum] =
+    validHexValidation(ValidChecksum(), length = 64)
+
+  final case class OperationResult(target: TargetFilename, hashes: Map[HashMethod.HashMethod, Refined[String, ValidChecksum]],
+                                   length: Long, resultCode: Int, resultText: String) {
+    def isSuccess:Boolean = resultCode == 0 || resultCode == 1
+  }
 }

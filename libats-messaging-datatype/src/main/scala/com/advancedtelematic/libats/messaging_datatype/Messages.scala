@@ -6,12 +6,16 @@ import java.util.{Base64, UUID}
 
 import akka.http.scaladsl.model.Uri
 import com.advancedtelematic.libats.data.Namespace
+import com.advancedtelematic.libats.data.RefinedUtils._
 import com.advancedtelematic.libats.messaging.Messages.MessageLike
+import com.advancedtelematic.libats.messaging_datatype.DataType.HashMethod.HashMethod
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
-import com.advancedtelematic.libats.messaging_datatype.DataType.{BsDiffRequestId, Commit, DeltaRequestId, PackageId}
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffRequest, CampaignLaunched, DeltaRequest, GeneratedDelta, UserCreated}
-import io.circe.{Decoder, Encoder, Json}
+import com.advancedtelematic.libats.messaging_datatype.DataType._
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffRequest, CampaignLaunched, DeltaRequest, DeviceUpdateReport, GeneratedDelta, UserCreated}
+import io.circe.{Decoder, Encoder, Json, KeyDecoder, KeyEncoder}
 import io.circe.generic.semiauto._
+
+import scala.util.Try
 
 object MessageCodecs {
   import com.advancedtelematic.libats.codecs.AkkaCirce._
@@ -40,6 +44,22 @@ object MessageCodecs {
 
   implicit val bsDiffRequestIdEncoder: Encoder[BsDiffRequest] = deriveEncoder
   implicit val bsDiffRequestIdDecoder: Decoder[BsDiffRequest] = deriveDecoder
+
+  implicit val keyDecoderEcuSerial: KeyDecoder[EcuSerial] = KeyDecoder.instance { value =>
+    value.refineTry[ValidEcuSerial].toOption
+  }
+  implicit val keyEncoderEcuSerial: KeyEncoder[EcuSerial] = KeyEncoder[String].contramap(_.value)
+
+  implicit val operationResultEncoder: Encoder[OperationResult] = deriveEncoder
+  implicit val operationResultDecoder: Decoder[OperationResult] = deriveDecoder
+
+  implicit val hashMethodKeyEncoder: KeyEncoder[HashMethod] = KeyEncoder[String].contramap(_.toString)
+  implicit val hashMethodKeyDecoder: KeyDecoder[HashMethod] = KeyDecoder.instance { value =>
+    Try(HashMethod.withName(value)).toOption
+  }
+
+  implicit val deviceUpdateReportEncoder: Encoder[DeviceUpdateReport] = deriveEncoder
+  implicit val deviceUpdateReportDecoder: Decoder[DeviceUpdateReport] = deriveDecoder
 }
 
 object Messages {
@@ -73,6 +93,9 @@ object Messages {
 
   case class ImageStorageUsage(namespace: Namespace, timestamp: Instant, byteCount: Long)
 
+  case class DeviceUpdateReport(namespace: Namespace, device: DeviceId, updateId: UpdateId, timestampVersion: Int,
+                                operationResult: Map[EcuSerial, OperationResult])
+
   implicit val userCreatedMessageLike = MessageLike[UserCreated](_.id)
 
   implicit val campaignLaunchedMessageLike = MessageLike[CampaignLaunched](_.updateId.toString)
@@ -90,4 +113,6 @@ object Messages {
   implicit val imageStorageMessageLike = MessageLike[ImageStorageUsage](_.namespace.get)
 
   implicit val treeHubCommitMessageLike = MessageLike[TreehubCommit](_.commit.value)
+
+  implicit val deviceUpdateReportMessageLike = MessageLike[DeviceUpdateReport](_.device.toString)
 }
