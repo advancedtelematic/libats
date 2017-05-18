@@ -11,8 +11,8 @@ import com.advancedtelematic.libats.messaging.Messages.MessageLike
 import com.advancedtelematic.libats.messaging_datatype.DataType.HashMethod.HashMethod
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffRequest, CampaignLaunched, DeltaRequest, DeviceUpdateReport, GeneratedDelta, UserCreated}
-import io.circe.{Decoder, Encoder, Json, KeyDecoder, KeyEncoder}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
+import io.circe._
 import io.circe.generic.semiauto._
 
 import scala.util.Try
@@ -44,6 +44,15 @@ object MessageCodecs {
 
   implicit val bsDiffRequestIdEncoder: Encoder[BsDiffRequest] = deriveEncoder
   implicit val bsDiffRequestIdDecoder: Decoder[BsDiffRequest] = deriveDecoder
+
+  implicit val generatedBsDiffEncoder: Encoder[GeneratedBsDiff] = deriveEncoder
+  implicit val generatedBsDiffDecoder: Decoder[GeneratedBsDiff] = deriveDecoder
+
+  implicit val deltaGenerationFailedEncoder: Encoder[DeltaGenerationFailed] = deriveEncoder
+  implicit val deltaGenerationFailedDecoder: Decoder[DeltaGenerationFailed] = deriveDecoder
+
+  implicit val bsDiffGenerationFailedEncoder: Encoder[BsDiffGenerationFailed] = deriveEncoder
+  implicit val bsDiffGenerationFailedDecoder: Decoder[BsDiffGenerationFailed] = deriveDecoder
 
   implicit val keyDecoderEcuSerial: KeyDecoder[EcuSerial] = KeyDecoder.instance { value =>
     value.refineTry[ValidEcuSerial].toOption
@@ -79,7 +88,11 @@ object Messages {
 
   case class GeneratedDelta(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, uri: Uri, size: Long)
 
+  case class GeneratedBsDiff(id: BsDiffRequestId, from: Uri, to: Uri, resultUri: Uri, size: Long)
+
   case class DeltaGenerationFailed(id: DeltaRequestId, namespace: Namespace, error: Option[Json] = None)
+
+  case class BsDiffGenerationFailed(id: BsDiffRequestId, error: Option[Json] = None)
 
   final case class TreehubCommit(ns: Namespace,
                                  commit: Commit,
@@ -105,6 +118,10 @@ object Messages {
   implicit val bsDiffRequestMessageLike = MessageLike[BsDiffRequest](_.id.uuid.toString)
 
   implicit val staticDeltaResponseMessageLike = MessageLike[GeneratedDelta](_.id.uuid.toString)
+
+  implicit val generatedBsDiffMessageLike = MessageLike[GeneratedBsDiff](_.id.uuid.toString)
+
+  implicit val bsDiffGenerationFailedMessageLike = MessageLike[BsDiffGenerationFailed](_.id.toString)
 
   implicit val deltaGenerationFailedMessageLike = MessageLike[DeltaGenerationFailed](_.id.uuid.toString)
 
