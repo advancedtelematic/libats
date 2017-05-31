@@ -84,15 +84,15 @@ object Messages {
 
   case class DeltaRequest(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, timestamp: Instant = Instant.now)
 
-  case class BsDiffRequest(id: BsDiffRequestId, from: Uri, to: Uri, timestamp: Instant = Instant.now)
+  case class BsDiffRequest(id: BsDiffRequestId, namespace: Namespace, from: Uri, to: Uri, timestamp: Instant = Instant.now)
 
   case class GeneratedDelta(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, uri: Uri, size: Long)
 
-  case class GeneratedBsDiff(id: BsDiffRequestId, from: Uri, to: Uri, resultUri: Uri, size: Long)
+  case class GeneratedBsDiff(id: BsDiffRequestId, namespace: Namespace, from: Uri, to: Uri, resultUri: Uri, size: Long)
 
   case class DeltaGenerationFailed(id: DeltaRequestId, namespace: Namespace, error: Option[Json] = None)
 
-  case class BsDiffGenerationFailed(id: BsDiffRequestId, error: Option[Json] = None)
+  case class BsDiffGenerationFailed(id: BsDiffRequestId, namespace: Namespace, error: Option[Json] = None)
 
   final case class TreehubCommit(ns: Namespace,
                                  commit: Commit,
