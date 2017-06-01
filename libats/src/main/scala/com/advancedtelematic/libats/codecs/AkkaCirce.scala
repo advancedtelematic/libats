@@ -4,10 +4,7 @@
  */
 package com.advancedtelematic.libats.codecs
 
-import akka.http.scaladsl.model.Uri
 import cats.syntax.either._
-import eu.timepit.refined.api.{Refined, Validate}
-import eu.timepit.refined.refineV
 import io.circe._
 import io.circe.{Decoder, Encoder}
 import java.time.Instant
@@ -15,22 +12,7 @@ import java.time.format.{DateTimeFormatter, DateTimeParseException}
 import java.time.temporal.ChronoField
 import java.util.UUID
 
-trait AkkaCirce {
-
-  implicit def refinedEncoder[T, P](implicit encoder: Encoder[T]): Encoder[Refined[T, P]] =
-    encoder.contramap(_.value)
-
-  implicit def refinedDecoder[T, P](implicit decoder: Decoder[T], p: Validate.Plain[T, P]): Decoder[Refined[T, P]] =
-    decoder.map(t =>
-      refineV[P](t) match {
-        case Left(e)  =>
-          throw DeserializationException(RefinementError(t, e))
-        case Right(r) => r
-      })
-
-  implicit val javaUuidEncoder : Encoder[UUID] = Encoder[String].contramap(_.toString)
-  implicit val javaUuidDecoder : Decoder[UUID] = Decoder[String].map(UUID.fromString)
-
+trait CirceDateTime {
   implicit val dateTimeEncoder : Encoder[Instant] = Encoder.instance[Instant] { instant =>
     Json.fromString {
       instant
@@ -56,5 +38,16 @@ trait AkkaCirce {
   }
 }
 
-object AkkaCirce extends AkkaCirce
+object CirceDateTime extends CirceDateTime
 
+trait CirceUuid {
+  implicit val javaUuidEncoder : Encoder[UUID] = Encoder[String].contramap(_.toString)
+  implicit val javaUuidDecoder : Decoder[UUID] = Decoder[String].map(UUID.fromString)
+}
+
+object CirceUuid extends CirceUuid
+
+object AkkaCirce extends CirceDateTime
+  with CirceUuid
+  with CirceAnyVal
+  with CirceRefined
