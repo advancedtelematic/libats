@@ -4,10 +4,8 @@ import java.util.UUID
 
 import akka.http.scaladsl.server.{PathMatcher1, PathMatchers}
 import cats.Show
-import io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
 import shapeless._
-
-import scala.reflect.ClassTag
 
 object UUIDKey {
   abstract class UUIDKeyObj[Self <: UUIDKey] {
@@ -22,8 +20,15 @@ object UUIDKey {
     }
 
     implicit val encoder: Encoder[Self] = Encoder[String].contramap(_.uuid.toString)
+
     implicit def decoder(implicit gen: SelfGen): Decoder[Self] =
       Decoder[String].map(s => fromJava(UUID.fromString(s)))
+
+    implicit def keyDecoder[T](implicit gen: Generic.Aux[T, UUID :: HNil]): KeyDecoder[T] =
+      KeyDecoder[String].map(s => gen.from(UUID.fromString(s) :: HNil))
+
+    implicit def keyEncoder[T <: UUIDKey]: KeyEncoder[T] =
+      KeyEncoder[String].contramap(_.uuid.toString)
 
     implicit val abstractKeyShow = Show.show[Self](_.uuid.toString)
 
