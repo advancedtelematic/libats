@@ -13,6 +13,8 @@ libraryDependencies ++= {
     "com.typesafe.slick" %% "slick-hikaricp" % slickV,
     "org.flywaydb" % "flyway-core" % "4.0.3",
 
-    "org.scalatest"     %% "scalatest" % scalaTestV % "provided"
+    "org.scalatest"     %% "scalatest" % scalaTestV % "provided",
+
+    "org.mariadb.jdbc" % "mariadb-java-client" % "1.4.4" % Test
   )
 }
