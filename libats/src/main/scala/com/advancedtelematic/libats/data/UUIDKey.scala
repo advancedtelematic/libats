@@ -24,11 +24,10 @@ object UUIDKey {
     implicit def decoder(implicit gen: SelfGen): Decoder[Self] =
       Decoder[String].map(s => fromJava(UUID.fromString(s)))
 
-    implicit def keyDecoder[T](implicit gen: Generic.Aux[T, UUID :: HNil]): KeyDecoder[T] =
+    implicit def keyDecoder(implicit gen: SelfGen): KeyDecoder[Self] =
       KeyDecoder[String].map(s => gen.from(UUID.fromString(s) :: HNil))
 
-    implicit def keyEncoder[T <: UUIDKey]: KeyEncoder[T] =
-      KeyEncoder[String].contramap(_.uuid.toString)
+    implicit def keyEncoder: KeyEncoder[Self] = KeyEncoder[String].contramap(_.uuid.toString)
 
     implicit val abstractKeyShow = Show.show[Self](_.uuid.toString)
 
