@@ -7,6 +7,7 @@ package com.advancedtelematic.libats.slick.db
 import java.sql.{BatchUpdateException, SQLIntegrityConstraintViolationException, Timestamp}
 import java.time.Instant
 import java.util.UUID
+
 import akka.http.scaladsl.model.Uri
 import com.advancedtelematic.libats.data.PaginationResult
 import com.advancedtelematic.libats.http.Errors
@@ -14,7 +15,8 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.Uuid
 import slick.ast.{Node, TypedType}
 import slick.jdbc.MySQLProfile.api._
-import slick.lifted.{AbstractTable, Rep}
+import slick.lifted.{AbstractTable, CanBeQueryCondition, Rep}
+
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 import scala.util.{Failure, Success}
@@ -63,6 +65,11 @@ trait SlickResultExtensions {
   implicit class QueryOps[+E, U](query: Query[E, U, Seq]) {
     def resultHead(onEmpty: Throwable)(implicit ec: ExecutionContext): DBIO[U] =
       DBIOOptionOps(query.take(1).result.headOption).failIfNone(onEmpty)
+
+    def maybeFilter(f: E => Rep[Option[Boolean]]): Query[E, U, Seq] =
+      query.withFilter { (e: E) =>
+        f(e).getOrElse(true)
+      }
   }
 
   implicit class DBIOSeqOps[+T](io: DBIO[Seq[T]]) {
