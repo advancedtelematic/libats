@@ -11,13 +11,14 @@ import scala.concurrent.ExecutionContext
 import scala.util.control.NoStackTrace
 
 object SlickExtensionsSpec {
-  case class Book(id: Long, title: String)
+  case class Book(id: Long, title: String, code: Option[String] = None)
 
   class BooksTable(tag: Tag) extends Table[Book](tag, "books") {
     def id = column[Long]("id", O.PrimaryKey)
     def title = column[String]("title")
+    def code = column[Option[String]]("code")
 
-    override def * = (id, title) <> ((Book.apply _).tupled, Book.unapply)
+    override def * = (id, title, code) <> ((Book.apply _).tupled, Book.unapply)
   }
 
   protected val books = TableQuery[BooksTable]
@@ -41,5 +42,30 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
     } yield inserted
 
     f.futureValue shouldBe Book(10, "Some book")
+  }
+
+  test("resultHead on a Query returns the error in arg") {
+    val f = db.run(books.filter(_.id === 20l).resultHead(Error))
+    f.failed.futureValue shouldBe Error
+  }
+
+  test("maybeFilter uses filter if condition is defined") {
+    val f = for {
+      _ <- db.run(books += Book(30, "Some book", Option("30 some code")))
+      result <- db.run(books.maybeFilter(_.id === Option(30l)).result)
+    } yield result
+
+    f.futureValue.length shouldBe 1
+    f.futureValue.head.id shouldBe 30l
+  }
+
+  test("maybeFilter ignores filter if condition is None") {
+    val f = for {
+      _ <- db.run(books += Book(40, "Some book"))
+      result <- db.run(books.maybeFilter(_.id === Option.empty[Long]).result)
+    } yield result
+
+    f.futureValue.length shouldBe >(1)
+    f.futureValue.map(_.id) should contain(40l)
   }
 }
