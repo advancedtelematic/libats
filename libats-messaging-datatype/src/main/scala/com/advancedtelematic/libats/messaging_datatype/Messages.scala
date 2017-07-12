@@ -5,6 +5,7 @@ import java.time.Instant
 import java.util.{Base64, UUID}
 
 import akka.http.scaladsl.model.Uri
+import cats.syntax.either._
 import com.advancedtelematic.libats.data.Namespace
 import com.advancedtelematic.libats.data.RefinedUtils._
 import com.advancedtelematic.libats.messaging.Messages.MessageLike
@@ -68,7 +69,20 @@ object MessageCodecs {
   }
 
   implicit val deviceUpdateReportEncoder: Encoder[DeviceUpdateReport] = deriveEncoder
-  implicit val deviceUpdateReportDecoder: Decoder[DeviceUpdateReport] = deriveDecoder
+
+  // For backwards compatibility reasons we have a decoder that can parse DeviceUpdateReport
+  // without a statusCode.
+  implicit val deviceUpdateReportDecoder: Decoder[DeviceUpdateReport] = Decoder.instance { cursor =>
+    for {
+      namespace <- cursor.downField("namespace").as[Namespace]
+      device <- cursor.downField("device").as[DeviceId]
+      updateId <- cursor.downField("updateId").as[UpdateId]
+      timestampVersion <- cursor.downField("timestampVersion").as[Int]
+      operationResult <- cursor.downField("operationResult").as[Map[EcuSerial, OperationResult]]
+      op_resultCode <- cursor.downField("resultCode").as[Option[Int]]
+      resultCode = op_resultCode.getOrElse(if (operationResult.forall(_._2.isSuccess)) 0 else 19)
+    } yield DeviceUpdateReport(namespace, device, updateId, timestampVersion, operationResult, resultCode)
+  }
 }
 
 object Messages {
@@ -107,7 +121,7 @@ object Messages {
   case class ImageStorageUsage(namespace: Namespace, timestamp: Instant, byteCount: Long)
 
   case class DeviceUpdateReport(namespace: Namespace, device: DeviceId, updateId: UpdateId, timestampVersion: Int,
-                                operationResult: Map[EcuSerial, OperationResult])
+                                operationResult: Map[EcuSerial, OperationResult], resultCode: Int)
 
   implicit val userCreatedMessageLike = MessageLike[UserCreated](_.id)
 
