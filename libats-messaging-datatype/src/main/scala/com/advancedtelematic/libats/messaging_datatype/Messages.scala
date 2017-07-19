@@ -92,6 +92,8 @@ object Messages {
 
   final case class UserCreated(id: String)
 
+  final case class DeviceSeen(namespace: Namespace, uuid: DeviceId, lastSeen: Instant = Instant.now)
+
   final case class CampaignLaunched(namespace: String, updateId: UUID,
                                     devices: Set[UUID], pkgUri: Uri,
                                     pkg: PackageId, pkgSize: Long, pkgChecksum: String)
@@ -124,6 +126,8 @@ object Messages {
                                 operationResult: Map[EcuSerial, OperationResult], resultCode: Int)
 
   implicit val userCreatedMessageLike = MessageLike[UserCreated](_.id)
+
+  implicit val deviceSeenMessageLike = MessageLike[DeviceSeen](_.uuid.toString)
 
   implicit val campaignLaunchedMessageLike = MessageLike[CampaignLaunched](_.updateId.toString)
 
