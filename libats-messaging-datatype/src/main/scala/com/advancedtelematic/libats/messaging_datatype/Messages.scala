@@ -68,6 +68,9 @@ object MessageCodecs {
     Try(HashMethod.withName(value)).toOption
   }
 
+  implicit val checksumEncoder: Encoder[Checksum] = deriveEncoder
+  implicit val checksumDecoder: Decoder[Checksum] = deriveDecoder
+
   implicit val deviceUpdateReportEncoder: Encoder[DeviceUpdateReport] = deriveEncoder
 
   // For backwards compatibility reasons we have a decoder that can parse DeviceUpdateReport
@@ -102,9 +105,9 @@ object Messages {
 
   case class BsDiffRequest(id: BsDiffRequestId, namespace: Namespace, from: Uri, to: Uri, timestamp: Instant = Instant.now)
 
-  case class GeneratedDelta(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, uri: Uri, size: Long)
+  case class GeneratedDelta(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, uri: Uri, size: Long, checksum: Checksum)
 
-  case class GeneratedBsDiff(id: BsDiffRequestId, namespace: Namespace, from: Uri, to: Uri, resultUri: Uri, size: Long)
+  case class GeneratedBsDiff(id: BsDiffRequestId, namespace: Namespace, from: Uri, to: Uri, resultUri: Uri, size: Long, checksum: Checksum)
 
   case class DeltaGenerationFailed(id: DeltaRequestId, namespace: Namespace, error: Option[Json] = None)
 

@@ -4,6 +4,7 @@ import java.util.UUID
 
 import com.advancedtelematic.libats.codecs.CirceEnum
 import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
+import com.advancedtelematic.libats.messaging_datatype.DataType.HashMethod.HashMethod
 import eu.timepit.refined.api.{Refined, Validate}
 
 object DataType {
@@ -56,6 +57,8 @@ object DataType {
       _ => "TargetFilename cannot be empty or bigger than 254 chars",
       ValidTargetFilename()
     )
+
+  case class Checksum(method: HashMethod, hash: Refined[String, ValidChecksum])
 
   object HashMethod extends CirceEnum {
     type HashMethod = Value
