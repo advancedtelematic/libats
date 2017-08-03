@@ -5,15 +5,19 @@ import akka.actor.Status.Failure
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
 import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor.Subscribe
 
 import scala.concurrent.duration._
 import scala.util.Try
 import akka.pattern.pipe
+import com.advancedtelematic.libats.messaging.ListenerMonitor
 import com.advancedtelematic.libats.messaging.Messages.MessageLike
+import org.slf4j.LoggerFactory
 
-class MessageBusListenerActor[M](source: Source[M, NotUsed])(implicit messageLike: MessageLike[M])
+import scala.concurrent.Future
+
+class MessageBusListenerActor[M](source: Source[M, NotUsed], monitor: ListenerMonitor, sink: Sink[M, Future[Done]])
+                                (implicit messageLike: MessageLike[M])
   extends Actor with ActorLogging {
 
   implicit val materializer = ActorMaterializer()
@@ -32,9 +36,11 @@ class MessageBusListenerActor[M](source: Source[M, NotUsed])(implicit messageLik
         log.warning("Listener already subscribed. Ignoring Subscribe message")
       case Failure(ex) =>
         log.error(ex, "Source/Listener died, subscribing again")
+        monitor.onError(ex)
         trySubscribeDelayed()
         context become idle
       case Done =>
+        monitor.onFinished
         log.info("Source finished, subscribing again")
         trySubscribeDelayed()
         context become idle
@@ -44,13 +50,17 @@ class MessageBusListenerActor[M](source: Source[M, NotUsed])(implicit messageLik
   private def subscribe(): Unit = {
     log.info(s"Subscribing to ${messageLike.streamName}")
 
-    val sink = Sink.foreach[M] { msg =>
-      log.info(s"Processed ${messageLike.streamName} - ${messageLike.id(msg)}")
-    }
-
-    source.runWith(sink).pipeTo(self)
+    source.mapAsync(1)(monitorSafe).runWith(sink).pipeTo(self)
 
     context become subscribed
+  }
+
+  private def monitorSafe: M => Future[M] = { msg =>
+    monitor.onProcessed.map(_ => msg).recover {
+      case tx =>
+        log.warning(s"Could not monitor onProcessed state: ${tx.getMessage}")
+        msg
+    }
   }
 
   private def idle: Receive = {
@@ -71,6 +81,12 @@ class MessageBusListenerActor[M](source: Source[M, NotUsed])(implicit messageLik
 object MessageBusListenerActor {
   case object Subscribe
 
-  def props[M](source: Source[M, NotUsed])(implicit ml: MessageLike[M]): Props
-    = Props(new MessageBusListenerActor[M](source))
+  private lazy val log = LoggerFactory.getLogger(this.getClass)
+
+  def loggingSink[M](implicit ml: MessageLike[M]): Sink[M, Future[Done]] = Sink.foreach[M] { msg =>
+    log.info(s"Processed ${ml.streamName} - ${ml.id(msg)}")
+  }
+
+  def props[M](source: Source[M, NotUsed], monitor: ListenerMonitor)(implicit ml: MessageLike[M]): Props
+  = Props(new MessageBusListenerActor[M](source, monitor, loggingSink))
 }

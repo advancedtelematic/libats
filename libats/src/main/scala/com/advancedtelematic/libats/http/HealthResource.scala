@@ -7,38 +7,51 @@ package com.advancedtelematic.libats.http
 
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.server.Directives
-import com.advancedtelematic.libats.monitoring.MetricsSupport
+import com.advancedtelematic.libats.monitoring.{JvmMetrics, MetricsSupport}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import com.advancedtelematic.libats.codecs.AkkaCirce._
+import com.codahale.metrics.MetricRegistry
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe.Json
 import io.circe.syntax._
 
 trait HealthCheck {
   def apply(logger: LoggingAdapter)(implicit ec: ExecutionContext): Future[Unit]
 }
 
-class HealthResource(healthChecks: Seq[HealthCheck], versionRepr: Map[String, Any] = Map.empty)
-                    (implicit val ec: ExecutionContext) {
+trait HealthMetrics {
+  def metricsJson: Future[Json]
+
+  def urlPrefix: String
+}
+
+class HealthResource(versionRepr: Map[String, Any] = Map.empty,
+                     healthChecks: Seq[HealthCheck] = Seq.empty,
+                     healthMetrics: Seq[HealthMetrics] = Seq.empty,
+                     metricRegistry: MetricRegistry = MetricsSupport.metricRegistry
+                    )(implicit val ec: ExecutionContext) {
   import Directives._
 
-  val metricRegistry = MetricsSupport.metricRegistry
+  val defaultMetrics = Seq(new JvmMetrics(metricRegistry))
 
-  def route =
-    (get & pathPrefix("health") & extractLog) { logger =>
-      pathEnd {
-        val f = Future.sequence(healthChecks.map(_(logger))).map(_ => Map("status" -> "OK"))
-        complete(f)
-      } ~
-        path("version") {
-        complete(versionRepr.mapValues(_.toString).asJson)
-      } ~
-      path("jvm") {
-        val jvm = metricRegistry.getGauges(MetricsSupport.JvmFilter).asScala
-        val data = jvm.mapValues(_.getValue.toString)
+  def route = {
+      (get & pathPrefix("health") & extractLog) { logger =>
 
-        complete(data.toMap.asJson)
+        val healthRoutes =
+          pathEnd {
+            val f = Future.sequence(healthChecks.map(_ (logger))).map(_ => Map("status" -> "OK"))
+            complete(f)
+          } ~
+          path("version") {
+            complete(versionRepr.mapValues(_.toString).asJson)
+          }
+
+        (defaultMetrics ++ healthMetrics).foldLeft(healthRoutes) { (routes, metricSet) =>
+          routes ~ path(metricSet.urlPrefix) {
+            complete(metricSet.metricsJson)
+          }
+        }
       }
-    }
+  }
 }
