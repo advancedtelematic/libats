@@ -54,13 +54,12 @@ class MessageListenerActorSpec extends TestKit(ActorSystem("KafkaClientSpec"))
   test("message listener source monitors message events") {
     val source: Source[MsgListenerSpecItem, NotUsed] = Source(List(msg))
     val monitor = new StorageListenerMonitor
-    val sink = Sink.actorRef(testActor, Done).mapMaterializedValue(_ => Future.successful(Done))
+    val sink = Sink.foreach[MsgListenerSpecItem] { testActor ! _ }
     val actor = system.actorOf(Props(new MessageBusListenerActor(source, monitor, sink)))
 
     actor ! Subscribe
 
     expectMsgType[MsgListenerSpecItem]
-    expectMsg(Done)
 
     monitor.error shouldBe 0
     monitor.finished shouldBe 1

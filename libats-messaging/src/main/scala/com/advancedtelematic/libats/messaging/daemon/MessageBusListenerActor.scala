@@ -41,9 +41,8 @@ class MessageBusListenerActor[M](source: Source[M, NotUsed], monitor: ListenerMo
         context become idle
       case Done =>
         monitor.onFinished
-        log.info("Source finished, subscribing again")
-        trySubscribeDelayed()
-        context become idle
+        log.info("Source finished, stopping message listener actor")
+        context.stop(self)
     }
   }
 
