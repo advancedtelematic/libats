@@ -8,6 +8,7 @@ libraryDependencies ++= {
   Seq(
     "io.dropwizard.metrics" % "metrics-core" % metricsV,
     "io.dropwizard.metrics" % "metrics-jvm" % metricsV,
+    "io.dropwizard.metrics" % "metrics-logback" % metricsV,
 
     "org.scalatest"     %% "scalatest" % scalaTestV % "provided"
   )
