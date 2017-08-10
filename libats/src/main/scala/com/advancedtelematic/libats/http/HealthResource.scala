@@ -7,7 +7,7 @@ package com.advancedtelematic.libats.http
 
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.server.Directives
-import com.advancedtelematic.libats.monitoring.{JvmMetrics, MetricsSupport}
+import com.advancedtelematic.libats.monitoring.{JvmMetrics, LoggerMetrics, MetricsSupport}
 
 import scala.concurrent.{ExecutionContext, Future}
 import com.advancedtelematic.libats.codecs.AkkaCirce._
@@ -33,7 +33,7 @@ class HealthResource(versionRepr: Map[String, Any] = Map.empty,
                     )(implicit val ec: ExecutionContext) {
   import Directives._
 
-  val defaultMetrics = Seq(new JvmMetrics(metricRegistry))
+  val defaultMetrics = Seq(new JvmMetrics(metricRegistry), new LoggerMetrics(metricRegistry))
 
   def route = {
       (get & pathPrefix("health") & extractLog) { logger =>
