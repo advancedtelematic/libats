@@ -41,6 +41,7 @@ trait InfluxdbMetricsReporterSupport {
   }
 
   metricsReporterSettings.foreach { settings =>
+    log.info(s"Reporting metrics to influxdb at ${settings.host}")
     InfluxDbMetricsReporter.start(settings, metricRegistry, AkkaHttpMetricsSink.apply(settings))
   }
 }
