@@ -43,6 +43,6 @@ trait AppMigration extends JdbcMigration with MigrationChecksumProvider {
 
   override def migrate(connection: Connection): Unit = {
     val f = migrate(MigrationDatabase(connection))
-    Await.ready(f, Duration.Inf)
+    Await.result(f, Duration.Inf)
   }
 }
