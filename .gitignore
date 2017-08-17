@@ -17,3 +17,4 @@ project/plugins/project/
 # C specific
 *.o
 *.so
+README.html

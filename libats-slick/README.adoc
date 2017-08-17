@@ -1,0 +1,52 @@
+= libats slick support
+
+== Migrations
+
+Migrations are supported through the `BootMigrations` trait, mixed in
+with `BootApp` or `DaemonApp`.
+
+=== App level migrations
+
+Often we need to write app level migrations in scala and not
+SQL. These are supported through
+https://flywaydb.org/documentation/migration/java[flyway java
+migrations].
+
+.Synchronous Migrations
+****
+
+Both SQL and Scala migrations are executed synchronously on
+`BootApp`. This means the app will not respond to `HTTP GET /health`
+until the migrations are executed, which can take more time than
+marathon is configured to wait. This means that to run the migration
+you might need to adjust the marathon timeout for your current
+deployment and adjust it back after running the migration.
+
+****
+
+All app level migrations should be *idempotent* and implemented as
+flyway repeatable migrations.
+
+To add a new app level migration you need to create a class named
+`R_YourMigration` extending `AppMigration` in the
+`\_root_.db.migrations` package in your project. This migration will be
+picked up by flyway and executed on boot if `DB_MIGRATE=true` is set
+for your app.
+
+There is an example of an app level migration on the
+https://github.com/advancedtelematic/service-blueprint/tree/master/src/main/scala/db/migration/R__BlueprintMigration.scala[service
+blueprint template].
+
+Once executed, the migration will not be executed again until the
+`checksum` column of the `schema_version` database table is
+changed. If you need to force the re-execution of the migration on the
+next app boot, you can update the `schema_version` table for that
+migration:
+
+[source,sql]
+----
+UPDATE schema_version SET checksum = NULL where installed_rank = '<current installed_rank for your migration';
+----
+
+Note that changing the name of the migration class will also force a
+re-execution of the migration.
