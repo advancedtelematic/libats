@@ -16,6 +16,12 @@ Choose the modules you need and add them to your `build.sbt`.
 Check the [blueprint](https://github.com/advancedtelematic/service-blueprint) for more details.
 
 
+### Further documentation
+
+Further documentation is available at the module README:
+
+- [libats-slick](libats-slick/README.adoc)
+
 ## Development
 
 It's useful to add this project as a local projects, so you can
