@@ -36,7 +36,7 @@ All app level migrations should be *idempotent* and implemented as
 flyway repeatable migrations.
 
 To add a new app level migration you need to create a class named
-`R_YourMigration` extending `AppMigration` in the
+`R__YourMigration` extending `AppMigration` in the
 `\_root_.db.migrations` package in your project. This migration will be
 picked up by flyway and executed on boot if `DB_MIGRATE=true` is set
 for your app.
