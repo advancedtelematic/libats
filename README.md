@@ -20,6 +20,7 @@ Check the [blueprint](https://github.com/advancedtelematic/service-blueprint) fo
 
 Further documentation is available at the module README:
 
+- [libats-metrics](libats-metrics/README.md)
 - [libats-slick](libats-slick/README.adoc)
 
 ## Development
