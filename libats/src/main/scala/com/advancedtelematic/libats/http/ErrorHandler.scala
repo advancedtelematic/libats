@@ -5,12 +5,17 @@
 
 package com.advancedtelematic.libats.http
 
-import akka.http.scaladsl.model.{HttpResponse, StatusCode, StatusCodes}
+import java.util.UUID
+
+import akka.event.LoggingAdapter
+import akka.http.scaladsl.model.{HttpResponse, StatusCode, StatusCodes, Uri}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.ExceptionHandler.PF
 import akka.http.scaladsl.server.{Directives, ExceptionHandler, _}
 import io.circe.Json
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe.syntax._
+import com.advancedtelematic.libats.codecs.CirceUuid._
 
 import scala.reflect.ClassTag
 import scala.util.control.NoStackTrace
@@ -68,18 +73,38 @@ object Errors {
     ).foldLeft(PartialFunction.empty[Throwable, Route])(_ orElse _)
 }
 
-
 object ErrorHandler {
   import Directives._
-  import Json.obj
+
+  private lazy val isProd =
+    Option(System.getenv("DEPLOY_ENV")).exists(env => env == "production" || env.isEmpty)
+
+  def logError(log: LoggingAdapter, uri: Uri, error: Throwable): UUID = {
+    val id = UUID.randomUUID()
+    log.error(error, s"Request error $id ($uri)")
+    id
+  }
+
+  def errorRepr(id: UUID, error: Throwable): Json = {
+    if(isProd)
+      Json.obj(
+        "error_id" -> id.asJson,
+        "description" -> "an error occurred".asJson
+      )
+    else
+      Json.obj(
+        "error_id" -> id.asJson,
+        "description" ->  Json.fromString(Option(error.getMessage).getOrElse("<empty error description>"))
+      )
+  }
 
   private def defaultHandler(): ExceptionHandler =
     Errors.handleAllErrors orElse ExceptionHandler {
       case e: Throwable =>
         (extractLog & extractUri) { (log, uri) =>
-          log.error(e, s"Request to $uri error")
-          val entity = obj("error" -> Json.fromString(Option(e.getMessage).getOrElse("")))
-          complete(HttpResponse(InternalServerError, entity = entity.toString()))
+          val errorId = logError(log, uri, e)
+          val entity = errorRepr(errorId, e)
+          complete(HttpResponse(InternalServerError, entity = entity.noSpaces))
         }
     }
 
