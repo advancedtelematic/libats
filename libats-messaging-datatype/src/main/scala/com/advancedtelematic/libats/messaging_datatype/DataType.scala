@@ -18,7 +18,7 @@ object DataType {
   case class BsDiffRequestId(uuid: UUID) extends UUIDKey
   object BsDiffRequestId extends UUIDKeyObj[BsDiffRequestId]
 
-  object UpdateType extends CirceEnum {
+  object UpdateType extends Enumeration {
     type UpdateType = Value
 
     val Image, Package = Value
@@ -60,7 +60,7 @@ object DataType {
 
   case class Checksum(method: HashMethod, hash: Refined[String, ValidChecksum])
 
-  object HashMethod extends CirceEnum {
+  object HashMethod extends Enumeration {
     type HashMethod = Value
 
     val SHA256 = Value("sha256")
