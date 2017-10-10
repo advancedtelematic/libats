@@ -1,8 +1,9 @@
 package com.advancedtelematic.libats.codecs
 
+import eu.timepit
 import eu.timepit.refined.api.{Refined, Validate}
 import eu.timepit.refined.refineV
-import io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
 
 import scala.util.{Failure, Success}
 
@@ -16,6 +17,16 @@ trait CirceRefined {
         case Left(e) => Failure(DeserializationException(RefinementError(t, e)))
         case Right(r) => Success(r)
       }
+    }
+
+  implicit def refinedKeyEncoder[P]
+  (implicit strKeyEncoder: KeyEncoder[String]): KeyEncoder[Refined[String, P]] =
+    strKeyEncoder.contramap(_.value)
+
+  implicit def refinedKeyDecoder[P]
+  (implicit p: Validate.Plain[String, P]): KeyDecoder[Refined[String, P]] =
+    KeyDecoder.instance[Refined[String, P]] { s =>
+      timepit.refined.refineV[P](s).right.toOption
     }
 }
 

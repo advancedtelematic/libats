@@ -8,13 +8,16 @@ val Library = new {
     val scalaTest = "3.0.0"
   }
 
+  val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Version.akka
+
   val akkaStream = "com.typesafe.akka" %% "akka-stream" % Version.akka
 
   val akkaHttp = Seq(
-    "com.typesafe.akka" %% "akka-http" % Version.akkaHttp,
-    "de.heikoseeberger" %% "akka-http-circe" % Version.akkaHttpCirce,
-    "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp % "provided"
-  )
+      "com.typesafe.akka" %% "akka-http" % Version.akkaHttp,
+      "de.heikoseeberger" %% "akka-http-circe" % Version.akkaHttpCirce
+    )
+
+  val akkaHttpTestKit = "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp % "test"
 
   val circe = Seq(
     "io.circe" %% "circe-core",
@@ -29,7 +32,7 @@ val Library = new {
 }
 
 lazy val commonDeps =
-  libraryDependencies ++= Library.akkaHttp ++ Library.circe ++ Seq(Library.refined, Library.scalatest)
+  libraryDependencies ++= Library.circe ++ Seq(Library.refined, Library.scalatest)
 
 lazy val commonConfigs = Seq.empty
 
@@ -51,11 +54,29 @@ lazy val libats = (project in file("libats"))
   .settings(commonSettings)
   .settings(Publish.settings)
 
+lazy val libats_http = (project in file("libats-http"))
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
+  .configs(commonConfigs: _*)
+  .settings(commonDeps)
+  .settings(commonSettings)
+  .settings(libraryDependencies ++= Library.akkaHttp)
+  .settings(Publish.settings)
+  .dependsOn(libats)
+
 lazy val libats_slick = (project in file("libats-slick"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
   .settings(commonDeps)
   .settings(commonSettings)
+  .settings(Publish.settings)
+  .dependsOn(libats)
+  .dependsOn(libats_http)
+
+lazy val libats_messaging_datatype = (project in file("libats-messaging-datatype"))
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(commonDeps)
   .settings(Publish.settings)
   .dependsOn(libats)
 
@@ -65,21 +86,16 @@ lazy val libats_messaging = (project in file("libats-messaging"))
   .settings(commonDeps)
   .settings(commonSettings)
   .settings(Publish.settings)
+  .settings(libraryDependencies += Library.akkaHttpTestKit)
   .dependsOn(libats)
-
-lazy val libats_messaging_datatype = (project in file("libats-messaging-datatype"))
-  .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
-  .configs(commonConfigs: _*)
-  .settings(commonSettings)
-  .settings(commonDeps)
-  .settings(Publish.settings)
-  .dependsOn(libats)
-  .dependsOn(libats_messaging)
+  .dependsOn(libats_http)
+  .dependsOn(libats_messaging_datatype)
 
 lazy val libats_metrics = (project in file("libats-metrics"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
   .settings(commonSettings)
+  .settings(libraryDependencies ++= Library.akkaHttp)
   .settings(libraryDependencies ++= Library.circe :+ Library.akkaStream)
   .settings(Publish.settings)
 
@@ -87,16 +103,16 @@ lazy val libats_metrics_kafka = (project in file("libats-metrics-kafka"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
   .settings(commonSettings)
-  .settings(Publish.settings).dependsOn(libats_metrics)
+  .settings(Publish.settings)
+  .dependsOn(libats_metrics)
 
 lazy val libats_metrics_akka = (project in file("libats-metrics-akka"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
   .settings(commonSettings)
-  .settings(libraryDependencies ++= Library.akkaHttp)
   .settings(Publish.settings)
   .dependsOn(libats_metrics)
-  .dependsOn(libats)
+  .dependsOn(libats_http)
 
 lazy val libats_metrics_finagle = (project in file("libats-metrics-finagle"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
@@ -111,10 +127,13 @@ lazy val libats_auth = (project in file("libats-auth"))
   .settings(commonSettings)
   .settings(commonDeps)
   .settings(Publish.settings)
+  .settings(libraryDependencies += Library.akkaSlf4j)
   .dependsOn(libats)
 
 lazy val libats_root = (project in file("."))
   .settings(Publish.disable)
   .settings(scalaVersion := "2.11.11")
-  .settings(  crossScalaVersions := Seq("2.11.11", "2.12.2"))
-  .aggregate(libats, libats_messaging, libats_messaging_datatype, libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka, libats_metrics_finagle)
+  .settings(crossScalaVersions := Seq("2.11.11", "2.12.2"))
+  .aggregate(libats, libats_http, libats_messaging, libats_messaging_datatype,
+    libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka,
+    libats_metrics_finagle)

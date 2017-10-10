@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import cats.syntax.either._
 import com.advancedtelematic.libats.http.BootApp
-import com.advancedtelematic.libats.monitoring.MetricsSupport
+import com.advancedtelematic.libats.http.monitoring.MetricsSupport
 import com.typesafe.config.{ConfigException, ConfigFactory}
 
 import scala.concurrent.duration.FiniteDuration

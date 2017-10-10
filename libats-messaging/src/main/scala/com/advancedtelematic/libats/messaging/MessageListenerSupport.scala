@@ -2,10 +2,10 @@ package com.advancedtelematic.libats.messaging
 
 import akka.actor.ActorRef
 import com.advancedtelematic.libats.http.BootApp
+import com.advancedtelematic.libats.http.monitoring.MetricsSupport
 import com.advancedtelematic.libats.messaging.MessageListener.MsgOperation
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
 import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor.Subscribe
-import com.advancedtelematic.libats.monitoring.MetricsSupport
+import com.advancedtelematic.libats.messaging_datatype.MessageLike
 
 trait MessageListenerSupport {
   self: BootApp with MetricsSupport =>

@@ -1,32 +1,21 @@
 
 package com.advancedtelematic.libats.messaging_datatype
 
+import java.net.URI
 import java.time.Instant
-import java.util.{Base64, UUID}
+import java.util.UUID
 
-import akka.http.scaladsl.model.Uri
 import cats.syntax.either._
-import com.advancedtelematic.libats.data.Namespace
+import com.advancedtelematic.libats.data.DataType.{Checksum, Namespace}
 import com.advancedtelematic.libats.data.RefinedUtils._
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
-import com.advancedtelematic.libats.messaging_datatype.DataType.HashMethod.HashMethod
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
 import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
 import io.circe._
 import io.circe.generic.semiauto._
 
-import scala.util.Try
-
 object MessageCodecs {
-  import com.advancedtelematic.libats.codecs.AkkaCirce._
-  import com.advancedtelematic.libats.codecs.Codecs.{namespaceEncoder, namespaceDecoder}
-
-  implicit val javaUuidEncoder : Encoder[UUID] = Encoder[String].contramap(_.toString)
-  implicit val javaUuidDecoder : Decoder[UUID] = Decoder[String].map(UUID.fromString)
-
-  implicit val uriEncoder : Encoder[Uri] = Encoder[String].contramap(_.toString)
-  implicit val uriDecoder : Decoder[Uri] = Decoder[String].map(Uri.apply)
+  import com.advancedtelematic.libats.codecs.CirceCodecs._
 
   implicit val userCreatedEncoder: Encoder[UserCreated] = deriveEncoder
   implicit val userCreatedDecoder: Decoder[UserCreated] = deriveDecoder
@@ -63,18 +52,7 @@ object MessageCodecs {
   implicit val operationResultEncoder: Encoder[OperationResult] = deriveEncoder
   implicit val operationResultDecoder: Decoder[OperationResult] = deriveDecoder
 
-  implicit val hashMethodKeyEncoder: KeyEncoder[HashMethod] = KeyEncoder[String].contramap(_.toString)
-  implicit val hashMethodKeyDecoder: KeyDecoder[HashMethod] = KeyDecoder.instance { value =>
-    Try(HashMethod.withName(value)).toOption
-  }
-
-  implicit val checksumEncoder: Encoder[Checksum] = deriveEncoder
-  implicit val checksumDecoder: Decoder[Checksum] = deriveDecoder
-
   implicit val deviceUpdateReportEncoder: Encoder[DeviceUpdateReport] = deriveEncoder
-
-  implicit val hashMethodEncoder: Encoder[HashMethod] = Encoder.enumEncoder(HashMethod)
-  implicit val hashMethodDecoder: Decoder[HashMethod] = Decoder.enumDecoder(HashMethod)
 
   implicit val updateTypeEncoder: Encoder[UpdateType] = Encoder.enumEncoder(UpdateType)
   implicit val updateTypeDecoder: Decoder[UpdateType] = Decoder.enumDecoder(UpdateType)
@@ -96,24 +74,23 @@ object MessageCodecs {
 
 object Messages {
   import MessageCodecs._
-  import com.advancedtelematic.libats.codecs.AkkaCirce._
-  import com.advancedtelematic.libats.codecs.Codecs.{namespaceEncoder, namespaceDecoder}
+  import com.advancedtelematic.libats.codecs.CirceCodecs._
 
   final case class UserCreated(id: String)
 
   final case class DeviceSeen(namespace: Namespace, uuid: DeviceId, lastSeen: Instant = Instant.now)
 
   final case class CampaignLaunched(namespace: String, updateId: UUID,
-                                    devices: Set[UUID], pkgUri: Uri,
+                                    devices: Set[UUID], pkgUri: URI,
                                     pkg: PackageId, pkgSize: Long, pkgChecksum: String)
 
   case class DeltaRequest(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, timestamp: Instant = Instant.now)
 
-  case class BsDiffRequest(id: BsDiffRequestId, namespace: Namespace, from: Uri, to: Uri, timestamp: Instant = Instant.now)
+  case class BsDiffRequest(id: BsDiffRequestId, namespace: Namespace, from: URI, to: URI, timestamp: Instant = Instant.now)
 
-  case class GeneratedDelta(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, uri: Uri, size: Long, checksum: Checksum)
+  case class GeneratedDelta(id: DeltaRequestId, namespace: Namespace, from: Commit, to: Commit, uri: URI, size: Long, checksum: Checksum)
 
-  case class GeneratedBsDiff(id: BsDiffRequestId, namespace: Namespace, from: Uri, to: Uri, resultUri: Uri, size: Long, checksum: Checksum)
+  case class GeneratedBsDiff(id: BsDiffRequestId, namespace: Namespace, from: URI, to: URI, resultUri: URI, size: Long, checksum: Checksum)
 
   case class DeltaGenerationFailed(id: DeltaRequestId, namespace: Namespace, error: Option[Json] = None)
 

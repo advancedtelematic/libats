@@ -12,8 +12,8 @@ import akka.kafka.ConsumerMessage.CommittableOffsetBatch
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
 import com.advancedtelematic.libats.messaging.kafka.KafkaClient
+import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike, Matchers}

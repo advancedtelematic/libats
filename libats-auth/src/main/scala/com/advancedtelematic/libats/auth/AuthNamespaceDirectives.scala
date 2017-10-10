@@ -10,7 +10,7 @@ import io.circe.Decoder
 import io.circe.parser._
 import cats.syntax.either._
 import cats.implicits._
-import com.advancedtelematic.libats.data.Namespace
+import com.advancedtelematic.libats.data.DataType.Namespace
 
 case class AuthedNamespaceScope(namespace: Namespace, scope: Option[Scope] = None) {
   type ScopeItem = String

@@ -11,7 +11,7 @@ import scala.concurrent.duration._
 import scala.util.Try
 import akka.pattern.pipe
 import com.advancedtelematic.libats.messaging.ListenerMonitor
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
+import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future

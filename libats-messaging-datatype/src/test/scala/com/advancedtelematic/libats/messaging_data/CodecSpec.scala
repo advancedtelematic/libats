@@ -1,7 +1,7 @@
 package com.advancedtelematic.libats.messaging_datatype
 
 import cats.syntax.show._
-import com.advancedtelematic.libats.data.Namespace
+import com.advancedtelematic.libats.data.DataType.{HashMethod, Namespace, ValidChecksum}
 import com.advancedtelematic.libats.data.RefinedUtils._
 import com.advancedtelematic.libats.messaging_datatype.DataType._
 import com.advancedtelematic.libats.messaging_datatype.MessageCodecs._

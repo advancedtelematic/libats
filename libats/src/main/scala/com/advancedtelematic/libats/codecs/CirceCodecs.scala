@@ -4,6 +4,8 @@
  */
 package com.advancedtelematic.libats.codecs
 
+import java.net.URI
+
 import cats.syntax.either._
 import io.circe._
 import io.circe.{Decoder, Encoder}
@@ -11,6 +13,12 @@ import java.time.Instant
 import java.time.format.{DateTimeFormatter, DateTimeParseException}
 import java.time.temporal.ChronoField
 import java.util.UUID
+
+import com.advancedtelematic.libats.data.DataType.HashMethod.HashMethod
+import com.advancedtelematic.libats.data.DataType.{Checksum, HashMethod, Namespace}
+import io.circe.generic.semiauto._
+
+import scala.util.Try
 
 trait CirceDateTime {
   implicit val dateTimeEncoder : Encoder[Instant] = Encoder.instance[Instant] { instant =>
@@ -47,7 +55,42 @@ trait CirceUuid {
 
 object CirceUuid extends CirceUuid
 
-object AkkaCirce extends CirceDateTime
+
+trait CirceUri {
+  implicit val urlEncoder: Encoder[URI] = Encoder.encodeString.contramap(_.toString)
+  implicit val urlDecoder: Decoder[URI] = Decoder.decodeString.map(URI.create)
+}
+
+object CirceUri extends CirceUri
+
+trait CirceAts {
+  import CirceRefined._
+
+  implicit val namespaceEncoder = Encoder.encodeString.contramap[Namespace](_.get)
+  implicit val namespaceDecoder = Decoder.decodeString.map(Namespace.apply)
+
+  implicit val hashMethodEncoder: Encoder[HashMethod] = Encoder.enumEncoder(HashMethod)
+  implicit val hashMethodDecoder: Decoder[HashMethod] = Decoder.enumDecoder(HashMethod)
+
+  implicit val hashMethodKeyEncoder: KeyEncoder[HashMethod] = KeyEncoder[String].contramap(_.toString)
+  implicit val hashMethodKeyDecoder: KeyDecoder[HashMethod] = KeyDecoder.instance { value =>
+    Try(HashMethod.withName(value)).toOption
+  }
+
+  implicit val checkSumEncoder: Encoder[Checksum] = deriveEncoder
+  implicit val checkSumDecoder: Decoder[Checksum] = deriveDecoder
+}
+
+object CirceAts extends CirceAts
+
+trait CirceCodecs extends CirceDateTime
   with CirceUuid
   with CirceAnyVal
   with CirceRefined
+  with CirceUri
+  with CirceAts
+
+object CirceCodecs extends CirceCodecs
+
+@deprecated("use CirceCodecs instead", "0.0.1-109")
+object AkkaCirce extends CirceCodecs

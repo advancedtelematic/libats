@@ -2,12 +2,9 @@ package com.advancedtelematic.libats.http
 import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.util.FastFuture
 import akka.stream.Materializer
-import com.advancedtelematic.libats.codecs.{DeserializationException, RefinementError}
-import eu.timepit.refined.refineV
 import eu.timepit.refined.api.{Refined, Validate}
+import com.advancedtelematic.libats.data.RefinedUtils._
 import scala.concurrent.ExecutionContext
-
-import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
 
 object RefinedMarshallingSupport {
 

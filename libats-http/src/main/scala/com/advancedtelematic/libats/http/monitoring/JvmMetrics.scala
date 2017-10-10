@@ -1,4 +1,4 @@
-package com.advancedtelematic.libats.monitoring
+package com.advancedtelematic.libats.http.monitoring
 
 import akka.http.scaladsl.util.FastFuture
 import com.advancedtelematic.libats.http.HealthMetrics
@@ -6,7 +6,6 @@ import com.codahale.metrics.jvm.{GarbageCollectorMetricSet, MemoryUsageGaugeSet}
 import com.codahale.metrics.{Metric, MetricFilter, MetricRegistry, MetricSet}
 import io.circe.Json
 import io.circe.syntax._
-
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
 

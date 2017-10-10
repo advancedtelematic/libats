@@ -2,9 +2,9 @@ package com.advancedtelematic.libats.messaging_datatype
 
 import java.util.UUID
 
-import com.advancedtelematic.libats.codecs.CirceEnum
+import com.advancedtelematic.libats.data.DataType.HashMethod.HashMethod
+import com.advancedtelematic.libats.data.DataType.{HashMethod, ValidChecksum}
 import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
-import com.advancedtelematic.libats.messaging_datatype.DataType.HashMethod.HashMethod
 import eu.timepit.refined.api.{Refined, Validate}
 
 object DataType {
@@ -48,6 +48,7 @@ object DataType {
   case class UpdateId(uuid: UUID) extends UUIDKey
   object UpdateId extends UUIDKeyObj[UpdateId]
 
+  @deprecated("use data type from libtuf-server", "0.0.1-109")
   case class ValidTargetFilename()
   type TargetFilename = Refined[String, ValidTargetFilename]
 
@@ -58,20 +59,7 @@ object DataType {
       ValidTargetFilename()
     )
 
-  case class Checksum(method: HashMethod, hash: Refined[String, ValidChecksum])
-
-  object HashMethod extends Enumeration {
-    type HashMethod = Value
-
-    val SHA256 = Value("sha256")
-  }
-
-  case class ValidChecksum()
-
-  implicit val validChecksum: Validate.Plain[String, ValidChecksum] =
-    validHexValidation(ValidChecksum(), length = 64)
-
-  final case class OperationResult(target: TargetFilename, hashes: Map[HashMethod.HashMethod, Refined[String, ValidChecksum]],
+  final case class OperationResult(target: TargetFilename, hashes: Map[HashMethod, Refined[String, ValidChecksum]],
                                    length: Long, resultCode: Int, resultText: String) {
     def isSuccess:Boolean = resultCode == 0 || resultCode == 1
   }

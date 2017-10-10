@@ -4,7 +4,7 @@ import akka.NotUsed
 import akka.actor.ActorRef
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
+import com.advancedtelematic.libats.messaging_datatype.MessageLike
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}

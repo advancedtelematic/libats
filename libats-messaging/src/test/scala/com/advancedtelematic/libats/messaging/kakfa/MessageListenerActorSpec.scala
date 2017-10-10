@@ -5,9 +5,9 @@ import akka.actor.{ActorSystem, Props}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
 import akka.testkit.TestKit
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
 import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor
 import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor.Subscribe
+import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike, Matchers}
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
 import org.scalatest.time.{Millis, Seconds, Span}

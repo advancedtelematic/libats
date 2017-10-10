@@ -4,8 +4,8 @@ import akka.NotUsed
 import akka.actor.{ActorSystem, Props}
 import akka.kafka.ConsumerMessage.CommittableMessage
 import akka.stream.scaladsl.Source
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
 import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor
+import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import com.codahale.metrics.MetricRegistry
 import com.typesafe.config.Config
 

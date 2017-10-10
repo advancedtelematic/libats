@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directive1
 import com.advancedtelematic.jwt.JsonWebToken
-import com.advancedtelematic.libats.data.Namespace
+import com.advancedtelematic.libats.data.DataType.Namespace
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.LoggerFactory
 

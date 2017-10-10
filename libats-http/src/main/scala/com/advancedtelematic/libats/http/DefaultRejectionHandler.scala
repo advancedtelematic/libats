@@ -7,10 +7,11 @@ package com.advancedtelematic.libats.http
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server._
-import com.advancedtelematic.libats.codecs.{DeserializationException, RefinementError}
-import io.circe.generic.auto._
 import com.advancedtelematic.libats.codecs.AkkaCirce._
+import com.advancedtelematic.libats.codecs.{DeserializationException, RefinementError}
+import com.advancedtelematic.libats.data.{ErrorCodes, ErrorRepresentation}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe.generic.auto._
 
 /**
   * When validation, JSON deserialisation fail or a duplicate entry

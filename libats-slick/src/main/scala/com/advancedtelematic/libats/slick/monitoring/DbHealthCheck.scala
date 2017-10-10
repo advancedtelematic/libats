@@ -4,8 +4,8 @@ import java.lang.management.ManagementFactory
 import javax.management.{JMX, ObjectName}
 
 import akka.event.LoggingAdapter
+import com.advancedtelematic.libats.http.monitoring.MetricsSupport
 import com.advancedtelematic.libats.http.{HealthCheck, HealthMetrics, HealthResource}
-import com.advancedtelematic.libats.monitoring.MetricsSupport
 import com.codahale.metrics.MetricRegistry
 import com.zaxxer.hikari.HikariPoolMXBean
 import io.circe.Json
