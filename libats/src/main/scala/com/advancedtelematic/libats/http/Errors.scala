@@ -4,6 +4,8 @@
  */
 package com.advancedtelematic.libats.http
 
+import java.util.UUID
+
 import io.circe.{Decoder, Encoder}
 
 /**
@@ -20,7 +22,7 @@ object ErrorCodes {
   val TooManyElements = ErrorCode("too_many_elements")
 }
 
-case class ErrorRepresentation( code: ErrorCode, description: String )
+case class ErrorRepresentation(code: ErrorCode, description: String, error_id: Option[UUID] = None)
 
 object ErrorRepresentation {
   import io.circe.generic.semiauto._

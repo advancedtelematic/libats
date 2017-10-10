@@ -73,6 +73,12 @@ object MessageCodecs {
 
   implicit val deviceUpdateReportEncoder: Encoder[DeviceUpdateReport] = deriveEncoder
 
+  implicit val hashMethodEncoder: Encoder[HashMethod] = Encoder.enumEncoder(HashMethod)
+  implicit val hashMethodDecoder: Decoder[HashMethod] = Decoder.enumDecoder(HashMethod)
+
+  implicit val updateTypeEncoder: Encoder[UpdateType] = Encoder.enumEncoder(UpdateType)
+  implicit val updateTypeDecoder: Decoder[UpdateType] = Decoder.enumDecoder(UpdateType)
+
   // For backwards compatibility reasons we have a decoder that can parse DeviceUpdateReport
   // without a statusCode.
   implicit val deviceUpdateReportDecoder: Decoder[DeviceUpdateReport] = Decoder.instance { cursor =>
