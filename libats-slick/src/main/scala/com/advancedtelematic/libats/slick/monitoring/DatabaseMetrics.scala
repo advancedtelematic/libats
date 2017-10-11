@@ -4,7 +4,7 @@ import java.util
 import java.lang.management.ManagementFactory
 import javax.management.{JMX, ObjectName}
 
-import com.advancedtelematic.libats.monitoring.MetricsSupport
+import com.advancedtelematic.libats.http.monitoring.MetricsSupport
 import com.advancedtelematic.libats.slick.db.DatabaseConfig
 import com.codahale.metrics.{Gauge, Metric, MetricSet}
 import slick.jdbc.hikaricp.HikariCPJdbcDataSource

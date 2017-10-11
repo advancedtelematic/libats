@@ -3,9 +3,9 @@
  *  License: MPL-2.0
  */
 
-package com.advancedtelematic.libats.monitoring
+package com.advancedtelematic.libats.http.monitoring
 
-import com.codahale.metrics._
+import com.codahale.metrics.MetricRegistry
 
 object MetricsSupport {
   lazy val metricRegistry = new MetricRegistry()

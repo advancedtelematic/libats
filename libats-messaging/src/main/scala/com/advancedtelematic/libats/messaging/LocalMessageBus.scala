@@ -9,10 +9,8 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
 import MessageListener.CommittableMsg
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
-import MessageListener.CommittableMsg
+import com.advancedtelematic.libats.messaging_datatype.MessageLike
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try

@@ -1,14 +1,14 @@
-package com.advancedtelematic.libats.monitoring
+package com.advancedtelematic.libats.http.monitoring
 
 import akka.http.scaladsl.util.FastFuture
 import ch.qos.logback.classic.LoggerContext
 import com.advancedtelematic.libats.http.HealthMetrics
-import com.codahale.metrics.{Metric, MetricFilter, MetricRegistry}
 import com.codahale.metrics.logback.InstrumentedAppender
+import com.codahale.metrics.{Metric, MetricFilter, MetricRegistry}
 import io.circe.Json
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-
+import io.circe.syntax._
+import org.slf4j.{Logger, LoggerFactory}
+import scala.collection.JavaConversions._
 import scala.concurrent.Future
 
 trait LoggerMetricsSupport {
@@ -28,8 +28,6 @@ trait LoggerMetricsSupport {
 }
 
 class LoggerMetrics(metricRegistry: MetricRegistry) extends HealthMetrics {
-  import scala.collection.JavaConversions._
-  import io.circe.syntax._
 
   lazy val filter: MetricFilter = new MetricFilter {
     override def matches(name: String, metric: Metric): Boolean = name.startsWith("log")

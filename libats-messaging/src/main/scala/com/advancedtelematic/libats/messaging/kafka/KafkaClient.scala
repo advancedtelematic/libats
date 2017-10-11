@@ -13,8 +13,6 @@ import akka.kafka.scaladsl.Consumer.Control
 import akka.kafka.{ConsumerSettings, ProducerSettings, Subscription, Subscriptions}
 import akka.stream.scaladsl.Source
 import cats.syntax.either._
-import com.advancedtelematic.libats.messaging.MessageBusPublisher
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
 import com.typesafe.config.{Config, ConfigException}
 import io.circe.syntax._
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -22,7 +20,7 @@ import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerRecor
 import org.apache.kafka.common.serialization._
 import com.advancedtelematic.libats.messaging.ConfigHelpers._
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
-import com.advancedtelematic.libats.messaging.Messages.MessageLike
+import com.advancedtelematic.libats.messaging_datatype.MessageLike
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 

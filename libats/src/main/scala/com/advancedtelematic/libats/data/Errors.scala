@@ -2,7 +2,7 @@
  * Copyright: Copyright (C) 2016, Jaguar Land Rover
  * License: MPL-2.0
  */
-package com.advancedtelematic.libats.http
+package com.advancedtelematic.libats.data
 
 import java.util.UUID
 

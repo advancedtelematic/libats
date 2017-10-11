@@ -8,14 +8,15 @@ package com.advancedtelematic.libats.http
 import java.util.UUID
 
 import akka.event.LoggingAdapter
-import akka.http.scaladsl.model.{HttpResponse, StatusCode, StatusCodes, Uri}
 import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.{HttpResponse, StatusCode, StatusCodes, Uri}
 import akka.http.scaladsl.server.ExceptionHandler.PF
 import akka.http.scaladsl.server.{Directives, ExceptionHandler, _}
-import io.circe.Json
+import com.advancedtelematic.libats.data.{ErrorCode, ErrorCodes, ErrorRepresentation}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.syntax._
 import com.advancedtelematic.libats.codecs.CirceUuid._
+import io.circe.Json
 
 import scala.reflect.ClassTag
 import scala.util.control.NoStackTrace

@@ -7,8 +7,9 @@ import cats.syntax.either._
 import com.advancedtelematic.libats.messaging.kafka.KafkaClient
 import com.typesafe.config.ConfigException.Missing
 import com.typesafe.config.Config
-import com.advancedtelematic.libats.messaging.Messages._
+import com.advancedtelematic.libats.messaging_datatype.Messages._
 import MessageListener.{CommittableMsg, KafkaMsg}
+import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}

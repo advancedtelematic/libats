@@ -7,7 +7,7 @@ package com.advancedtelematic.libats.http
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 import org.slf4j.LoggerFactory
 
 trait BootApp extends App {

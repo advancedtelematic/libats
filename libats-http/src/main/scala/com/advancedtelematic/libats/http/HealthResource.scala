@@ -7,14 +7,14 @@ package com.advancedtelematic.libats.http
 
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.server.Directives
-import com.advancedtelematic.libats.monitoring.{JvmMetrics, LoggerMetrics, MetricsSupport}
-
-import scala.concurrent.{ExecutionContext, Future}
 import com.advancedtelematic.libats.codecs.AkkaCirce._
+import com.advancedtelematic.libats.http.monitoring.{JvmMetrics, LoggerMetrics, MetricsSupport}
 import com.codahale.metrics.MetricRegistry
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.Json
 import io.circe.syntax._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 trait HealthCheck {
   def apply(logger: LoggingAdapter)(implicit ec: ExecutionContext): Future[Unit]
