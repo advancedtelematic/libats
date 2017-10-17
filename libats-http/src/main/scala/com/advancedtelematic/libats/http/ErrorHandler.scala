@@ -16,46 +16,60 @@ import com.advancedtelematic.libats.data.{ErrorCode, ErrorCodes, ErrorRepresenta
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.syntax._
 import com.advancedtelematic.libats.codecs.CirceUuid._
-import io.circe.Json
+import io.circe.{Encoder, Json}
+import cats.syntax.option._
 
 import scala.reflect.ClassTag
 import scala.util.control.NoStackTrace
+import scala.language.existentials
 
 object Errors {
   import Directives._
   import ErrorRepresentation._
 
-  import scala.language.existentials
+  abstract class Error[T](val code: ErrorCode,
+                          val responseCode: StatusCode,
+                          val msg: String,
+                          val cause: Throwable = null,
+                          val errorId: UUID = UUID.randomUUID()) extends Throwable(msg, cause) with NoStackTrace
 
-  trait Error[T] extends NoStackTrace {
-    implicit val ct: ClassTag[T]
-    def name = ct.runtimeClass.getSimpleName
-  }
-
-  case class MissingEntity[T]()(implicit val ct: ClassTag[T]) extends Throwable(s"Missing entity: ${ct.runtimeClass.getSimpleName}") with Error[T]
-  case class EntityAlreadyExists[T]()(implicit val ct: ClassTag[T]) extends Throwable(s"Entity already exists: ${ct.runtimeClass.getSimpleName}") with Error[T]
+  case class JsonError(code: ErrorCode,
+                       responseCode: StatusCode,
+                       json: Json,
+                       msg: String,
+                       errorId: UUID = UUID.randomUUID()) extends Throwable(msg) with NoStackTrace
 
   case class RawError(code: ErrorCode,
                       responseCode: StatusCode,
-                      desc: String) extends Exception(desc) with NoStackTrace
+                      desc: String,
+                      errorId: UUID = UUID.randomUUID()) extends Exception(desc) with NoStackTrace
+
+  case class MissingEntity[T]()(implicit ct: ClassTag[T]) extends
+    Error[T](ErrorCodes.MissingEntity, StatusCodes.NotFound, s"Missing entity: ${ct.runtimeClass.getSimpleName}")
+
+  case class EntityAlreadyExists[T]()(implicit ct: ClassTag[T]) extends
+    Error[T](ErrorCodes.ConflictingEntity, StatusCodes.Conflict, s"Entity already exists: ${ct.runtimeClass.getSimpleName}")
+
+  def RemoteServiceError(msg: String, cause: Option[Json] = None, errorId: UUID = UUID.randomUUID()) = {
+    val causeJson = cause.getOrElse(Json.obj())
+    JsonError(ErrorCodes.RemoteServiceError, StatusCodes.BadGateway, causeJson, msg, errorId)
+  }
 
   val TooManyElements = RawError(ErrorCodes.TooManyElements, StatusCodes.InternalServerError, "Too many elements found")
 
   private val onRawError: PF = {
-    case RawError(code, statusCode, desc) =>
-      complete(statusCode -> ErrorRepresentation(code, desc))
+    case RawError(code, statusCode, desc, uuid) =>
+      complete(statusCode -> ErrorRepresentation(code, desc, None, uuid.some))
   }
 
-  private val onMissingEntity: PF = {
-    case me @ MissingEntity() =>
-      complete(StatusCodes.NotFound ->
-        ErrorRepresentation(ErrorCodes.MissingEntity, s"${me.name} not found"))
+  private val onJsonError: PF = {
+    case JsonError(code, statusCode, json, description, errorId) =>
+      complete(statusCode -> ErrorRepresentation(code, description, json.some, errorId.some))
   }
 
-  private val onConflictingEntity: PF = {
-    case eae @ EntityAlreadyExists() =>
-      complete(StatusCodes.Conflict ->
-        ErrorRepresentation(ErrorCodes.ConflictingEntity, s"${eae.name} already exists"))
+  private val onError: PF = {
+    case e : Error[_] =>
+      complete(e.responseCode -> ErrorRepresentation(e.code, e.msg, Option(e.cause.getMessage).map(_.asJson), e.errorId.some))
   }
 
   private val onIntegrityViolationError: PF = {
@@ -67,8 +81,8 @@ object Errors {
   // Add more handlers here, or use RawError
   val handleAllErrors =
     Seq(
-      onMissingEntity,
-      onConflictingEntity,
+      onJsonError,
+      onError,
       onIntegrityViolationError,
       onRawError
     ).foldLeft(PartialFunction.empty[Throwable, Route])(_ orElse _)
