@@ -6,7 +6,7 @@ package com.advancedtelematic.libats.data
 
 import java.util.UUID
 
-import io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, Encoder, Json}
 
 /**
   * Errors are presented to the user of the core and resolver API as
@@ -20,9 +20,10 @@ object ErrorCodes {
   val MissingEntity = ErrorCode("missing_entity")
   val ConflictingEntity = ErrorCode("conflicting_entity")
   val TooManyElements = ErrorCode("too_many_elements")
+  val RemoteServiceError = ErrorCode("remote_service_error")
 }
 
-case class ErrorRepresentation(code: ErrorCode, description: String, error_id: Option[UUID] = None)
+case class ErrorRepresentation(code: ErrorCode, description: String, cause: Option[Json] = None, errorId: Option[UUID] = None)
 
 object ErrorRepresentation {
   import io.circe.generic.semiauto._
