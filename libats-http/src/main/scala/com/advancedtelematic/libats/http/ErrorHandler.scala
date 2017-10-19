@@ -16,7 +16,7 @@ import com.advancedtelematic.libats.data.{ErrorCode, ErrorCodes, ErrorRepresenta
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.syntax._
 import com.advancedtelematic.libats.codecs.CirceUuid._
-import io.circe.{Encoder, Json}
+import io.circe.Json
 import cats.syntax.option._
 
 import scala.reflect.ClassTag
@@ -30,8 +30,8 @@ object Errors {
   abstract class Error[T](val code: ErrorCode,
                           val responseCode: StatusCode,
                           val msg: String,
-                          val cause: Throwable = null,
-                          val errorId: UUID = UUID.randomUUID()) extends Throwable(msg, cause) with NoStackTrace
+                          val cause: Option[Throwable] = None,
+                          val errorId: UUID = UUID.randomUUID()) extends Throwable(msg, cause.orNull) with NoStackTrace
 
   case class JsonError(code: ErrorCode,
                        responseCode: StatusCode,
@@ -69,7 +69,7 @@ object Errors {
 
   private val onError: PF = {
     case e : Error[_] =>
-      complete(e.responseCode -> ErrorRepresentation(e.code, e.msg, Option(e.cause.getMessage).map(_.asJson), e.errorId.some))
+      complete(e.responseCode -> ErrorRepresentation(e.code, e.msg, e.cause.map(_.getMessage.asJson), e.errorId.some))
   }
 
   private val onIntegrityViolationError: PF = {
