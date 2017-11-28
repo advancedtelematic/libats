@@ -16,13 +16,22 @@ Choose the modules you need and add them to your `build.sbt`.
     
 Check the [blueprint](https://github.com/advancedtelematic/service-blueprint) for more details.
 
-
 ### Further documentation
 
 Further documentation is available at the module README:
 
 - [libats-metrics](libats-metrics/README.md)
 - [libats-slick](libats-slick/README.adoc)
+
+## Sub-Module Dependencies
+
+![libats dependencies](libats_dependencies.png)
+
+Generated with:
+
+    sbt -no-colors -batch libats_root/moduleDepDot | 
+    grep -P -v "^\[.+\]"  | 
+    dot -Tpng > libats_dependencies.png
 
 ## Development
 

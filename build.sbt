@@ -131,6 +131,7 @@ lazy val libats_auth = (project in file("libats-auth"))
   .dependsOn(libats)
 
 lazy val libats_root = (project in file("."))
+  .enablePlugins(DependencyGraph)
   .settings(Publish.disable)
   .settings(scalaVersion := "2.11.11")
   .settings(crossScalaVersions := Seq("2.11.11", "2.12.2"))
