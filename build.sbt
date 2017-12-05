@@ -1,12 +1,15 @@
 val Library = new {
   object Version {
-    val akka = "2.4.17"
-    val akkaHttp = "10.0.5"
-    val akkaHttpCirce = "1.15.0"
-    val circe = "0.7.1"
+    val akka = "2.5.7"
+    val akkaHttp = "10.0.10"
+    val akkaHttpCirce = "1.18.1"
+    val circe = "0.8.0"
     val refined = "0.8.0"
     val scalaTest = "3.0.0"
+    val metricsV = "3.2.5"
   }
+
+  val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
 
   val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Version.akka
 
@@ -29,10 +32,16 @@ val Library = new {
   val refined = "eu.timepit" %% "refined" % Version.refined
 
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test,provided"
+
+  val jvmMetrics =  Seq(
+    "io.dropwizard.metrics" % "metrics-core" % Version.metricsV,
+    "io.dropwizard.metrics" % "metrics-jvm" % Version.metricsV,
+    "io.dropwizard.metrics" % "metrics-logback" % Version.metricsV
+  )
 }
 
 lazy val commonDeps =
-  libraryDependencies ++= Library.circe ++ Seq(Library.refined, Library.scalatest)
+  libraryDependencies ++= Library.circe ++ Seq(Library.refined, Library.scalatest) :+ Library.logback
 
 lazy val commonConfigs = Seq.empty
 
@@ -60,6 +69,7 @@ lazy val libats_http = (project in file("libats-http"))
   .settings(commonDeps)
   .settings(commonSettings)
   .settings(libraryDependencies ++= Library.akkaHttp)
+  .settings(libraryDependencies ++= Library.jvmMetrics)
   .settings(Publish.settings)
   .dependsOn(libats)
 
@@ -69,6 +79,7 @@ lazy val libats_slick = (project in file("libats-slick"))
   .settings(commonDeps)
   .settings(commonSettings)
   .settings(Publish.settings)
+  .settings(libraryDependencies ++= Library.jvmMetrics)
   .dependsOn(libats)
   .dependsOn(libats_http)
 
@@ -97,6 +108,7 @@ lazy val libats_metrics = (project in file("libats-metrics"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Library.akkaHttp)
   .settings(libraryDependencies ++= Library.circe :+ Library.akkaStream)
+  .settings(libraryDependencies ++= Library.jvmMetrics)
   .settings(Publish.settings)
 
 lazy val libats_metrics_kafka = (project in file("libats-metrics-kafka"))
