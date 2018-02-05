@@ -16,6 +16,7 @@ MYSQL_PORT=${MYSQL_PORT-3306}
 
 docker run -d \
   --name libats_slick-mariadb \
+  -l service=libats \
   -p $MYSQL_PORT:3306 \
   -v $(pwd)/libats_slick_entrypoint.d:/docker-entrypoint-initdb.d \
   -e MYSQL_ROOT_PASSWORD=root \
@@ -24,6 +25,16 @@ docker run -d \
   mariadb:10.1 \
   --character-set-server=utf8 --collation-server=utf8_unicode_ci \
   --max_connections=1000
+
+startKafka() {
+  docker run -d -p 2181:2181 -l service=libats --name zookeeper wurstmeister/zookeeper
+
+  docker run -d -p 9092:9092 -l service=libats \
+    --link zookeeper \
+    -e KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 -e KAFKA_ADVERTISED_HOST_NAME=127.0.0.1 \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    wurstmeister/kafka:0.10.0.1
+}
 
 function mysqladmin_alive {
     docker run \
@@ -35,6 +46,8 @@ function mysqladmin_alive {
 
 TRIES=60
 TIMEOUT=1s
+
+startKafka
 
 for t in `seq $TRIES`; do
     res=$(mysqladmin_alive || true)

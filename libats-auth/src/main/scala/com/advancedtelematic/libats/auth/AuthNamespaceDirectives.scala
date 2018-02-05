@@ -8,8 +8,7 @@ import com.advancedtelematic.jws.CompactSerialization
 import com.advancedtelematic.jwt.{JsonWebToken, Scope, Subject}
 import io.circe.Decoder
 import io.circe.parser._
-import cats.syntax.either._
-import cats.implicits._
+import cats.syntax.either.catsSyntaxEither
 import com.advancedtelematic.libats.data.DataType.Namespace
 
 case class AuthedNamespaceScope(namespace: Namespace, scope: Option[Scope] = None) {
