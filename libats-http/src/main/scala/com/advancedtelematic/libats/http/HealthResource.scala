@@ -42,7 +42,10 @@ class HealthResource(versionRepr: Map[String, Any] = Map.empty,
         val healthRoutes =
           pathEnd {
             val f = Future.sequence(healthChecks.map(_ (logger))).map(_ => StatusCodes.OK -> Map("status" -> "OK"))
-              .recover { case _ => StatusCodes.ServiceUnavailable -> Map("status" -> "DOWN")}
+              .recover { case t =>
+                logger.error(t, "Health check failed.")
+                StatusCodes.ServiceUnavailable -> Map("status" -> "DOWN")
+              }
             complete(f)
           } ~
           path("version") {
