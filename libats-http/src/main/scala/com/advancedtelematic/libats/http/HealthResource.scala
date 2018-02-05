@@ -54,6 +54,6 @@ class HealthResource(versionRepr: Map[String, Any] = Map.empty,
             complete(metricSet.metricsJson)
           }
         }
-      }
+      } ~ LoggingResource.route
   }
 }
