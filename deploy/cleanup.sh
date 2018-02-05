@@ -1,5 +1,5 @@
 #!/bin/bash
 
-docker rm --force libats_slick-mariadb || true
+docker rm --force $(docker ps -q --filter label=service=libats) || true
 
 

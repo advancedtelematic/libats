@@ -1,11 +1,11 @@
 val Library = new {
   object Version {
-    val akka = "2.5.7"
-    val akkaHttp = "10.0.10"
-    val akkaHttpCirce = "1.18.1"
-    val circe = "0.8.0"
-    val refined = "0.8.0"
-    val scalaTest = "3.0.0"
+    val akka = "2.5.9"
+    val akkaHttp = "10.0.11"
+    val akkaHttpCirce = "1.19.0"
+    val circe = "0.9.1"
+    val refined = "0.8.7"
+    val scalaTest = "3.0.5"
     val metricsV = "3.2.5"
   }
 
@@ -15,12 +15,21 @@ val Library = new {
 
   val akkaStream = "com.typesafe.akka" %% "akka-stream" % Version.akka
 
+  val Akka = Set(
+    "com.typesafe.akka" %% "akka-slf4j",
+    "com.typesafe.akka" %% "akka-actor",
+    "com.typesafe.akka" %% "akka-stream"
+  ).map(_ % Version.akka)
+
   val akkaHttp = Seq(
       "com.typesafe.akka" %% "akka-http" % Version.akkaHttp,
       "de.heikoseeberger" %% "akka-http-circe" % Version.akkaHttpCirce
-    )
+    ) ++ Akka
 
-  val akkaHttpTestKit = "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp % "test"
+  val akkaHttpTestKit = Seq(
+    "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp,
+    "com.typesafe.akka" %% "akka-stream-testkit" % Version.akka
+  ).map(_ % Test)
 
   val circe = Seq(
     "io.circe" %% "circe-core",
@@ -39,6 +48,8 @@ val Library = new {
     "io.dropwizard.metrics" % "metrics-logback" % Version.metricsV
   )
 }
+
+onLoad in Global := { s => "dependencyUpdates" :: s }
 
 lazy val commonDeps =
   libraryDependencies ++= Library.circe ++ Seq(Library.refined, Library.scalatest) :+ Library.logback
@@ -97,7 +108,7 @@ lazy val libats_messaging = (project in file("libats-messaging"))
   .settings(commonDeps)
   .settings(commonSettings)
   .settings(Publish.settings)
-  .settings(libraryDependencies += Library.akkaHttpTestKit)
+  .settings(libraryDependencies ++= Library.akkaHttpTestKit)
   .dependsOn(libats)
   .dependsOn(libats_http)
   .dependsOn(libats_messaging_datatype)

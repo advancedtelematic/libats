@@ -15,3 +15,5 @@ addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
 addSbtPlugin("net.vonbuchholtz" % "sbt-dependency-check" % "0.1.10")
 
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.9.0")
+
+addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.3.4")
