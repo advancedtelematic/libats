@@ -2,7 +2,7 @@ name := "libats-metrics-finagle"
 
 libraryDependencies ++= {
 
-  val finagleV = "7.1.0"
+  val finagleV = "18.2.0"
   val typesafeUriV = "0.1.1"
 
   Seq(
