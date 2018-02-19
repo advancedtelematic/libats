@@ -11,6 +11,6 @@ libraryDependencies ++= {
 
     "org.scalatest"     %% "scalatest" % scalaTestV % "provided",
 
-    "org.mariadb.jdbc" % "mariadb-java-client" % "1.4.4" % Test
+    "org.mariadb.jdbc" % "mariadb-java-client" % "2.2.1" % Test
   )
 }
