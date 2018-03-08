@@ -10,7 +10,6 @@ import java.util.UUID
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.{HttpResponse, StatusCode, StatusCodes, Uri}
-import akka.http.scaladsl.server.ExceptionHandler.PF
 import akka.http.scaladsl.server.{Directives, ExceptionHandler, _}
 import com.advancedtelematic.libats.data.{ErrorCode, ErrorCodes, ErrorRepresentation}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
@@ -27,11 +26,11 @@ object Errors {
   import Directives._
   import ErrorRepresentation._
 
-  abstract class Error[T](val code: ErrorCode,
-                          val responseCode: StatusCode,
-                          val msg: String,
-                          val cause: Option[Throwable] = None,
-                          val errorId: UUID = UUID.randomUUID()) extends Throwable(msg, cause.orNull) with NoStackTrace
+  abstract class Error(val code: ErrorCode,
+                       val responseCode: StatusCode,
+                       val msg: String,
+                       val cause: Option[Throwable] = None,
+                       val errorId: UUID = UUID.randomUUID()) extends Throwable(msg, cause.orNull) with NoStackTrace
 
   case class JsonError(code: ErrorCode,
                        responseCode: StatusCode,
@@ -44,48 +43,67 @@ object Errors {
                       desc: String,
                       errorId: UUID = UUID.randomUUID()) extends Exception(desc) with NoStackTrace
 
+  case class RemoteServiceError(msg: String,
+                                status: StatusCode,
+                                description: Json = Json.Null,
+                                causeCode: ErrorCode = ErrorCodes.RemoteServiceError,
+                                cause: Option[ErrorRepresentation] = None,
+                                errorId: UUID = UUID.randomUUID()
+                               ) extends Throwable(s"Remote Service Error: $msg") with NoStackTrace
+
   case class MissingEntity[T]()(implicit ct: ClassTag[T]) extends
-    Error[T](ErrorCodes.MissingEntity, StatusCodes.NotFound, s"Missing entity: ${ct.runtimeClass.getSimpleName}")
+    Error(ErrorCodes.MissingEntity, StatusCodes.NotFound, s"Missing entity: ${ct.runtimeClass.getSimpleName}")
 
   case class EntityAlreadyExists[T]()(implicit ct: ClassTag[T]) extends
-    Error[T](ErrorCodes.ConflictingEntity, StatusCodes.Conflict, s"Entity already exists: ${ct.runtimeClass.getSimpleName}")
-
-  def RemoteServiceError(msg: String, cause: Option[Json] = None, errorId: UUID = UUID.randomUUID()) = {
-    val causeJson = cause.getOrElse(Json.obj())
-    JsonError(ErrorCodes.RemoteServiceError, StatusCodes.BadGateway, causeJson, msg, errorId)
-  }
+    Error(ErrorCodes.ConflictingEntity, StatusCodes.Conflict, s"Entity already exists: ${ct.runtimeClass.getSimpleName}")
 
   val TooManyElements = RawError(ErrorCodes.TooManyElements, StatusCodes.InternalServerError, "Too many elements found")
 
+  type PF = PartialFunction[Throwable, (StatusCode, ErrorRepresentation)]
+
   private val onRawError: PF = {
     case RawError(code, statusCode, desc, uuid) =>
-      complete(statusCode -> ErrorRepresentation(code, desc, None, uuid.some))
+      statusCode -> ErrorRepresentation(code, desc, None, uuid.some)
   }
 
   private val onJsonError: PF = {
     case JsonError(code, statusCode, json, description, errorId) =>
-      complete(statusCode -> ErrorRepresentation(code, description, json.some, errorId.some))
+      statusCode -> ErrorRepresentation(code, description, json.some, errorId.some)
+  }
+
+  private val onRemoteServiceError: PF = {
+    case RemoteServiceError(msg, _, _, code, cause, errorId) =>
+      StatusCodes.BadGateway -> ErrorRepresentation(code, msg, cause.map(_.asJson), errorId.some)
   }
 
   private val onError: PF = {
-    case e : Error[_] =>
-      complete(e.responseCode -> ErrorRepresentation(e.code, e.msg, e.cause.map(_.getMessage.asJson), e.errorId.some))
+    case e : Error =>
+      e.responseCode -> ErrorRepresentation(e.code, e.msg, e.cause.map(_.getMessage.asJson), e.errorId.some)
   }
 
   private val onIntegrityViolationError: PF = {
     case err: java.sql.SQLIntegrityConstraintViolationException if err.getErrorCode == 1062 =>
-      complete(StatusCodes.Conflict ->
-        ErrorRepresentation(ErrorCodes.ConflictingEntity, "Entry already exists"))
+      StatusCodes.Conflict -> ErrorRepresentation(ErrorCodes.ConflictingEntity, "Entry already exists")
   }
 
   // Add more handlers here, or use RawError
-  val handleAllErrors =
+  private val toErrorRepresentation: PartialFunction[Throwable, (StatusCode, ErrorRepresentation)] =
     Seq(
       onJsonError,
       onError,
+      onRemoteServiceError,
       onIntegrityViolationError,
       onRawError
-    ).foldLeft(PartialFunction.empty[Throwable, Route])(_ orElse _)
+    ).foldLeft(PartialFunction.empty[Throwable, (StatusCode, ErrorRepresentation)])(_ orElse _)
+
+  val logAndHandleErrors: PartialFunction[Throwable, Route] =
+    toErrorRepresentation andThen {
+      case (status, errorRepr) =>
+        extractLog { log =>
+          log.error(s"An error occurred. ErrorId: ${errorRepr.errorId} ${errorRepr.asJson.noSpaces}")
+          complete(status -> errorRepr)
+        }
+    }
 }
 
 object ErrorHandler {
@@ -113,8 +131,8 @@ object ErrorHandler {
       )
   }
 
-  private def defaultHandler(): ExceptionHandler =
-    Errors.handleAllErrors orElse ExceptionHandler {
+  private def defaultHandler: ExceptionHandler =
+    Errors.logAndHandleErrors orElse ExceptionHandler {
       case e: Throwable =>
         (extractLog & extractUri) { (log, uri) =>
           val errorId = logError(log, uri, e)
@@ -123,5 +141,5 @@ object ErrorHandler {
         }
     }
 
-  val handleErrors: Directive0 = handleExceptions(defaultHandler())
+  val handleErrors: Directive0 = handleExceptions(defaultHandler)
 }

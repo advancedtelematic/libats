@@ -7,6 +7,7 @@ val Library = new {
     val refined = "0.8.7"
     val scalaTest = "3.0.5"
     val metricsV = "3.2.5"
+    val cats = "1.0.1"
   }
 
   val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
@@ -47,12 +48,18 @@ val Library = new {
     "io.dropwizard.metrics" % "metrics-jvm" % Version.metricsV,
     "io.dropwizard.metrics" % "metrics-logback" % Version.metricsV
   )
+
+  val cats = Seq(
+    "org.typelevel" %% "cats-core" % Version.cats,
+    "org.typelevel" %% "cats-kernel" % Version.cats,
+    "org.typelevel" %% "cats-macros" % Version.cats
+  )
 }
 
 onLoad in Global := { s => "dependencyUpdates" :: s }
 
 lazy val commonDeps =
-  libraryDependencies ++= Library.circe ++ Seq(Library.refined, Library.scalatest) :+ Library.logback
+  libraryDependencies ++= Library.circe ++ Seq(Library.refined, Library.scalatest) ++ Library.cats :+ Library.logback
 
 lazy val commonConfigs = Seq.empty
 
@@ -60,7 +67,7 @@ lazy val commonSettings = Seq(
   organization := "com.advancedtelematic",
   scalaVersion := "2.11.11",
   crossScalaVersions := Seq("2.11.11", "2.12.2"),
-  scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature"),
+  scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature", "-Ypartial-unification"),
   resolvers += "ATS Releases" at "http://nexus.advancedtelematic.com:8081/content/repositories/releases",
   resolvers += "ATS Snapshots" at "http://nexus.advancedtelematic.com:8081/content/repositories/snapshots",
   resolvers += "version99 Empty loggers" at "http://version99.qos.ch",

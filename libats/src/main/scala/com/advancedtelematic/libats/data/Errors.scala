@@ -23,7 +23,7 @@ object ErrorCodes {
   val RemoteServiceError = ErrorCode("remote_service_error")
 }
 
-case class ErrorRepresentation(code: ErrorCode, description: String, cause: Option[Json] = None, errorId: Option[UUID] = None)
+case class ErrorRepresentation(code: ErrorCode, description: String, cause: Option[Json] = None, errorId: Option[UUID] = Some(UUID.randomUUID()))
 
 object ErrorRepresentation {
   import io.circe.generic.semiauto._
