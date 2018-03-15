@@ -13,7 +13,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 object MessageListener {
-
   type MsgOperation[T] = T => Future[_]
 
   trait CommittableMsg[T] {
@@ -30,11 +29,10 @@ object MessageListener {
       message.committableOffset.commitScaladsl().map(_ => msg())
   }
 
-  def buildSource[T](fromSource: Source[CommittableMsg[T], NotUsed], op: MsgOperation[T])
+  def buildSource[T](fromSource: Source[CommittableMsg[T], NotUsed], op: MsgOperation[T], parallelism: Int = 3)
                     (implicit system: ActorSystem, ml: MessageLike[T]): Source[T, NotUsed] = {
     implicit val ec = system.dispatcher
-
-    fromSource.mapAsync(3) { committableMsg =>
+    fromSource.mapAsync(parallelism) { committableMsg =>
       val msg = committableMsg.msg()
       op(msg).map(_ => committableMsg)
     }.mapAsync(1) { committableMsg =>
@@ -44,7 +42,8 @@ object MessageListener {
 
   def props[T](config: Config, op: MsgOperation[T], metricRegistry: MetricRegistry)
               (implicit system: ActorSystem, ml: MessageLike[T]): Props = {
-    val source = buildSource(MessageBus.subscribeCommittable(config), op)
+    val parallelism = config.getInt("messaging.listener.parallelism")
+    val source = buildSource(MessageBus.subscribeCommittable(config), op, parallelism)
 
     val monitor = new MetricsBusMonitor(metricRegistry, ml.streamName)
 
