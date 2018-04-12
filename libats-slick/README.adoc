@@ -1,5 +1,38 @@
 = libats slick support
 
+== Column Encryption
+
+=== Configuration
+
+To use this feature you'll need to add the following settings to your application.conf:
+
+----
+ats {
+  database {
+    encryption {
+      salt = "<some salt, at least 8 bytes, base64 encoded"
+      password = "some password, 64 chars long"
+    }
+  }
+}
+----
+
+A valid salt can be generated with:
+
+----
+python3 -c 'import base64; import secrets; print(base64.b64encode(secrets.token_bytes(8)).decode("utf-8"))'
+----
+
+A valid password can be generated with:
+
+----
+pwgen --capitalize --numerals --secure 64 1
+----
+
+=== Usage
+
+See https://github.com/advancedtelematic/ota-tuf[ota-tuf/keyserver] for examples on how to use this feature.
+
 == Migrations
 
 Migrations are supported through the `BootMigrations` trait, mixed in
