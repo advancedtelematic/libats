@@ -52,6 +52,7 @@ object MessageCodecs {
   implicit val operationResultEncoder: Encoder[OperationResult] = deriveEncoder
   implicit val operationResultDecoder: Decoder[OperationResult] = deriveDecoder
 
+  @deprecated("use data type from libtuf-server", "v0.1.1-21")
   implicit val deviceUpdateReportEncoder: Encoder[DeviceUpdateReport] = deriveEncoder
 
   implicit val updateTypeEncoder: Encoder[UpdateType] = Encoder.enumEncoder(UpdateType)
@@ -59,6 +60,7 @@ object MessageCodecs {
 
   // For backwards compatibility reasons we have a decoder that can parse DeviceUpdateReport
   // without a statusCode.
+  @deprecated("use data type from libtuf-server", "v0.1.1-21")
   implicit val deviceUpdateReportDecoder: Decoder[DeviceUpdateReport] = Decoder.instance { cursor =>
     for {
       namespace <- cursor.downField("namespace").as[Namespace]
@@ -108,6 +110,7 @@ object Messages {
 
   case class ImageStorageUsage(namespace: Namespace, timestamp: Instant, byteCount: Long)
 
+  @deprecated("use data type from libtuf_server", "v0.1.1-21")
   case class DeviceUpdateReport(namespace: Namespace, device: DeviceId, updateId: UpdateId, timestampVersion: Int,
                                 operationResult: Map[EcuSerial, OperationResult], resultCode: Int)
 
@@ -135,5 +138,6 @@ object Messages {
 
   implicit val treeHubCommitMessageLike = MessageLike[TreehubCommit](_.commit.value)
 
+  @deprecated("use data type from libtuf_server", "v0.1.1-21")
   implicit val deviceUpdateReportMessageLike = MessageLike[DeviceUpdateReport](_.device.toString)
 }
