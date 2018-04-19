@@ -98,6 +98,7 @@ lazy val libats_slick = (project in file("libats-slick"))
   .settings(commonSettings)
   .settings(Publish.settings)
   .settings(libraryDependencies ++= Library.jvmMetrics)
+  .settings(libraryDependencies ++= Library.akkaHttpTestKit)
   .dependsOn(libats)
   .dependsOn(libats_http)
 

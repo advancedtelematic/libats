@@ -52,16 +52,21 @@ protected [db] object SlickCrypto {
 
   private lazy val _config = ConfigFactory.load()
 
-  private lazy val dbEncryptionSalt =
-    Base64.getDecoder.decode(_config.getString("ats.database.encryption.salt").getBytes)
+  private lazy val dbEncryptionSaltBase64String =
+    _config.getString("ats.database.encryption.salt")
 
-  private lazy val dbEncryptionPassword = _config.getString("ats.database.encryption.password")
+  private lazy val dbEncryptionPassword =
+    _config.getString("ats.database.encryption.password")
 
-  lazy val slickCrypto = {
-    assert(dbEncryptionSalt.length >= 8, s"SlickCrypto: Salt needs to be base64 encoded and 8 bytes or longer")
-    assert(dbEncryptionPassword.length >= 64, "SlickCrypto: password needs to be 64 chars or longer")
+  lazy val configSlickCrypto = SlickCrypto(dbEncryptionSaltBase64String, dbEncryptionPassword)
 
-    new SlickCrypto(dbEncryptionSalt, dbEncryptionPassword)
+  def apply(saltBase64String: String, password: String): SlickCrypto = {
+    val saltBytes = Base64.getDecoder.decode(saltBase64String.getBytes)
+
+    assert(saltBytes.length >= 8, s"SlickCrypto: Salt needs to be base64 encoded and 8 bytes or longer")
+    assert(password.length >= 64, "SlickCrypto: password needs to be 64 chars or longer")
+
+    new SlickCrypto(saltBytes, password)
   }
 }
 
@@ -72,10 +77,10 @@ object SlickEncryptedColumn {
 
   def encryptedColumnJsonMapper[T : ClassTag : Encoder : Decoder]: BaseColumnType[EncryptedColumn[T]] =
     MappedColumnType.base[EncryptedColumn[T], String](
-      encryptedColumn => slickCrypto.encrypt(encryptedColumn.value.asJson.noSpaces)
+      encryptedColumn => configSlickCrypto.encrypt(encryptedColumn.value.asJson.noSpaces)
       ,
       str => {
-        val parsedJson = parser.parse(slickCrypto.decrypt(str)).flatMap(_.as[T]).valueOr(throw _)
+        val parsedJson = parser.parse(configSlickCrypto.decrypt(str)).flatMap(_.as[T]).valueOr(throw _)
         EncryptedColumn(parsedJson)
       }
     )

@@ -33,6 +33,24 @@ pwgen --capitalize --numerals --secure 64 1
 
 See https://github.com/advancedtelematic/ota-tuf[ota-tuf/keyserver] for examples on how to use this feature.
 
+=== Changing encryption keys
+
+IMPORTANT: This is a dangerous operation, test thoroughly before running this in a production server
+
+The encryption key used to encrypt existing data can be changed with the following command:
+
+----
+sbt run-main com.advancedtelematic.libats.slick.db.SlickEncryptionKeyChangeApp idColumn tableName column oldSalt oldPass newSalt newPass
+----
+
+For example:
+
+----
+sbt run-main com.advancedtelematic.libats.slick.db.SlickEncryptionKeyChangeApp key_id keys private_key zP4TEcmyaZw= H83tIxLhILdshamQFxqULXlkLKF1ytrowuBLNIHs5aFq994Y6OxVpXTJHesValH7 80R1NXHKHeQ= WcywlQrO7NXk2dQeAtsHO3FYUdfRXfVsmTOZR9934Tf0p14JD5VYeTIGIJv27sXk
+----
+
+Pay attention to warnings and log messages when running this command. The command might leave the database in an inconsitent case in case it cannot decrypt or encrypt some columns in the database.
+
 == Migrations
 
 Migrations are supported through the `BootMigrations` trait, mixed in
