@@ -40,10 +40,7 @@ class KafkaClientIntegrationSpec extends TestKit(ActorSystem("KafkaClientSpec"))
 
   override implicit def patienceConfig = PatienceConfig(timeout = Span(30, Seconds), interval = Span(500, Millis))
 
-  val publisher = KafkaClient.publisher(system, system.settings.config) match {
-    case Right(p) => p
-    case Left(ex) => throw ex
-  }
+  val publisher = KafkaClient.publisher(system, system.settings.config)
 
   test("can send an event to bus") {
     val testMsg = KafkaSpecMessage(1, Instant.now.toString)
@@ -54,11 +51,7 @@ class KafkaClientIntegrationSpec extends TestKit(ActorSystem("KafkaClientSpec"))
   test("can send-receive events from bus") {
     val testMsg = KafkaSpecMessage(2, Instant.now.toString)
 
-    val source = KafkaClient.source[KafkaSpecMessage](system, system.settings.config) match {
-      case Right(s) => s
-      case Left(ex) => throw ex
-    }
-
+    val source = KafkaClient.source[KafkaSpecMessage](system, system.settings.config)
     val msgFuture = source.groupedWithin(10, 5.seconds).runWith(Sink.head)
 
     for {
@@ -72,10 +65,7 @@ class KafkaClientIntegrationSpec extends TestKit(ActorSystem("KafkaClientSpec"))
   test("can send-receive and commit events from bus") {
     val testMsg = KafkaSpecMessage(3, Instant.now.toString)
 
-    val source = KafkaClient.committableSource[KafkaSpecMessage](system.settings.config) match {
-      case Right(s) => s
-      case Left(ex) => throw ex
-    }
+    val source = KafkaClient.committableSource[KafkaSpecMessage](system.settings.config)
 
     val msgFuture = source
       .groupedWithin(10, 5.seconds)

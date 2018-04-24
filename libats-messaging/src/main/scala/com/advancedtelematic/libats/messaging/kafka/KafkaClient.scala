@@ -12,13 +12,11 @@ import akka.kafka.scaladsl.Consumer
 import akka.kafka.scaladsl.Consumer.Control
 import akka.kafka.{ConsumerSettings, ProducerSettings, Subscription, Subscriptions}
 import akka.stream.scaladsl.Source
-import cats.syntax.either._
-import com.typesafe.config.{Config, ConfigException}
+import com.typesafe.config.Config
 import io.circe.syntax._
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerRecord, RecordMetadata}
 import org.apache.kafka.common.serialization._
-import com.advancedtelematic.libats.messaging.ConfigHelpers._
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
 
@@ -26,43 +24,43 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 
 object KafkaClient {
 
-  def publisher(system: ActorSystem, config: Config): Throwable Either MessageBusPublisher =
-    for {
-      cfg <- config.configAt("messaging.kafka")
-      topicNameFn <- topic(cfg)
-      kafkaProducer <- producer(cfg)(system)
-    } yield {
-      new MessageBusPublisher {
-        override def publish[T](msg: T)(implicit ex: ExecutionContext, messageLike: MessageLike[T]): Future[Unit] = {
-          val promise = Promise[RecordMetadata]()
+  def publisher(system: ActorSystem, config: Config): MessageBusPublisher = {
+    val cfg = config.getConfig("messaging.kafka")
+    val topicNameFn = topic(cfg)
+    val kafkaProducer = producer(cfg)(system)
 
-          val topic = topicNameFn(messageLike.streamName)
+    new MessageBusPublisher {
+      override def publish[T](msg: T)(implicit ex: ExecutionContext, messageLike: MessageLike[T]): Future[Unit] = {
+        val promise = Promise[RecordMetadata]()
 
-          val record = new ProducerRecord[Array[Byte], String](topic,
-            messageLike.id(msg).getBytes, msg.asJson(messageLike.encoder).noSpaces)
+        val topic = topicNameFn(messageLike.streamName)
 
-          kafkaProducer.send(record, new Callback {
-            override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
-              if (exception != null)
-                promise.failure(exception)
-              else if (metadata != null)
-                promise.success(metadata)
-              else
-                promise.failure(new Exception("Unknown error occurred, no metadata or error received"))
-            }
-          })
+        val record = new ProducerRecord[Array[Byte], String](topic,
+          messageLike.id(msg).getBytes, msg.asJson(messageLike.encoder).noSpaces)
 
-          promise.future.map(_ => ())
-        }
+        kafkaProducer.send(record, new Callback {
+          override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+            if (exception != null)
+              promise.failure(exception)
+            else if (metadata != null)
+              promise.success(metadata)
+            else
+              promise.failure(new Exception("Unknown error occurred, no metadata or error received"))
+          }
+        })
+
+        promise.future.map(_ => ())
       }
     }
+  }
+
 
   def source[T](system: ActorSystem, config: Config)
-               (implicit ml: MessageLike[T]): Throwable Either Source[T, NotUsed] =
+               (implicit ml: MessageLike[T]): Source[T, NotUsed] =
     plainSource(config)(ml, system)
 
   private def plainSource[T](config: Config)
-                            (implicit ml: MessageLike[T], system: ActorSystem): Throwable Either Source[T, NotUsed] = {
+                            (implicit ml: MessageLike[T], system: ActorSystem): Source[T, NotUsed] = {
     buildSource(config) { (cfgSettings: ConsumerSettings[Array[Byte], T], subscriptions) =>
       val settings = cfgSettings.withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
       Consumer.plainSource(settings, subscriptions).map(_.value()).filter(_ != null)
@@ -70,48 +68,43 @@ object KafkaClient {
   }
 
   def committableSource[T](config: Config)
-                          (implicit ml: MessageLike[T], system: ActorSystem)
-  : Throwable Either Source[CommittableMessage[Array[Byte], T], NotUsed] =
+                          (implicit ml: MessageLike[T], system: ActorSystem): Source[CommittableMessage[Array[Byte], T], NotUsed] =
     buildSource(config) { (cfgSettings: ConsumerSettings[Array[Byte], T], subscriptions) =>
       Consumer.committableSource(cfgSettings, subscriptions).filter(_.record.value() != null)
     }
 
   private def consumerSettings[T](system: ActorSystem, config: Config)
-                                 (implicit ml: MessageLike[T]): Throwable Either ConsumerSettings[Array[Byte], T] =
-    for {
-      host <- config.readString("host")
-      topicFn <- topic(config)
-      groupId <- config.readString("groupIdPrefix").map(_ + "-" + topicFn(ml.streamName))
-    } yield {
-      ConsumerSettings(system, new ByteArrayDeserializer, new JsonDeserializer(ml.decoder))
-        .withBootstrapServers(host)
-        .withGroupId(groupId)
-        .withClientId(s"consumer-$groupId")
-        .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
-    }
+                                 (implicit ml: MessageLike[T]): ConsumerSettings[Array[Byte], T] = {
+    val host = config.getString("host")
+    val topicFn = topic(config)
+    val groupId = config.getString("groupIdPrefix") + "-" + topicFn(ml.streamName)
+
+    ConsumerSettings(system, new ByteArrayDeserializer, new JsonDeserializer(ml.decoder))
+      .withBootstrapServers(host)
+      .withGroupId(groupId)
+      .withClientId(s"consumer-$groupId")
+      .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
+  }
 
   private def buildSource[T, M](config: Config)
                                (consumerFn: (ConsumerSettings[Array[Byte], M], Subscription) => Source[T, Control])
-                               (implicit system: ActorSystem, ml: MessageLike[M]): Throwable Either Source[T, NotUsed] =
-    for {
-      cfg <- config.configAt("messaging.kafka")
-      cfgSettings <- consumerSettings(system, cfg)
-      topicFn <- topic(cfg)
-    } yield {
-      val subscription = Subscriptions.topics(topicFn(ml.streamName))
-      consumerFn(cfgSettings, subscription).mapMaterializedValue { _ => NotUsed }
-    }
+                               (implicit system: ActorSystem, ml: MessageLike[M]): Source[T, NotUsed] = {
+    val cfg = config.getConfig("messaging.kafka")
+    val cfgSettings = consumerSettings(system, cfg)
+    val topicFn = topic(cfg)
+    val subscription = Subscriptions.topics(topicFn(ml.streamName))
 
-  private[this] def topic(config: Config): ConfigException Either (String => String) =
-    config.readString("topicSuffix").map { suffix =>
-      (streamName: String) => streamName + "-" + suffix
-    }
+    consumerFn(cfgSettings, subscription).mapMaterializedValue { _ => NotUsed }
+  }
+
+  private[this] def topic(config: Config): String => String = {
+    val suffix = config.getString("topicSuffix")
+    (streamName: String) => streamName + "-" + suffix
+  }
 
   private[this] def producer(config: Config)
-                            (implicit system: ActorSystem): ConfigException Either KafkaProducer[Array[Byte], String] =
-    config.readString("host").map { host =>
-      ProducerSettings(system, new ByteArraySerializer, new StringSerializer)
-        .withBootstrapServers(host)
-        .createKafkaProducer()
-    }
+                            (implicit system: ActorSystem): KafkaProducer[Array[Byte], String] =
+    ProducerSettings(system, new ByteArraySerializer, new StringSerializer)
+      .withBootstrapServers(config.getString("host"))
+      .createKafkaProducer()
 }
