@@ -9,8 +9,11 @@ libraryDependencies ++= {
     "com.typesafe.slick" %% "slick-hikaricp" % slickV,
     "org.flywaydb" % "flyway-core" % "4.0.3",
 
-    "org.scalatest"     %% "scalatest" % scalaTestV % "provided",
+    "org.scalatest"     %% "scalatest" % scalaTestV % Provided,
 
-    "org.mariadb.jdbc" % "mariadb-java-client" % "2.2.1" % Test
+    "org.mariadb.jdbc" % "mariadb-java-client" % "2.2.1" % Test,
+
+    "org.bouncycastle" % "bcprov-jdk15on" % "1.57" % Provided,
+    "org.bouncycastle" % "bcpkix-jdk15on" % "1.57" % Provided
   )
 }
