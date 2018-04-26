@@ -50,8 +50,10 @@ object DataType {
 
   @deprecated("use data type from libtuf-server", "0.0.1-109")
   case class ValidTargetFilename()
+  @deprecated("use data type from libtuf-server", "v0.1.1-21")
   type TargetFilename = Refined[String, ValidTargetFilename]
 
+  @deprecated("use data type from libtuf-server", "v0.1.1-21")
   implicit val validTargetFilename: Validate.Plain[String, ValidTargetFilename] =
     Validate.fromPredicate(
       f => f.nonEmpty && f.length < 254,
@@ -59,6 +61,7 @@ object DataType {
       ValidTargetFilename()
     )
 
+  @deprecated("use data type from libtuf-server", "v0.1.1-21")
   final case class OperationResult(target: TargetFilename, hashes: Map[HashMethod, Refined[String, ValidChecksum]],
                                    length: Long, resultCode: Int, resultText: String) {
     def isSuccess:Boolean = resultCode == 0 || resultCode == 1
