@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.client.RequestBuilding._
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.ContentTypes._
-import akka.http.scaladsl.model.{HttpEntity, Multipart, StatusCodes, Uri}
+import akka.http.scaladsl.model.{FormData, StatusCodes, Uri}
 import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials, OAuth2BearerToken}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.server.{AuthorizationFailedRejection, Directive0, Directives}
@@ -15,7 +15,6 @@ import com.advancedtelematic.json.signature.JcaSupport
 import com.advancedtelematic.jwa.HS256
 import com.advancedtelematic.jws.Jws
 import com.typesafe.config.{ConfigException, ConfigFactory}
-import io.circe.Json
 import io.circe.generic.auto._
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
@@ -36,7 +35,6 @@ object TokenValidator {
 class TokenValidator(implicit system: ActorSystem, mat: Materializer) {
   import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
   import Directives._
-  import Json._
 
   private val config = ConfigFactory.load()
   val logger = LoggerFactory.getLogger(this.getClass)
@@ -51,9 +49,8 @@ class TokenValidator(implicit system: ActorSystem, mat: Materializer) {
                                 (implicit ec: ExecutionContext): Future[Boolean] = {
     import StatusCodes._
     val uri = authPlusUri.withPath(Uri("/introspect").path)
-    val entity = HttpEntity(`application/json`, fromString(token).noSpaces )
-    val form = Multipart.FormData(Map("token" -> entity))
-    val request = Post(uri,form) ~> Authorization(BasicHttpCredentials(clientId, clientSecret))
+    val request = Post(uri, FormData(("token", token)).toEntity) ~>
+      Authorization(BasicHttpCredentials(clientId, clientSecret))
 
     for {
       response <- Http().singleRequest(request)
