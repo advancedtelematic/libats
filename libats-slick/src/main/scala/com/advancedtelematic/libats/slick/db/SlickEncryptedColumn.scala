@@ -2,19 +2,24 @@ package com.advancedtelematic.libats.slick.db
 
 import java.util.Base64
 
+import cats.data.{Validated, ValidatedNel}
 import javax.crypto.Cipher
 import javax.crypto.spec.PBEParameterSpec
 import io.circe.{Decoder, Encoder}
 
 import scala.reflect.ClassTag
 import slick.jdbc.MySQLProfile.api._
-import cats.syntax.either._
+
 import com.typesafe.config.ConfigFactory
 import io.circe.parser
 import io.circe.syntax._
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+
+
+import cats.implicits._
+import scala.util.Try
 
 protected [db] class SlickCrypto(salt: Array[Byte], password: String) {
   private lazy val pbeParameterSpec = new PBEParameterSpec(salt, 1000)
@@ -49,31 +54,37 @@ protected [db] class SlickCrypto(salt: Array[Byte], password: String) {
 }
 
 protected [db] object SlickCrypto {
+  import cats.syntax.either._
 
   private lazy val _config = ConfigFactory.load()
 
-  private lazy val dbEncryptionSaltBase64String =
-    _config.getString("ats.database.encryption.salt")
+  private lazy val dbEncryptionSaltBase64String = _config.getString("ats.database.encryption.salt")
 
-  private lazy val dbEncryptionPassword =
-    _config.getString("ats.database.encryption.password")
+  private lazy val dbEncryptionPassword = _config.getString("ats.database.encryption.password")
 
   lazy val configSlickCrypto = SlickCrypto(dbEncryptionSaltBase64String, dbEncryptionPassword)
 
   def apply(saltBase64String: String, password: String): SlickCrypto = {
     val saltBytes = Base64.getDecoder.decode(saltBase64String.getBytes)
 
-    assert(saltBytes.length >= 8, s"SlickCrypto: Salt needs to be base64 encoded and 8 bytes or longer")
-    assert(password.length >= 64, "SlickCrypto: password needs to be 64 chars or longer")
+    val saltV = Validated.condNel(saltBytes.length >= 8, saltBytes, "SlickCrypto: Salt needs to be base64 encoded and 8 bytes or longer")
+    val passV = Validated.condNel(password.length >= 64, password, "SlickCrypto: password needs to be 64 chars or longer")
 
-    new SlickCrypto(saltBytes, password)
+    val slickCryptoV: ValidatedNel[String, SlickCrypto] = (saltV, passV).mapN { (saltbytes, password) =>
+      new SlickCrypto(saltBytes, password)
+    }
+
+    slickCryptoV.toEither.leftMap { errors =>
+      new IllegalArgumentException(errors.toList.mkString(", "))
+    }.valueOr(throw _)
   }
 }
 
 object SlickEncryptedColumn {
-  import SlickCrypto._
+  import cats.syntax.either._
+  import SlickCrypto.configSlickCrypto
 
-  case class EncryptedColumn[T](value: T)
+  case class EncryptedColumn[T](value: T) extends AnyVal
 
   def encryptedColumnJsonMapper[T : ClassTag : Encoder : Decoder]: BaseColumnType[EncryptedColumn[T]] =
     MappedColumnType.base[EncryptedColumn[T], String](
