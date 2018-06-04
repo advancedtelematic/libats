@@ -7,11 +7,14 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.Uri.{Path, Query}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials}
+import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Sink}
+import com.codahale.metrics.MetricRegistry
 
 import scala.util.{Failure, Success}
+
 
 object AkkaHttpMetricsSink {
 
