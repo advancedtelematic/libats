@@ -68,7 +68,7 @@ class HealthResource(versionRepr: Map[String, Any] = Map.empty,
 
     healthCheckResults.map { results =>
       if (results.forall(_._2 == Up))
-        ToResponseMarshallable(StatusCodes.OK -> "OK")
+        ToResponseMarshallable(StatusCodes.OK -> Map("status" -> "OK"))
       else
         ToResponseMarshallable(errorCode -> results.toMap)
     }.recover { case t =>
