@@ -3,12 +3,11 @@ package com.advancedtelematic.libats.messaging
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
-import com.advancedtelematic.libats.messaging.kafka.{Commiter, KafkaClient, KafkaCommiter}
-import com.typesafe.config.ConfigException.Missing
-import com.typesafe.config.Config
-import MessageListener._
-import com.advancedtelematic.libats.messaging.LocalMessageBus.{LocalBusCommittableMsg, LocalCommitter}
+import com.advancedtelematic.libats.messaging.kafka.KafkaClient
+import com.advancedtelematic.libats.messaging.MessageListener._
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigException.Missing
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -57,8 +56,8 @@ object MessageBus {
 
   lazy val log = LoggerFactory.getLogger(this.getClass)
 
-  def subscribe[T](system: ActorSystem, config: Config)
-                  (implicit messageLike: MessageLike[T]): Source[T, NotUsed] = {
+  def subscribe[T](system: ActorSystem, config: Config, op: MsgOperation[T])
+                  (implicit messageLike: MessageLike[T], ec: ExecutionContext): Source[T, NotUsed] = {
     config.getString("messaging.mode").toLowerCase().trim match {
       case "kafka" =>
         log.info("Starting messaging mode: Kafka")
@@ -66,30 +65,25 @@ object MessageBus {
         KafkaClient.source(system, config)(messageLike)
       case "local" | "test" =>
         log.info("Using local event bus")
-        LocalMessageBus.subscribe(system)(messageLike)
+        LocalMessageBus.subscribe(system, config, op)
       case mode =>
         throw new Missing(s"Unknown messaging mode specified ($mode)")
     }
   }
 
-  def subscribeCommittable[T, U](config: Config)
-                                (implicit messageLike: MessageLike[T], system: ActorSystem): (Source[CommittableMsg[T], NotUsed], Commiter) = {
+  def subscribeCommittable[T, U](config: Config, op: MsgOperation[T])
+                                (implicit messageLike: MessageLike[T], ec: ExecutionContext, system: ActorSystem): Source[T, NotUsed] = {
     config.getString("messaging.mode").toLowerCase().trim match {
       case "kafka" =>
         log.info("Starting messaging mode: Kafka")
         log.info(s"Using stream name: ${messageLike.streamName}")
 
-        val source = KafkaClient
-          .committableSource[T](config)(messageLike, system)
-          .map(m => new KafkaMsg(m))
-
-        source -> new KafkaCommiter
+        KafkaClient.committableSource[T](config, op)
 
       case "local" | "test" =>
         log.info("Using local event bus")
-        val source = LocalMessageBus.subscribe(system)(messageLike).map(LocalBusCommittableMsg(_))
+        LocalMessageBus.subscribe(system, config, op)
 
-        source -> new LocalCommitter
       case mode =>
         throw new Missing(s"Unknown messaging mode specified ($mode)")
     }

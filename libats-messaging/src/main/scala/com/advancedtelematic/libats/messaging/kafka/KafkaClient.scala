@@ -5,9 +5,11 @@
 
 package com.advancedtelematic.libats.messaging.kafka
 
+import java.util.concurrent.TimeUnit
+
 import akka.NotUsed
 import akka.actor.ActorSystem
-import akka.kafka.ConsumerMessage.CommittableMessage
+import akka.kafka.ConsumerMessage.{CommittableMessage, CommittableOffsetBatch}
 import akka.kafka.scaladsl.Consumer
 import akka.kafka.scaladsl.Consumer.Control
 import akka.kafka.{ConsumerSettings, ProducerSettings, Subscription, Subscriptions}
@@ -18,9 +20,11 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerRecord, RecordMetadata}
 import org.apache.kafka.common.serialization._
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
+import com.advancedtelematic.libats.messaging.MessageListener.MsgOperation
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.duration.FiniteDuration
 
 object KafkaClient {
 
@@ -67,10 +71,24 @@ object KafkaClient {
     }
   }
 
-  def committableSource[T](config: Config)
-                          (implicit ml: MessageLike[T], system: ActorSystem): Source[CommittableMessage[Array[Byte], T], NotUsed] =
+  def committableSource[T](config: Config, op: MsgOperation[T])
+                          (implicit ml: MessageLike[T], ec: ExecutionContext, system: ActorSystem): Source[T, NotUsed] =
     buildSource(config) { (cfgSettings: ConsumerSettings[Array[Byte], T], subscriptions) =>
-      Consumer.committableSource(cfgSettings, subscriptions).filter(_.record.value() != null)
+      val handlerParallelism = config.getInt("messaging.listener.parallelism")
+      val batchInterval = config.getDuration("messaging.listener.batch.interval", TimeUnit.MILLISECONDS)
+      val batchMax = config.getInt("messaging.listener.batch.max")
+      Consumer.committableSource(cfgSettings, subscriptions)
+        .filter(_.record.value() != null)
+        .mapAsync(handlerParallelism)(msg => op(msg.record.value()).map(_ => msg))
+        .groupedWithin(batchMax, FiniteDuration(batchInterval, TimeUnit.MILLISECONDS))
+        .filter(_.nonEmpty)
+        .log(s"${ml.streamName}.listener", xs => s"Committing batch with size ${xs.size} after ${batchInterval}ms")
+        .mapAsync(1) { group =>
+          group
+            .foldLeft(CommittableOffsetBatch.empty)( (batch, msg) => batch.updated(msg.committableOffset))
+            .commitScaladsl().map(_ => group)
+        }.mapConcat(_.map(_.record.value()))
+
     }
 
   private def consumerSettings[T](system: ActorSystem, config: Config)
