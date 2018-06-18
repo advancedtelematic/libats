@@ -5,30 +5,25 @@
 
 package com.advancedtelematic.libats.messaging
 
-import akka.NotUsed
+import akka.{Done, NotUsed}
 import akka.actor.ActorSystem
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
-import MessageListener.CommittableMsg
+import com.advancedtelematic.libats.messaging.MessageListener.MsgOperation
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
+import com.typesafe.config.Config
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 object LocalMessageBus {
-  def subscribe[T](system: ActorSystem)(implicit m: MessageLike[T]): Source[T, NotUsed] = {
-    Source.actorRef(MessageBus.DEFAULT_CLIENT_BUFFER_SIZE, OverflowStrategy.dropTail).mapMaterializedValue { ref =>
-      system.eventStream.subscribe(ref, m.tag.runtimeClass)
-      NotUsed
-    }
-  }
 
-  def subscribeCommittable[T](system: ActorSystem)(implicit m: MessageLike[T])
-  : Source[CommittableMsg[T], NotUsed] = {
-    Source.actorRef(MessageBus.DEFAULT_CLIENT_BUFFER_SIZE, OverflowStrategy.dropTail).mapMaterializedValue { ref =>
+  def subscribe[T](system: ActorSystem, config: Config, op: MsgOperation[T])(implicit ec: ExecutionContext, m: MessageLike[T]): Source[T, NotUsed] = {
+    val handlerParallelism = config.getInt("messaging.listener.parallelism")
+    Source.actorRef[T](MessageBus.DEFAULT_CLIENT_BUFFER_SIZE, OverflowStrategy.dropTail).mapMaterializedValue { ref =>
       system.eventStream.subscribe(ref, m.tag.runtimeClass)
       NotUsed
-    }
+    }.mapAsync(handlerParallelism){ x: T => op.apply(x).map(_ => x) }
   }
 
   def publisher(system: ActorSystem): MessageBusPublisher = {
