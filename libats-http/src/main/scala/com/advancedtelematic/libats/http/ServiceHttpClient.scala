@@ -16,10 +16,11 @@ import cats.syntax.option._
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
+import scala.util.Try
 
 
 trait ServiceHttpClientSupport {
-  def defaultHttpClient(implicit system: ActorSystem, mat: Materializer): (HttpRequest => Future[HttpResponse]) = {
+  def defaultHttpClient(implicit system: ActorSystem, mat: Materializer): HttpRequest => Future[HttpResponse] = {
     val _http = Http()
     req => _http.singleRequest(req)
   }
@@ -69,6 +70,9 @@ abstract class ServiceHttpClient(httpClient: HttpRequest => Future[HttpResponse]
           else {
             log.debug(s"request failed: $request")
             val e = error.copy(msg = s"${this.getClass.getSimpleName}|Unexpected response from remote server at ${request.uri}|${request.method.value}|${r.status.intValue()}|${error.msg}")
+
+            Try(r.discardEntityBytes())
+
             FastFuture.failed(e)
           }
         }
