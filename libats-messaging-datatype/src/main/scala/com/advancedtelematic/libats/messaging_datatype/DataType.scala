@@ -1,11 +1,13 @@
 package com.advancedtelematic.libats.messaging_datatype
 
+import java.time.Instant
 import java.util.UUID
 
 import com.advancedtelematic.libats.data.DataType.HashMethod.HashMethod
 import com.advancedtelematic.libats.data.DataType.{HashMethod, ValidChecksum}
 import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
 import eu.timepit.refined.api.{Refined, Validate}
+import io.circe.Json
 
 object DataType {
   case class PackageId(name: String, version: String) {
@@ -66,4 +68,13 @@ object DataType {
                                    length: Long, resultCode: Int, resultText: String) {
     def isSuccess:Boolean = resultCode == 0 || resultCode == 1
   }
+
+  final case class EventType(id: String, version: Int)
+
+  final case class Event(deviceUuid: DeviceId,
+                         eventId: String,
+                         eventType: EventType,
+                         deviceTime: Instant,
+                         receivedAt: Instant,
+                         payload: Json)
 }
