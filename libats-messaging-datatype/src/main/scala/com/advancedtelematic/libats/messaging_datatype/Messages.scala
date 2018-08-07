@@ -10,12 +10,30 @@ import com.advancedtelematic.libats.data.DataType.{Checksum, Namespace}
 import com.advancedtelematic.libats.data.RefinedUtils._
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
 import io.circe._
 import io.circe.generic.semiauto._
+import io.circe.syntax._
 
 object MessageCodecs {
   import com.advancedtelematic.libats.codecs.CirceCodecs._
+
+  implicit val eventTypeEncoder: Encoder[EventType] = deriveEncoder
+  implicit val eventTypeDecoder: Decoder[EventType] = deriveDecoder
+
+  implicit val eventEncoder: Encoder[Event] = deriveEncoder[Event]
+  implicit val eventDecoder: Decoder[Event] = deriveDecoder[Event]
+
+  implicit val deviceEventEncoder: Encoder[DeviceEventMessage] = Encoder.instance { x =>
+    eventEncoder(x.event).mapObject(_.add("namespace", x.namespace.get.asJson))
+  }
+
+  implicit val deviceEventDecoder: Decoder[DeviceEventMessage] = Decoder.instance { c =>
+    for {
+      event <- c.as[Event]
+      ns    <- c.get[String]("namespace").map(Namespace.apply)
+    } yield DeviceEventMessage(ns, event)
+  }
 
   implicit val userCreatedEncoder: Encoder[UserCreated] = deriveEncoder
   implicit val userCreatedDecoder: Decoder[UserCreated] = deriveDecoder
@@ -105,6 +123,8 @@ object Messages {
                                  size: Int,
                                  uri: String)
 
+  final case class DeviceEventMessage(namespace: Namespace, event: Event)
+
   case class BandwidthUsage(id: UUID, namespace: Namespace, timestamp: Instant, byteCount: Long,
                             updateType: UpdateType, updateId: String)
 
@@ -137,6 +157,8 @@ object Messages {
   implicit val imageStorageMessageLike = MessageLike[ImageStorageUsage](_.namespace.get)
 
   implicit val treeHubCommitMessageLike = MessageLike[TreehubCommit](_.commit.value)
+
+  implicit val deviceEventMessageType = MessageLike[DeviceEventMessage](_.namespace.get)
 
   @deprecated("use data type from libtuf_server", "v0.1.1-21")
   implicit val deviceUpdateReportMessageLike = MessageLike[DeviceUpdateReport](_.device.toString)
