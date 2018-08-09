@@ -1,5 +1,11 @@
 package com.advancedtelematic.libats.slick.db
 
+import java.time.Instant
+import java.util.UUID
+
+import akka.http.scaladsl.model.headers.LinkParams.title
+import com.advancedtelematic.libats.data.DataType.Namespace
+import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
 import com.advancedtelematic.libats.test.DatabaseSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -11,6 +17,10 @@ import scala.concurrent.ExecutionContext
 import scala.util.control.NoStackTrace
 
 object SlickExtensionsSpec {
+  import SlickAnyVal._
+  import SlickUUIDKey._
+  import SlickExtensions._
+
   case class Book(id: Long, title: String, code: Option[String] = None)
 
   class BooksTable(tag: Tag) extends Table[Book](tag, "books") {
@@ -22,6 +32,20 @@ object SlickExtensionsSpec {
   }
 
   protected val books = TableQuery[BooksTable]
+
+  case class BookMeta(id: Long, bookId: Long, tag: Long)
+
+  class BookMetaTable(tag: Tag) extends Table[BookMeta](tag, "book_meta") {
+    def id    = column[Long]("id")
+    def bookId = column[Long]("book_id")
+    def bookTag  = column[Long]("tag")
+
+    def pk = primaryKey("book_meta_pk", (bookId, id))
+
+    override def * = (bookId, id, bookTag) <> ((BookMeta.apply _).tupled, BookMeta.unapply)
+  }
+
+  protected val bookMeta = TableQuery[BookMetaTable]
 }
 
 
@@ -67,5 +91,13 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
 
     f.futureValue.length shouldBe >(1)
     f.futureValue.map(_.id) should contain(40l)
+  }
+
+  test("handleIntegrityErrors works with mariadb 10.2") {
+    val error = new RuntimeException("[test] expected error") with NoStackTrace
+    val g = BookMeta(-1, -1, 0)
+    val f = db.run((bookMeta.insertOrUpdate(g)).handleIntegrityErrors(error))
+
+    f.failed.futureValue shouldBe error
   }
 }

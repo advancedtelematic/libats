@@ -4,7 +4,7 @@
  */
 package com.advancedtelematic.libats.slick.db
 
-import java.sql.{BatchUpdateException, SQLIntegrityConstraintViolationException, Timestamp}
+import java.sql.{BatchUpdateException, SQLException, SQLIntegrityConstraintViolationException, Timestamp}
 import java.time.Instant
 import java.util.UUID
 
@@ -36,6 +36,8 @@ trait SlickResultExtensions {
         case Failure(e: SQLIntegrityConstraintViolationException) =>
           DBIO.failed(error)
         case Failure(e: BatchUpdateException) if e.getCause.isInstanceOf[SQLIntegrityConstraintViolationException] =>
+          DBIO.failed(error)
+        case Failure(e: SQLException) if e.getErrorCode == 1032 => // ER_KEY_NOT_FOUND See https://mariadb.com/kb/en/library/mariadb-error-codes/
           DBIO.failed(error)
         case Failure(e) =>
           DBIO.failed(e)
