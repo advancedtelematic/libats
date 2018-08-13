@@ -11,6 +11,7 @@ import com.advancedtelematic.libats.codecs.AkkaCirce._
 import com.advancedtelematic.libats.codecs.{DeserializationException, RefinementError}
 import com.advancedtelematic.libats.data.{ErrorCodes, ErrorRepresentation}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe.DecodingFailure
 import io.circe.generic.auto._
 
 /**
@@ -20,11 +21,6 @@ import io.circe.generic.auto._
   */
 
 object DefaultRejectionHandler {
-
-  case class InvalidEntity(msg: String) extends Throwable(msg)
-
-  case object DuplicateEntry extends Throwable("Entry already exists")
-
   def rejectionHandler : RejectionHandler = RejectionHandler.newBuilder().handle {
     case ValidationRejection(msg, _) =>
       complete( StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, msg) )
@@ -33,6 +29,9 @@ object DefaultRejectionHandler {
       complete(StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, msg))
   }.handle{
     case MalformedRequestContentRejection(_, DeserializationException(RefinementError(_, msg))) =>
+      complete(StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, msg))
+  }.handle {
+    case MalformedRequestContentRejection(_, DecodingFailure(msg, _)) =>
       complete(StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, msg))
   }.result().withFallback(RejectionHandler.default)
 }
