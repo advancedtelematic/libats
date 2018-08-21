@@ -5,7 +5,7 @@ import io.circe.generic.encoding.DerivedObjectEncoder
 import io.circe.parser._
 import io.circe.{Decoder, Encoder}
 import shapeless.Lazy
-
+import io.circe.generic.semiauto._
 import scala.reflect.ClassTag
 
 object MessageLike {
@@ -23,15 +23,22 @@ object MessageLike {
 
   def apply[T](idFn: T => String)
               (implicit ct: ClassTag[T],
-               encode: Lazy[DerivedObjectEncoder[T]],
-               decode: Lazy[DerivedDecoder[T]]): MessageLike[T] = new MessageLike[T] {
+               encoderInstance: Encoder[T],
+               decoderInstance: Decoder[T]): MessageLike[T] = new MessageLike[T] {
     override def id(v: T): String = idFn(v)
 
-    import io.circe.generic.semiauto._
-
-    override implicit val encoder: Encoder[T] = deriveEncoder[T]
-    override implicit val decoder: Decoder[T] = deriveDecoder[T]
+    override implicit val encoder: Encoder[T] = encoderInstance
+    override implicit val decoder: Decoder[T] = decoderInstance
   }
+
+  def derive[T](idFn: T => String)(implicit ct: ClassTag[T],
+                                encode: Lazy[DerivedObjectEncoder[T]],
+                                decode: Lazy[DerivedDecoder[T]]): MessageLike[T] = new MessageLike[T] {
+      override def id(v: T): String = idFn(v)
+
+      override implicit val encoder: Encoder[T] = deriveEncoder
+      override implicit val decoder: Decoder[T] = deriveDecoder
+    }
 }
 
 abstract class MessageLike[T]()(implicit val tag: ClassTag[T]) {
