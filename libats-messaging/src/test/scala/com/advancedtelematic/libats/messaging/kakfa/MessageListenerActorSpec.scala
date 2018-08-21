@@ -18,7 +18,7 @@ import scala.util.control.NoStackTrace
 case class MsgListenerSpecItem(id: Int, payload: String)
 
 object MsgListenerSpecItem {
-  implicit val messageLike = MessageLike[MsgListenerSpecItem](_.id.toString)
+  implicit val messageLike = MessageLike.derive[MsgListenerSpecItem](_.id.toString)
 
   case object MsgListenerSpecError extends Exception("test ERROR") with NoStackTrace
 }
