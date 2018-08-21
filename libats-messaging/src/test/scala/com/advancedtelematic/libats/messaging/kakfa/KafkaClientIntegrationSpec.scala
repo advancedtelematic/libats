@@ -10,7 +10,6 @@ import java.time.Instant
 import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.util.FastFuture
-import akka.kafka.ConsumerMessage.CommittableOffsetBatch
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.testkit.TestKit
@@ -28,7 +27,7 @@ import scala.concurrent.Future
 case class KafkaSpecMessage(id: Int, payload: String)
 
 object KafkaSpecMessage {
-  implicit val messageLike = MessageLike[KafkaSpecMessage](_.id.toString)
+  implicit val messageLike = MessageLike.derive[KafkaSpecMessage](_.id.toString)
 }
 
 class KafkaClientIntegrationSpec extends TestKit(ActorSystem("KafkaClientSpec"))
