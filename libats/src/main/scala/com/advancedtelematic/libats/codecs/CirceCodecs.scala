@@ -5,20 +5,20 @@
 package com.advancedtelematic.libats.codecs
 
 import java.net.URI
-
-import cats.syntax.either._
-import io.circe._
-import io.circe.{Decoder, Encoder}
 import java.time.Instant
 import java.time.format.{DateTimeFormatter, DateTimeParseException}
 import java.time.temporal.ChronoField
 import java.util.UUID
 
+import cats.data.NonEmptySet
+import cats.syntax.either._
 import com.advancedtelematic.libats.data.DataType.HashMethod.HashMethod
 import com.advancedtelematic.libats.data.DataType.{Checksum, HashMethod, Namespace}
 import io.circe.generic.semiauto._
+import io.circe.{Decoder, Encoder, _}
 
-import scala.util.Try
+import scala.collection.immutable.SortedSet
+import scala.util.{Failure, Success, Try}
 
 trait CirceDateTime {
   implicit val dateTimeEncoder : Encoder[Instant] = Encoder.instance[Instant] { instant =>
@@ -63,6 +63,18 @@ trait CirceUri {
 
 object CirceUri extends CirceUri
 
+trait CirceNonEmptySet {
+
+  import cats.data.NonEmptySet.fromSetUnsafe
+
+  implicit def nonEmptySetDecoder[T](implicit dec: Decoder[Set[T]], ordering: Ordering[T]): Decoder[NonEmptySet[T]] =
+    dec.emapTry(xs => if (xs.isEmpty) Failure(DecodingFailure("No elements given for non-empty set.", Nil)) else Success(fromSetUnsafe[T](xs.to[SortedSet])))
+
+  implicit def nonEmptySetEncoder[T](implicit enc: Encoder[Set[T]]): Encoder[NonEmptySet[T]] = enc.contramap(_.toSortedSet)
+}
+
+object CirceNonEmptySet extends CirceNonEmptySet
+
 trait CirceAts {
   import CirceRefined._
 
@@ -89,6 +101,7 @@ trait CirceCodecs extends CirceDateTime
   with CirceRefined
   with CirceUri
   with CirceAts
+  with CirceNonEmptySet
 
 object CirceCodecs extends CirceCodecs
 
