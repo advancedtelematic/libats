@@ -136,7 +136,7 @@ object Messages {
 
   implicit val userCreatedMessageLike = MessageLike[UserCreated](_.id)
 
-  implicit val deviceSeenMessageLike = MessageLike[DeviceSeen](_.uuid.toString)
+  implicit val deviceSeenMessageLike = MessageLike.derive[DeviceSeen](_.uuid.toString)
 
   implicit val campaignLaunchedMessageLike = MessageLike[CampaignLaunched](_.updateId.toString)
 
@@ -152,11 +152,11 @@ object Messages {
 
   implicit val deltaGenerationFailedMessageLike = MessageLike[DeltaGenerationFailed](_.id.uuid.toString)
 
-  implicit val bandwidthUsageMessageLike = MessageLike[BandwidthUsage](_.id.toString)
+  implicit val bandwidthUsageMessageLike = MessageLike.derive[BandwidthUsage](_.id.toString)
 
-  implicit val imageStorageMessageLike = MessageLike[ImageStorageUsage](_.namespace.get)
+  implicit val imageStorageMessageLike = MessageLike.derive[ImageStorageUsage](_.namespace.get)
 
-  implicit val treeHubCommitMessageLike = MessageLike[TreehubCommit](_.commit.value)
+  implicit val treeHubCommitMessageLike = MessageLike.derive[TreehubCommit](_.commit.value)
 
   implicit val deviceEventMessageType = MessageLike[DeviceEventMessage](_.namespace.get)
 
