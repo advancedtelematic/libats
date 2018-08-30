@@ -96,7 +96,15 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
   test("handleIntegrityErrors works with mariadb 10.2") {
     val error = new RuntimeException("[test] expected error") with NoStackTrace
     val g = BookMeta(-1, -1, 0)
-    val f = db.run((bookMeta.insertOrUpdate(g)).handleIntegrityErrors(error))
+    val f = db.run(bookMeta.insertOrUpdate(g).handleIntegrityErrors(error))
+
+    f.failed.futureValue shouldBe error
+  }
+
+  test("handleForeignKeyError") {
+    val error = new RuntimeException("[test] expected error") with NoStackTrace
+    val g = BookMeta(1, 1984, 0)
+    val f = db.run((bookMeta += g).handleForeignKeyError(error))
 
     f.failed.futureValue shouldBe error
   }

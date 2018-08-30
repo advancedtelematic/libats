@@ -15,7 +15,7 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.Uuid
 import slick.ast.{Node, TypedType}
 import slick.jdbc.MySQLProfile.api._
-import slick.lifted.{AbstractTable, CanBeQueryCondition, Rep}
+import slick.lifted.{AbstractTable, Rep}
 
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
@@ -29,6 +29,15 @@ object SlickPipeToUnit {
 
 trait SlickResultExtensions {
   implicit class DBIOActionExtensions[T](action: DBIO[T]) {
+
+    def handleForeignKeyError(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] = {
+      action.asTry.flatMap {
+        case Success(a) => DBIO.successful(a)
+        case Failure(e: SQLIntegrityConstraintViolationException) if e.getErrorCode == 1452 => DBIO.failed(error) // ER_NO_REFERENCED_ROW_2
+        case Failure(e) => DBIO.failed(e)
+      }
+    }
+
     def handleIntegrityErrors(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] = {
       action.asTry.flatMap {
         case Success(i) =>
