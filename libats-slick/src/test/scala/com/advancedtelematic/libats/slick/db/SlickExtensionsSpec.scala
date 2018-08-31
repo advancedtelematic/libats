@@ -104,7 +104,7 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
   test("handleForeignKeyError") {
     val error = new RuntimeException("[test] expected error") with NoStackTrace
     val g = BookMeta(1, 1984, 0)
-    val f = db.run((bookMeta += g).handleForeignKeyError(error))
+    val f = db.run((bookMeta += g).mapError { case SqlExceptions.NoReferencedRow(_) => error })
 
     f.failed.futureValue shouldBe error
   }
