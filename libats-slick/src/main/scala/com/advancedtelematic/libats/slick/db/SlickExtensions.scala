@@ -15,33 +15,71 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.Uuid
 import slick.ast.{Node, TypedType}
 import slick.jdbc.MySQLProfile.api._
-import slick.lifted.{AbstractTable, CanBeQueryCondition, Rep}
+import slick.lifted.{AbstractTable, Rep}
 
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
-import scala.util.{Failure, Success}
-import scala.language.implicitConversions
+import scala.util.{Failure, Success, Try}
 
 
 object SlickPipeToUnit {
   implicit def pipeToUnit(value: DBIO[Any])(implicit ec: ExecutionContext): DBIO[Unit] = value.map(_ => ())
 }
 
+object SqlExceptions {
+
+  object NoReferencedRow {
+    def unapply(t: Throwable): Option[SQLIntegrityConstraintViolationException] = t match {
+      case e: SQLIntegrityConstraintViolationException if e.getErrorCode == 1452 => Some(e)
+      case _ => None
+    }
+  }
+
+  // ER_KEY_NOT_FOUND See https://mariadb.com/kb/en/library/mariadb-error-codes/
+  object KeyNotFound {
+    def unapply(arg: Throwable): Option[SQLException] = arg match {
+      case e: SQLException if e.getErrorCode == 1032 => Some(e)
+      case _ => None
+    }
+  }
+
+  object IntegrityConstraintViolation {
+    def unapply(arg: Throwable): Option[SQLIntegrityConstraintViolationException] = arg match {
+      case e: SQLIntegrityConstraintViolationException =>
+        Some(e)
+
+      case e: BatchUpdateException if e.getCause.isInstanceOf[SQLIntegrityConstraintViolationException] =>
+        Some(e.getCause.asInstanceOf[SQLIntegrityConstraintViolationException])
+
+      case _ => None
+    }
+  }
+}
+
 trait SlickResultExtensions {
   implicit class DBIOActionExtensions[T](action: DBIO[T]) {
-    def handleIntegrityErrors(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] = {
-      action.asTry.flatMap {
-        case Success(i) =>
-          DBIO.successful(i)
-        case Failure(e: SQLIntegrityConstraintViolationException) =>
-          DBIO.failed(error)
-        case Failure(e: BatchUpdateException) if e.getCause.isInstanceOf[SQLIntegrityConstraintViolationException] =>
-          DBIO.failed(error)
-        case Failure(e: SQLException) if e.getErrorCode == 1032 => // ER_KEY_NOT_FOUND See https://mariadb.com/kb/en/library/mariadb-error-codes/
-          DBIO.failed(error)
-        case Failure(e) =>
-          DBIO.failed(e)
+    import SqlExceptions._
+
+    def mapError(mapping: PartialFunction[Throwable, Throwable])(implicit ec: ExecutionContext): DBIO[T] =
+      recover {
+        case Failure(t) if mapping.isDefinedAt(t) => DBIO.failed(mapping.apply(t))
       }
+
+    def recover(handler: PartialFunction[Try[T], DBIO[T]])(implicit ec: ExecutionContext): DBIO[T] =
+      action.asTry.flatMap{ x =>
+        handler.applyOrElse(x, (t: Try[T]) => t match {
+          case Success(a) => DBIO.successful(a)
+          case Failure(e) => DBIO.failed(e)
+        })
+      }
+
+    def handleForeignKeyError(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] =
+      mapError { case NoReferencedRow(_) => error }
+
+    def handleIntegrityErrors(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] =
+      mapError {
+        case IntegrityConstraintViolation(_) => error
+        case KeyNotFound(_) => error
     }
   }
 
