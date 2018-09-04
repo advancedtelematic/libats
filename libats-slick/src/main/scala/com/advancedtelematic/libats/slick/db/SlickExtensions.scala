@@ -20,7 +20,6 @@ import slick.lifted.{AbstractTable, Rep}
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
-import scala.language.implicitConversions
 
 
 object SlickPipeToUnit {
@@ -61,32 +60,26 @@ trait SlickResultExtensions {
   implicit class DBIOActionExtensions[T](action: DBIO[T]) {
     import SqlExceptions._
 
-    def mapError(mapping: PartialFunction[Throwable, Throwable])(implicit ec: ExecutionContext): DBIO[T] = {
+    def mapError(mapping: PartialFunction[Throwable, Throwable])(implicit ec: ExecutionContext): DBIO[T] =
       recover {
         case Failure(t) if mapping.isDefinedAt(t) => DBIO.failed(mapping.apply(t))
       }
-    }
 
-    def recover(handler: PartialFunction[Try[T], DBIO[T]])(implicit ec: ExecutionContext): DBIO[T] = {
+    def recover(handler: PartialFunction[Try[T], DBIO[T]])(implicit ec: ExecutionContext): DBIO[T] =
       action.asTry.flatMap{ x =>
-        handler.applyOrElse(x, (_: Try[T]) => action)
+        handler.applyOrElse(x, (t: Try[T]) => t match {
+          case Success(a) => DBIO.successful(a)
+          case Failure(e) => DBIO.failed(e)
+        })
       }
-    }
 
-    def handleIntegrityErrors(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] = {
-      action.asTry.flatMap {
-        case Success(_) =>
-          action
+    def handleForeignKeyError(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] =
+      mapError { case NoReferencedRow(_) => error }
 
-        case Failure(IntegrityConstraintViolation(_)) =>
-          DBIO.failed(error)
-
-        case Failure(KeyNotFound(_)) =>
-          DBIO.failed(error)
-
-        case Failure(e) =>
-          DBIO.failed(e)
-      }
+    def handleIntegrityErrors(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] =
+      mapError {
+        case IntegrityConstraintViolation(_) => error
+        case KeyNotFound(_) => error
     }
   }
 

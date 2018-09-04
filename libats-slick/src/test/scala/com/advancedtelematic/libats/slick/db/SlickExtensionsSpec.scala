@@ -1,25 +1,16 @@
 package com.advancedtelematic.libats.slick.db
 
-import java.time.Instant
-import java.util.UUID
-
-import akka.http.scaladsl.model.headers.LinkParams.title
-import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
 import com.advancedtelematic.libats.test.DatabaseSpec
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds, Span}
+import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{FunSuite, Matchers}
-import slick.lifted.TableQuery
 import slick.jdbc.MySQLProfile.api._
+import slick.lifted.TableQuery
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NoStackTrace
 
 object SlickExtensionsSpec {
-  import SlickAnyVal._
-  import SlickUUIDKey._
-  import SlickExtensions._
 
   case class Book(id: Long, title: String, code: Option[String] = None)
 
@@ -50,8 +41,8 @@ object SlickExtensionsSpec {
 
 
 class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with DatabaseSpec {
-  import SlickExtensionsSpec._
   import SlickExtensions._
+  import SlickExtensionsSpec._
 
   val Error = new Exception("Expected Error") with NoStackTrace
 
@@ -94,18 +85,24 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
   }
 
   test("handleIntegrityErrors works with mariadb 10.2") {
-    val error = new RuntimeException("[test] expected error") with NoStackTrace
     val g = BookMeta(-1, -1, 0)
-    val f = db.run(bookMeta.insertOrUpdate(g).handleIntegrityErrors(error))
+    val f = db.run(bookMeta.insertOrUpdate(g).handleIntegrityErrors(Error))
 
-    f.failed.futureValue shouldBe error
+    f.failed.futureValue shouldBe Error
   }
 
-  test("handleForeignKeyError") {
-    val error = new RuntimeException("[test] expected error") with NoStackTrace
+  test("handleForeignKeyError throws the expected error") {
     val g = BookMeta(1, 1984, 0)
-    val f = db.run((bookMeta += g).mapError { case SqlExceptions.NoReferencedRow(_) => error })
+    val f = db.run((bookMeta += g).handleForeignKeyError(Error))
 
-    f.failed.futureValue shouldBe error
+    f.failed.futureValue shouldBe Error
+  }
+
+  test("handleForeignKeyError ignores the error when FK exists") {
+    val b = Book(15, "The Count of Monte Cristo", Some("9781377261379"))
+    val bm = BookMeta(15, 15, 0)
+    val f = db.run((books += b).andThen(bookMeta += bm).handleForeignKeyError(Error))
+
+    f.futureValue shouldBe 1
   }
 }
