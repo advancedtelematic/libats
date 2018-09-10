@@ -169,6 +169,14 @@ lazy val libats_auth = (project in file("libats-auth"))
   .settings(libraryDependencies += Library.akkaSlf4j)
   .dependsOn(libats)
 
+lazy val libats_logging = (project in file("libats-logging"))
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(libraryDependencies ++= Library.circe :+ Library.logback)
+  .settings(name := "libats-logging")
+  .settings(Publish.settings)
+
 lazy val libats_root = (project in file("."))
   .enablePlugins(DependencyGraph)
   .settings(Publish.disable)
@@ -176,4 +184,4 @@ lazy val libats_root = (project in file("."))
   .settings(crossScalaVersions := Seq("2.11.11", "2.12.4"))
   .aggregate(libats, libats_http, libats_messaging, libats_messaging_datatype,
     libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka,
-    libats_metrics_finagle, libats_metrics_prometheus)
+    libats_metrics_finagle, libats_metrics_prometheus, libats_logging)

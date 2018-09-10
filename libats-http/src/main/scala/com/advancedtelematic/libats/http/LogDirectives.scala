@@ -4,10 +4,12 @@
  */
 package com.advancedtelematic.libats.http
 
+import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.event.Logging.LogLevel
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.http.scaladsl.server.{Directive0, Directives}
+import com.advancedtelematic.libats.http.logging.RequestLoggingActor
 
 object LogDirectives {
   import Directives._
@@ -18,32 +20,35 @@ object LogDirectives {
 
   def logResponseMetrics(defaultServiceName: String,
                          extraMetrics: MetricsBuilder = (_, _) => Map.empty,
-                         level: LogLevel = Logging.InfoLevel): Directive0 = {
-    val serviceName = envServiceName.getOrElse(defaultServiceName)
+                         level: LogLevel = Logging.InfoLevel)
+                        (implicit system: ActorSystem): Directive0 = {
 
-    extractRequestContext flatMap { ctx =>
+    val serviceName = envServiceName.getOrElse(defaultServiceName)
+    val requestLoggingActorRef = system.actorOf(RequestLoggingActor.router(level), "request-log-router")
+
+    extractRequestContext.flatMap { ctx =>
       val startAt = System.currentTimeMillis()
+
       mapResponse { resp =>
         val responseTime = System.currentTimeMillis() - startAt
         val allMetrics =
           defaultMetrics(ctx.request, resp, responseTime) ++
-            extraMetrics(ctx.request, resp) ++ Map("service_name" -> serviceName)
+            extraMetrics(ctx.request, resp) ++ Map("http_service_name" -> serviceName)
 
-        ctx.log.log(level, formatResponseLog(allMetrics))
+        requestLoggingActorRef ! RequestLoggingActor.LogMsg(formatResponseLog(allMetrics), allMetrics)
 
         resp
       }
     }
   }
 
-  private def defaultMetrics(request: HttpRequest, response: HttpResponse, serviceTime: Long):
-  Map[String, String] = {
+  private def defaultMetrics(request: HttpRequest, response: HttpResponse, serviceTime: Long): Map[String, String] = {
     Map(
-      "method" -> request.method.name,
-      "path" -> request.uri.path.toString,
-      "query" -> s"'${request.uri.rawQueryString.getOrElse("").toString}'",
-      "stime" -> serviceTime.toString,
-      "status" -> response.status.intValue.toString
+      "http_method" -> request.method.name,
+      "http_path" -> request.uri.path.toString,
+      "http_query" -> s"'${request.uri.rawQueryString.getOrElse("").toString}'",
+      "http_stime" -> serviceTime.toString,
+      "http_status" -> response.status.intValue.toString
     )
   }
 

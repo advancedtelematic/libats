@@ -11,12 +11,15 @@ import akka.event.LoggingAdapter
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.{HttpResponse, StatusCode, StatusCodes, Uri}
 import akka.http.scaladsl.server.{Directives, ExceptionHandler, _}
+import cats.Show
 import com.advancedtelematic.libats.data.{ErrorCode, ErrorCodes, ErrorRepresentation}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.syntax._
 import com.advancedtelematic.libats.codecs.CirceUuid._
 import io.circe.Json
 import cats.syntax.option._
+import cats.syntax.show
+import shapeless.{Generic, HNil}
 
 import scala.reflect.ClassTag
 import scala.util.control.NoStackTrace
@@ -49,7 +52,10 @@ object Errors {
                                 causeCode: ErrorCode = ErrorCodes.RemoteServiceError,
                                 cause: Option[ErrorRepresentation] = None,
                                 errorId: UUID = UUID.randomUUID()
-                               ) extends Throwable(s"Remote Service Error: $msg") with NoStackTrace
+                               ) extends Exception(s"Remote Service Error: $msg") with NoStackTrace
+
+  case class MissingEntityId[T](id: T)(implicit ct: ClassTag[T], show: Show[T]) extends
+    Error(ErrorCodes.MissingEntity, StatusCodes.NotFound, s"Missing entity: ${ct.runtimeClass.getSimpleName} ${show.show(id)}")
 
   case class MissingEntity[T]()(implicit ct: ClassTag[T]) extends
     Error(ErrorCodes.MissingEntity, StatusCodes.NotFound, s"Missing entity: ${ct.runtimeClass.getSimpleName}")
