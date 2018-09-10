@@ -30,13 +30,13 @@ object Errors {
                        val responseCode: StatusCode,
                        val msg: String,
                        val cause: Option[Throwable] = None,
-                       val errorId: UUID = UUID.randomUUID()) extends Throwable(msg, cause.orNull) with NoStackTrace
+                       val errorId: UUID = UUID.randomUUID()) extends Exception(msg, cause.orNull) with NoStackTrace
 
   case class JsonError(code: ErrorCode,
                        responseCode: StatusCode,
                        json: Json,
                        msg: String,
-                       errorId: UUID = UUID.randomUUID()) extends Throwable(msg) with NoStackTrace
+                       errorId: UUID = UUID.randomUUID()) extends Exception(msg) with NoStackTrace
 
   case class RawError(code: ErrorCode,
                       responseCode: StatusCode,
