@@ -2,23 +2,16 @@ package com.advancedtelematic.libats.logging
 
 import java.time.Instant
 
-import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.pattern.{TargetLengthBasedClassNameAbbreviator, ThrowableProxyConverter}
 import ch.qos.logback.classic.spi.ILoggingEvent
-import io.circe.{Encoder, Json}
-import io.circe.syntax._
 import io.circe.java8.time._
+import io.circe.syntax._
+import io.circe.{Encoder, Json}
 
 import scala.collection.JavaConverters._
 
-object CirceLayoutCodecs {
-  implicit val levelEncoder: Encoder[Level] = Encoder.encodeString.contramap(_.toString)
-}
-
-class CirceEncoder extends ch.qos.logback.core.encoder.EncoderBase[ILoggingEvent] {
-  import CirceLayoutCodecs._
-
+class JsonEncoder extends ch.qos.logback.core.encoder.EncoderBase[ILoggingEvent] {
   private var includeContext = false
   private var includeThread = false
   private var includeMdc = false
@@ -28,6 +21,8 @@ class CirceEncoder extends ch.qos.logback.core.encoder.EncoderBase[ILoggingEvent
 
   private val throwableProxyConverter = new ThrowableProxyConverter
   private val abbreviator = new TargetLengthBasedClassNameAbbreviator(loggerLength)
+
+  implicit private val levelEncoder: Encoder[Level] = Encoder.encodeString.contramap(_.toString)
 
   def setLoggerLength(value: Int): Unit = loggerLength = 36
 

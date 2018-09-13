@@ -20,7 +20,7 @@ using the following settings:
 
 ```xml
 <appender name="json" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="com.advancedtelematic.libats.logging.CirceEncoder">
+        <encoder class="com.advancedtelematic.libats.logging.JsonEncoder">
             <includeContext>false</includeContext>
             <includeThread>false</includeThread>
             <includeMdc>false</includeMdc>
@@ -35,7 +35,7 @@ using the following settings:
 
 Both the Stdout logger and Json logger can be used with an async
 logger. Use `LOG_APPENDER=async_stdout` or
-`LOG_APPENDER=async_json`. This is recommended for async services
+`LOG_APPENDER=async_json`. This is recommended for async services to
 avoid blocking when logging.
 
 ## Logging Akka-Http Services
