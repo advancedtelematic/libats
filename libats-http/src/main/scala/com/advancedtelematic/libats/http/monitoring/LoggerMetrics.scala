@@ -8,6 +8,7 @@ import com.codahale.metrics.{Metric, MetricFilter, MetricRegistry}
 import io.circe.Json
 import io.circe.syntax._
 import org.slf4j.{Logger, LoggerFactory}
+
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
 
