@@ -14,12 +14,13 @@ Set the `LOG_APPENDER` environment variable to `stdout`.
 
 ## Json Logging
 
-Set the `LOG_APPENDER` environment variable to `json`. Additionally,
-this logging could be overwritten and configued in a `logback.xml`
-using the following settings:
+Set the `LOG_APPENDER` environment variable to `json`.
+
+A different appender can be configured in a `logback.xml` using the
+following settings:
 
 ```xml
-<appender name="json" class="ch.qos.logback.core.ConsoleAppender">
+<appender name="my-appender-json" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="com.advancedtelematic.libats.logging.JsonEncoder">
             <includeContext>false</includeContext>
             <includeThread>false</includeThread>
