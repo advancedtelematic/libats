@@ -60,28 +60,48 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
   }
 
   test("resultHead on a Query returns the error in arg") {
-    val f = db.run(books.filter(_.id === 20l).resultHead(Error))
+    val f = db.run(books.filter(_.id === 15l).resultHead(Error))
     f.failed.futureValue shouldBe Error
   }
 
   test("maybeFilter uses filter if condition is defined") {
     val f = for {
-      _ <- db.run(books += Book(30, "Some book", Option("30 some code")))
-      result <- db.run(books.maybeFilter(_.id === Option(30l)).result)
+      _ <- db.run(books += Book(20, "Some book", Option("20 some code")))
+      result <- db.run(books.maybeFilter(_.id === Option(20l)).result)
     } yield result
 
     f.futureValue.length shouldBe 1
-    f.futureValue.head.id shouldBe 30l
+    f.futureValue.head.id shouldBe 20l
   }
 
   test("maybeFilter ignores filter if condition is None") {
     val f = for {
-      _ <- db.run(books += Book(40, "Some book"))
+      _ <- db.run(books += Book(30, "Some book"))
       result <- db.run(books.maybeFilter(_.id === Option.empty[Long]).result)
     } yield result
 
     f.futureValue.length shouldBe >(1)
-    f.futureValue.map(_.id) should contain(40l)
+    f.futureValue.map(_.id) should contain(30l)
+  }
+
+  test("maybeContains uses string if it is defined") {
+    val f = for {
+      _ <- db.run(books += Book(40, "A very interesting book", Some("30 some code")))
+      result <- db.run(books.maybeContains(_.title, Some("interesting")).result)
+    } yield result
+
+    f.futureValue.length shouldBe 1
+    f.futureValue.head.id shouldBe 40l
+  }
+
+  test("maybeContains gives all elements if string is empty") {
+    val result = db.run(books.maybeContains(_.title, Some("")).result)
+    result.futureValue.length shouldBe 4
+  }
+
+  test("maybeContains gives all elements if string is None") {
+    val result = db.run(books.maybeContains(_.title, None).result)
+    result.futureValue.length shouldBe 4
   }
 
   test("handleIntegrityErrors works with mariadb 10.2") {

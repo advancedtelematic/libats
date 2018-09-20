@@ -11,9 +11,10 @@ import java.util.UUID
 import akka.http.scaladsl.model.Uri
 import com.advancedtelematic.libats.data.PaginationResult
 import com.advancedtelematic.libats.http.Errors
+import com.advancedtelematic.libats.slick.db.SlickExtensions.MappedColumnExtensions
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.Uuid
-import slick.ast.{Node, TypedType}
+import slick.ast.TypedType
 import slick.jdbc.MySQLProfile.api._
 import slick.lifted.{AbstractTable, Rep}
 
@@ -107,8 +108,16 @@ trait SlickResultExtensions {
       DBIOOptionOps(query.take(1).result.headOption).failIfNone(onEmpty)
 
     def maybeFilter(f: E => Rep[Option[Boolean]]): Query[E, U, Seq] =
-      query.withFilter { (e: E) =>
+      query.withFilter { e: E =>
         f(e).getOrElse(true)
+      }
+
+    def maybeContains(f: E => Rep[_], exp: Option[String]): Query[E, U, Seq] =
+      query.withFilter { e: E =>
+        exp match {
+          case Some(s) if s.nonEmpty => f(e).mappedTo[String].like(s"%$s%")
+          case _ => true.bind
+        }
       }
   }
 
@@ -180,32 +189,21 @@ object SlickPagination extends SlickPagination
 object SlickExtensions extends SlickResultExtensions with SlickPagination {
   implicit val UriColumnType = MappedColumnType.base[Uri, String](_.toString(), Uri.apply)
 
-  implicit val uuidColumnType = MappedColumnType.base[UUID, String]( _.toString(), UUID.fromString )
+  implicit val uuidColumnType = MappedColumnType.base[UUID, String](_.toString(), UUID.fromString)
 
-  implicit val javaInstantMapping = {
-    MappedColumnType.base[Instant, Timestamp](
-      dt => Timestamp.from(dt),
-      ts => ts.toInstant)
+  implicit val javaInstantMapping = MappedColumnType.base[Instant, Timestamp](Timestamp.from, _.toInstant)
+
+  implicit class MappedColumnExtensions(c: Rep[_]) {
+    def mappedTo[U: TypedType] = Rep.forNode[U](c.toNode)
   }
 
-  final class MappedExtensionMethods(val n: Node) extends AnyVal {
-
-    def mappedTo[U: TypedType] = Rep.forNode[U](n)
-
-  }
-
-  implicit def mappedColumnExtensions(c: Rep[_]) : MappedExtensionMethods = new MappedExtensionMethods(c.toNode)
-
-  implicit def uuidToJava(refined: Refined[String, Uuid]): Rep[UUID] =
-    UUID.fromString(refined.value).bind
+  implicit def uuidToJava(refined: Refined[String, Uuid]): Rep[UUID] = UUID.fromString(refined.value).bind
 
   implicit class InsertOrUpdateWithKeyOps[Q <: AbstractTable[_], E](tableQuery: TableQuery[Q])
                                                                    (implicit ev: E =:= Q#TableElementType) {
 
-    def insertOrUpdateWithKey(element: E,
-                              primaryKeyQuery: TableQuery[Q] => Query[Q, E, Seq],
-                              onUpdate: E => E
-                             )(implicit ec: ExecutionContext): DBIO[E] = {
+    def insertOrUpdateWithKey(element: E, primaryKeyQuery: TableQuery[Q] => Query[Q, E, Seq], onUpdate: E => E)
+                             (implicit ec: ExecutionContext): DBIO[E] = {
 
       val findQuery = primaryKeyQuery(tableQuery)
 
