@@ -150,36 +150,28 @@ object SlickResultExtensions extends SlickResultExtensions
 
 trait SlickPagination {
   implicit class DBIOPaginateExtensions[E, U](action: Query[E, U, Seq]) {
-    def paginateAndSort[T <% slick.lifted.Ordered](fn: E => T, offset: Long, limit: Long): Query[E, U, Seq] = {
+    def paginate(offset: Long, limit: Long): Query[E, U, Seq] =
+      action
+        .drop(offset)
+        .take(limit)
+
+    def paginateAndSort[T <% slick.lifted.Ordered](fn: E => T, offset: Long, limit: Long): Query[E, U, Seq] =
       action
         .sortBy(fn)
         .drop(offset)
         .take(limit)
-    }
 
-    def paginate(offset: Long, limit: Long): Query[E, U, Seq] = {
-      action
-        .drop(offset)
-        .take(limit)
+    def paginateResult(offset: Long, limit: Long)(implicit ec: ExecutionContext): DBIO[PaginationResult[U]] = {
+      val tot = action.length.result
+      val pag = action.paginate(offset, limit).result
+      tot.zip(pag).map{ case (total, values) => PaginationResult(values, total, offset, limit) }
     }
 
     def paginateAndSortResult[T <% slick.lifted.Ordered](fn: E => T, offset: Long, limit: Long)
                                                         (implicit ec: ExecutionContext): DBIO[PaginationResult[U]] = {
       val tot = action.length.result
       val pag = action.paginateAndSort(fn, offset, limit).result
-
-      tot.zip(pag).map{ case (total, values) =>
-        PaginationResult(total = total, limit = limit, offset = offset, values = values)
-      }
-    }
-
-    def paginateResult(offset: Long, limit: Long)(implicit ec: ExecutionContext): DBIO[PaginationResult[U]] = {
-      val tot = action.length.result
-      val pag = action.paginate(offset, limit).result
-
-      tot.zip(pag).map{ case (total, values) =>
-        PaginationResult(total = total, limit = limit, offset = offset, values = values)
-      }
+      tot.zip(pag).map{ case (total, values) => PaginationResult(values, total, offset, limit) }
     }
   }
 }
