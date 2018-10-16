@@ -1,6 +1,6 @@
 package com.advancedtelematic.libats.data
 
-final case class PaginationResult[A](total: Long, limit: Long, offset: Long, values: Seq[A]) {
+final case class PaginationResult[A](values: Seq[A], total: Long, offset: Long, limit: Long) {
   def map[B](f: A => B): PaginationResult[B] = this.copy(values = values.map(f))
 }
 
