@@ -36,7 +36,7 @@ object MessageBusPublisher {
     lazy private val _logger = LoggerFactory.getLogger(this.getClass)
 
     override def publish[T](msg: T)(implicit ex: ExecutionContext, messageLike: MessageLike[T]): Future[Unit] = {
-      _logger.info(s"Ignoring message publish to bus")
+      _logger.info(s"Ignoring message publish to bus: ${messageLike.streamName} - ${messageLike.id(msg)}")
       Future.successful(())
     }
   }
