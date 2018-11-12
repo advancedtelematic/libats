@@ -69,6 +69,10 @@ object DataType {
     def isSuccess:Boolean = resultCode == 0 || resultCode == 1
   }
 
+  final case class InstallationResult(success: Boolean, code: String, description: String)
+
+  final case class EcuInstallationReport(result: InstallationResult, target: Seq[String], report: Option[Json])
+
   final case class EventType(id: String, version: Int)
 
   final case class Event(deviceUuid: DeviceId,
@@ -77,11 +81,4 @@ object DataType {
                          deviceTime: Instant,
                          receivedAt: Instant,
                          payload: Json)
-
-  case class CorrelationId(id: String) extends AnyVal
-  object CorrelationId {
-    val namespace = "here-ota"
-    def make(resource: String, id: String) = CorrelationId(s"$namespace:$resource:$id")
-    def from(id: UpdateId): CorrelationId = make("mtus", id.uuid.toString)
-  }
 }
