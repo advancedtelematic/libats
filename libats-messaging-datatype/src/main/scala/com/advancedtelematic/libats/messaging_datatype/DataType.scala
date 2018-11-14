@@ -4,7 +4,7 @@ import java.time.Instant
 import java.util.UUID
 
 import com.advancedtelematic.libats.data.DataType.HashMethod.HashMethod
-import com.advancedtelematic.libats.data.DataType.{HashMethod, ValidChecksum}
+import com.advancedtelematic.libats.data.DataType.ValidChecksum
 import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
 import eu.timepit.refined.api.{Refined, Validate}
 import io.circe.Json
@@ -77,4 +77,11 @@ object DataType {
                          deviceTime: Instant,
                          receivedAt: Instant,
                          payload: Json)
+
+  case class CorrelationId(id: String) extends AnyVal
+  object CorrelationId {
+    val namespace = "here-ota"
+    def make(resource: String, id: String) = CorrelationId(s"$namespace:$resource:$id")
+    def from(id: UpdateId): CorrelationId = make("mtus", id.uuid.toString)
+  }
 }
