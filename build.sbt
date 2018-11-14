@@ -65,11 +65,11 @@ lazy val commonConfigs = Seq.empty
 
 lazy val commonSettings = Seq(
   organization := "com.advancedtelematic",
-  scalaVersion := "2.11.11",
-  crossScalaVersions := Seq("2.11.11", "2.12.2"),
+  scalaVersion := "2.12.7",
   scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature", "-Ypartial-unification"),
   resolvers += "ATS Releases" at "http://nexus.advancedtelematic.com:8081/content/repositories/releases",
   resolvers += "ATS Snapshots" at "http://nexus.advancedtelematic.com:8081/content/repositories/snapshots",
+  resolvers += "Central" at "http://nexus.advancedtelematic.com:8081/content/repositories/central",
   resolvers += "version99 Empty loggers" at "http://version99.qos.ch",
   buildInfoOptions += BuildInfoOption.ToMap,
   buildInfoOptions += BuildInfoOption.BuildTime) ++ Versioning.settings
@@ -180,8 +180,7 @@ lazy val libats_logging = (project in file("libats-logging"))
 lazy val libats_root = (project in file("."))
   .enablePlugins(DependencyGraph)
   .settings(Publish.disable)
-  .settings(scalaVersion := "2.11.11")
-  .settings(crossScalaVersions := Seq("2.11.11", "2.12.4"))
+  .settings(scalaVersion := "2.12.7")
   .aggregate(libats, libats_http, libats_messaging, libats_messaging_datatype,
     libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka,
     libats_metrics_finagle, libats_metrics_prometheus, libats_logging)
