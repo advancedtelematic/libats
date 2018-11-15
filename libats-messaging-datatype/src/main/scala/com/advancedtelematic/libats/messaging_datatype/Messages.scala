@@ -6,11 +6,12 @@ import java.time.Instant
 import java.util.UUID
 
 import cats.syntax.either._
-import com.advancedtelematic.libats.data.DataType.{Checksum, Namespace}
+import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Namespace}
 import com.advancedtelematic.libats.data.RefinedUtils._
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
 import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceInstallationReport
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
@@ -69,6 +70,15 @@ object MessageCodecs {
 
   implicit val operationResultEncoder: Encoder[OperationResult] = deriveEncoder
   implicit val operationResultDecoder: Decoder[OperationResult] = deriveDecoder
+
+  implicit val installationResultEncoder: Encoder[InstallationResult] = deriveEncoder
+  implicit val installationResultDecoder: Decoder[InstallationResult] = deriveDecoder
+
+  implicit val ecuInstallationReportEncoder: Encoder[EcuInstallationReport] = deriveEncoder
+  implicit val ecuInstallationReportDecoder: Decoder[EcuInstallationReport] = deriveDecoder
+
+  implicit val deviceInstallationReportEncoder: Encoder[DeviceInstallationReport] = deriveEncoder
+  implicit val deviceInstallationReportDecoder: Decoder[DeviceInstallationReport] = deriveDecoder
 
   @deprecated("use data type from libtuf-server", "v0.1.1-21")
   implicit val deviceUpdateReportEncoder: Encoder[DeviceUpdateReport] = deriveEncoder
@@ -134,6 +144,13 @@ object Messages {
   case class DeviceUpdateReport(namespace: Namespace, device: DeviceId, updateId: UpdateId, timestampVersion: Int,
                                 operationResult: Map[EcuSerial, OperationResult], resultCode: Int)
 
+  final case class DeviceInstallationReport(namespace: Namespace, device: DeviceId,
+                                            correlationId: CorrelationId,
+                                            result: InstallationResult,
+                                            ecuReports: Map[EcuSerial, EcuInstallationReport],
+                                            report: Option[Json],
+                                            receivedAt: Instant)
+
   implicit val userCreatedMessageLike = MessageLike[UserCreated](_.id)
 
   implicit val deviceSeenMessageLike = MessageLike.derive[DeviceSeen](_.uuid.toString)
@@ -162,4 +179,6 @@ object Messages {
 
   @deprecated("use data type from libtuf_server", "v0.1.1-21")
   implicit val deviceUpdateReportMessageLike = MessageLike[DeviceUpdateReport](_.device.toString)
+
+  implicit val deviceInstallationReportMessageLike = MessageLike[DeviceInstallationReport](_.device.toString)
 }
