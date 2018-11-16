@@ -23,13 +23,17 @@ object DataType {
     ValidationUtils.validHexValidation(ValidChecksum(), length = 64)
 
   sealed trait CorrelationId
-  final case class CampaignId(value: UUID) extends CorrelationId
-  final case class MultiTargetUpdateId(value: UUID) extends CorrelationId
+  final case class CampaignId(value: UUID) extends CorrelationId {
+    override def toString = s"urn:here-ota:campaign:$value"
+  }
+  final case class MultiTargetUpdateId(value: UUID) extends CorrelationId {
+    override def toString = s"urn:here-ota:mtu:$value"
+  }
 
   object CorrelationId {
     private[this] val CorrelationIdRe = """^urn:here-ota:(mtu|campaign):([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})$"""r
 
-    implicit val DecoderInstance: Decoder[CorrelationId] = Decoder.decodeString.emap {
+    def fromString(value: String) = value match {
       case CorrelationIdRe("mtu", uuid) =>
         Right(MultiTargetUpdateId(UUID.fromString(uuid)))
 
@@ -39,9 +43,8 @@ object DataType {
         Left(s"'$x' is an invalid CorrelationId")
     }
 
-    implicit val EncoderInstance: Encoder[CorrelationId] = Encoder.encodeString.contramap {
-      case CampaignId(x) => s"urn:here-ota:campaign:$x"
-      case MultiTargetUpdateId(x) => s"urn:here-ota:mtu:$x"
-    }
+    implicit val DecoderInstance: Decoder[CorrelationId] = Decoder.decodeString.emap(CorrelationId.fromString(_))
+
+    implicit val EncoderInstance: Encoder[CorrelationId] = Encoder.encodeString.contramap(_.toString)
   }
 }

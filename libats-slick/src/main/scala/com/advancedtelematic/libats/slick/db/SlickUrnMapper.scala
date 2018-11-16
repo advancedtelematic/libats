@@ -7,8 +7,8 @@ import io.circe.syntax._
 
 object SlickUrnMapper {
   implicit val correlationIdMapper = MappedColumnType.base[CorrelationId, String](
-    _.asJson.noSpaces,
-    x => decode[CorrelationId](x) match {
+    _.toString,
+    CorrelationId.fromString(_) match {
       case Right(x) => x
       case Left(err) => throw new Exception(err)
     }
