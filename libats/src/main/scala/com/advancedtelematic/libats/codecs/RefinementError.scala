@@ -12,3 +12,5 @@ import scala.util.control.NoStackTrace
   */
 
 case class RefinementError[T](o: T, msg: String) extends Exception(msg) with NoStackTrace
+
+case class ValidationError(msg: String) extends Exception(msg) with NoStackTrace

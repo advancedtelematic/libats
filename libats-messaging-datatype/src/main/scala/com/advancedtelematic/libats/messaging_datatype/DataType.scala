@@ -3,6 +3,7 @@ package com.advancedtelematic.libats.messaging_datatype
 import java.time.Instant
 import java.util.UUID
 
+import com.advancedtelematic.libats.codecs.ValidationError
 import com.advancedtelematic.libats.data.DataType.HashMethod.HashMethod
 import com.advancedtelematic.libats.data.DataType.ValidChecksum
 import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
@@ -38,10 +39,13 @@ object DataType {
       ValidCommit()
     )
 
-  final case class EcuIdentifier(value: String) extends AnyVal {
-    def apply(v: String): EcuIdentifier = {
-      require(value.length >= 1 && value.length <= 64, s"$value is not between 1 and 64 chars long.")
-      this(v)
+  final case class EcuIdentifier(value: String) extends AnyVal
+  object EcuIdentifier {
+    def apply(v: String): Either[ValidationError, EcuIdentifier] = {
+      if(v.length < 1 || v.length > 64)
+        Left(ValidationError(s"Invalid value for EcuIdentifier. $v is not between 1 and 64 chars long."))
+      else
+        Right(new EcuIdentifier(v))
     }
   }
 

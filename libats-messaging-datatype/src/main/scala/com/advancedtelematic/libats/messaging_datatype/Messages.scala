@@ -64,7 +64,7 @@ object MessageCodecs {
   implicit val bsDiffGenerationFailedDecoder: Decoder[BsDiffGenerationFailed] = deriveDecoder
 
   implicit val ecuIdentifierKeyEncoder: KeyEncoder[EcuIdentifier] = KeyEncoder[String].contramap(_.value)
-  implicit val ecuIdentifierKeyDecoder: KeyDecoder[EcuIdentifier] = KeyDecoder.instance { v => Try(EcuIdentifier.apply(v)).toOption }
+  implicit val ecuIdentifierKeyDecoder: KeyDecoder[EcuIdentifier] = KeyDecoder.instance(EcuIdentifier(_).toOption)
 
   implicit val operationResultEncoder: Encoder[OperationResult] = deriveEncoder
   implicit val operationResultDecoder: Decoder[OperationResult] = deriveDecoder

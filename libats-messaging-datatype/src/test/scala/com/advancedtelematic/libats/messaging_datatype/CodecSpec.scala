@@ -1,5 +1,6 @@
 package com.advancedtelematic.libats.messaging_datatype
 
+import cats.syntax.either._
 import cats.syntax.show._
 import com.advancedtelematic.libats.data.DataType.{HashMethod, Namespace, ValidChecksum}
 import com.advancedtelematic.libats.data.RefinedUtils._
@@ -21,8 +22,8 @@ class CodecSpec extends FunSuite with Matchers {
   val operationResultFailed =
     OperationResult(targetA, hashA, 22, 19, "Failed")
 
-  val ecu1 = EcuIdentifier("ecu1")
-  val ecu2 = EcuIdentifier("ecu2")
+  val ecu1 = EcuIdentifier("ecu1").valueOr(throw _)
+  val ecu2 = EcuIdentifier("ecu2").valueOr(throw _)
 
   val device = DeviceId.generate
   val update = UpdateId.generate
