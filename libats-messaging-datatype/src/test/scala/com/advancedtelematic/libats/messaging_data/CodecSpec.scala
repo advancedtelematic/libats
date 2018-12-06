@@ -21,8 +21,8 @@ class CodecSpec extends FunSuite with Matchers {
   val operationResultFailed =
     OperationResult(targetA, hashA, 22, 19, "Failed")
 
-  val ecu1 = "ecu1".refineTry[ValidEcuSerial].get
-  val ecu2 = "ecu2".refineTry[ValidEcuSerial].get
+  val ecu1 = EcuIdentifier("ecu1")
+  val ecu2 = EcuIdentifier("ecu2")
 
   val device = DeviceId.generate
   val update = UpdateId.generate

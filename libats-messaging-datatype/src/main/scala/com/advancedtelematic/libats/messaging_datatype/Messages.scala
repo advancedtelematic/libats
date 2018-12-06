@@ -5,9 +5,7 @@ import java.net.URI
 import java.time.Instant
 import java.util.UUID
 
-import cats.syntax.either._
 import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Namespace}
-import com.advancedtelematic.libats.data.RefinedUtils._
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
 import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
@@ -15,6 +13,8 @@ import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceInstallati
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
+
+import scala.util.Try
 
 object MessageCodecs {
   import com.advancedtelematic.libats.codecs.CirceCodecs._
@@ -63,10 +63,8 @@ object MessageCodecs {
   implicit val bsDiffGenerationFailedEncoder: Encoder[BsDiffGenerationFailed] = deriveEncoder
   implicit val bsDiffGenerationFailedDecoder: Decoder[BsDiffGenerationFailed] = deriveDecoder
 
-  implicit val keyDecoderEcuSerial: KeyDecoder[EcuSerial] = KeyDecoder.instance { value =>
-    value.refineTry[ValidEcuSerial].toOption
-  }
-  implicit val keyEncoderEcuSerial: KeyEncoder[EcuSerial] = KeyEncoder[String].contramap(_.value)
+  implicit val ecuIdentifierKeyEncoder: KeyEncoder[EcuIdentifier] = KeyEncoder[String].contramap(_.value)
+  implicit val ecuIdentifierKeyDecoder: KeyDecoder[EcuIdentifier] = KeyDecoder.instance { v => Try(EcuIdentifier.apply(v)).toOption }
 
   implicit val operationResultEncoder: Encoder[OperationResult] = deriveEncoder
   implicit val operationResultDecoder: Decoder[OperationResult] = deriveDecoder
@@ -95,7 +93,7 @@ object MessageCodecs {
       device <- cursor.downField("device").as[DeviceId]
       updateId <- cursor.downField("updateId").as[UpdateId]
       timestampVersion <- cursor.downField("timestampVersion").as[Int]
-      operationResult <- cursor.downField("operationResult").as[Map[EcuSerial, OperationResult]]
+      operationResult <- cursor.downField("operationResult").as[Map[EcuIdentifier, OperationResult]]
       op_resultCode <- cursor.downField("resultCode").as[Option[Int]]
       resultCode = op_resultCode.getOrElse(if (operationResult.forall(_._2.isSuccess)) 0 else 19)
     } yield DeviceUpdateReport(namespace, device, updateId, timestampVersion, operationResult, resultCode)
@@ -142,12 +140,13 @@ object Messages {
 
   @deprecated("use data type from libtuf_server", "v0.1.1-21")
   case class DeviceUpdateReport(namespace: Namespace, device: DeviceId, updateId: UpdateId, timestampVersion: Int,
-                                operationResult: Map[EcuSerial, OperationResult], resultCode: Int)
+                                operationResult: Map[EcuIdentifier, OperationResult], resultCode: Int)
 
-  final case class DeviceInstallationReport(namespace: Namespace, device: DeviceId,
+  final case class DeviceInstallationReport(namespace: Namespace,
+                                            device: DeviceId,
                                             correlationId: CorrelationId,
                                             result: InstallationResult,
-                                            ecuReports: Map[EcuSerial, EcuInstallationReport],
+                                            ecuReports: Map[EcuIdentifier, EcuInstallationReport],
                                             report: Option[Json],
                                             receivedAt: Instant)
 

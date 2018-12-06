@@ -38,11 +38,12 @@ object DataType {
       ValidCommit()
     )
 
-  final case class ValidEcuSerial()
-  type EcuSerial = Refined[String, ValidEcuSerial]
-
-  implicit val validEcuSerial: Validate.Plain[String, ValidEcuSerial] =
-    validInBetween(min = 1, max = 64, ValidEcuSerial())
+  final case class EcuIdentifier(value: String) extends AnyVal {
+    def apply(v: String): EcuIdentifier = {
+      require(value.length >= 1 && value.length <= 64, s"$value is not between 1 and 64 chars long.")
+      this(v)
+    }
+  }
 
   case class DeviceId(uuid: UUID) extends UUIDKey
   object DeviceId extends UUIDKeyObj[DeviceId]
