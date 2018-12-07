@@ -81,4 +81,16 @@ object DataType {
                          deviceTime: Instant,
                          receivedAt: Instant,
                          payload: Json)
+
+  object CampaignUpdateStatus extends Enumeration {
+    type CampaignUpdateStatus = Value
+
+    val Activated, Available, Accepted, Canceling = Value
+  }
+
+  object DeviceUpdateStatus extends Enumeration {
+    type DeviceUpdateStatus = Value
+
+    val Available, InFlight, Canceled, Failed, Finished = Value
+  }
 }
