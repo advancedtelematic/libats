@@ -3,9 +3,9 @@ package com.advancedtelematic.libats.http.tracing
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
 import akka.http.scaladsl.server.Directive1
-import brave.{Span, Tracing => BraveTracing}
 import brave.http.{HttpServerAdapter, HttpServerHandler, HttpTracing}
 import brave.propagation.TraceContext
+import brave.{Span, Tracing => BraveTracing}
 import com.advancedtelematic.libats.http.tracing.Tracing.{RequestTracing, Tracing}
 import zipkin2.reporter.AsyncReporter
 import zipkin2.reporter.okhttp3.OkHttpSender
@@ -34,29 +34,35 @@ class ZipkinTracing(httpTracing: HttpTracing) extends Tracing {
   private def extractor(tracing: HttpTracing): TraceContext.Extractor[HttpRequest] =
     tracing.tracing.propagation.extractor((carrier: HttpRequest, key: String) => carrier.headers.find(_.name() == key).map(_.value()).orNull)
 
-  override def traceRequests: Directive1[RequestTracing] = extractRequest.flatMap { req =>
-    val span = createAkkaHandler(httpTracing).handleReceive(extractor(httpTracing), req)
+  private def traceRequest(req: HttpRequest): Boolean =
+    req.uri.path.startsWith(Uri.Path("/health")) == false
 
-    req.headers.foreach { h =>
-      span.tag(h.name(), h.value())
-    }
+  override def traceRequests: Directive1[RequestTracing] = extractRequest.flatMap {
+    case req if traceRequest(req) =>
+      val span = createAkkaHandler(httpTracing).handleReceive(extractor(httpTracing), req)
 
-    mapResponse { resp =>
-      val headers = TrieMap.empty[String, String]
-
-      httpTracing.tracing().propagation
-        .injector((_: HttpResponse, key: String, value: String) => headers.put(key, value))
-        .inject(span.context(), resp)
-
-      val respWithHeaders = headers.foldLeft(resp) { case (acc, (k, v)) =>
-        acc.addHeader(RawHeader(k, v))
+      req.headers.foreach { h =>
+        span.tag(h.name(), h.value())
       }
 
-      createAkkaHandler(httpTracing).handleSend(respWithHeaders, null, span)
+      mapResponse { resp =>
+        val headers = TrieMap.empty[String, String]
 
-      respWithHeaders
+        httpTracing.tracing().propagation
+          .injector((_: HttpResponse, key: String, value: String) => headers.put(key, value))
+          .inject(span.context(), resp)
 
-    }.tflatMap(_ => provide(new ZipkinRequestTracing(httpTracing, span)))
+        val respWithHeaders = headers.foldLeft(resp) { case (acc, (k, v)) =>
+          acc.addHeader(RawHeader(k, v))
+        }
+
+        createAkkaHandler(httpTracing).handleSend(respWithHeaders, null, span)
+
+        respWithHeaders
+
+      }.tflatMap(_ => provide(new ZipkinRequestTracing(httpTracing, span)))
+    case _ =>
+      provide(new NullRequestTracing)
   }
 
   override def shutdown: Unit = {
@@ -80,7 +86,7 @@ class ZipkinRequestTracing(httpTracing: HttpTracing, requestSpan: Span) extends 
     headers.toMap
   }
 
-  def finishSpan: Unit = requestSpan.finish()
+  def finishSpan(): Unit = requestSpan.finish()
 }
 
 protected class ZipkinTracingHttpAdapter extends HttpServerAdapter[HttpRequest, HttpResponse] {
