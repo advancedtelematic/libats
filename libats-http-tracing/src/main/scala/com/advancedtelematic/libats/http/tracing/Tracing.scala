@@ -12,7 +12,7 @@ object Tracing {
   trait Tracing {
     def traceRequests: Directive1[RequestTracing]
 
-    def shutdown: Unit
+    def shutdown(): Unit
   }
 
   trait RequestTracing {
