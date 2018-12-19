@@ -54,6 +54,12 @@ val Library = new {
     "org.typelevel" %% "cats-kernel" % Version.cats,
     "org.typelevel" %% "cats-macros" % Version.cats
   )
+
+  val brave = Seq(
+    "io.zipkin.brave" % "brave" % "5.2.0",
+    "io.zipkin.brave" % "brave-instrumentation-http" % "5.2.0",
+    "io.zipkin.reporter2" % "zipkin-sender-okhttp3" % "2.7.7"
+  )
 }
 
 onLoad in Global := { s => "dependencyUpdates" :: s }
@@ -66,7 +72,7 @@ lazy val commonConfigs = Seq.empty
 lazy val commonSettings = Seq(
   organization := "com.advancedtelematic",
   scalaVersion := "2.12.7",
-  scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature", "-Ypartial-unification"),
+  scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature", "-Ypartial-unification", "-Xexperimental"),
   resolvers += "ATS Releases" at "http://nexus.advancedtelematic.com:8081/content/repositories/releases",
   resolvers += "ATS Snapshots" at "http://nexus.advancedtelematic.com:8081/content/repositories/snapshots",
   resolvers += "Central" at "http://nexus.advancedtelematic.com:8081/content/repositories/central",
@@ -88,6 +94,17 @@ lazy val libats_http = (project in file("libats-http"))
   .settings(commonSettings)
   .settings(libraryDependencies ++= Library.akkaHttp)
   .settings(libraryDependencies ++= Library.jvmMetrics)
+  .settings(Publish.settings)
+  .dependsOn(libats)
+
+lazy val libats_http_tracing = (project in file("libats-http-tracing"))
+  .settings(name := "libats-http-tracing")
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
+  .configs(commonConfigs: _*)
+  .settings(commonDeps)
+  .settings(commonSettings)
+  .dependsOn(libats_http)
+  .settings(libraryDependencies ++= Library.brave)
   .settings(Publish.settings)
   .dependsOn(libats)
 
@@ -181,6 +198,6 @@ lazy val libats_root = (project in file("."))
   .enablePlugins(DependencyGraph)
   .settings(Publish.disable)
   .settings(scalaVersion := "2.12.7")
-  .aggregate(libats, libats_http, libats_messaging, libats_messaging_datatype,
+  .aggregate(libats, libats_http, libats_http_tracing, libats_messaging, libats_messaging_datatype,
     libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka,
     libats_metrics_finagle, libats_metrics_prometheus, libats_logging)
