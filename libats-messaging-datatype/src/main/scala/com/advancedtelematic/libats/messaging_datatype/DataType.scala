@@ -81,4 +81,10 @@ object DataType {
                          deviceTime: Instant,
                          receivedAt: Instant,
                          payload: Json)
+
+  object DeviceUpdateStatus extends Enumeration {
+    type DeviceUpdateStatus = Value
+
+    val Available, InFlight, Canceled, Failed, Finished = Value
+  }
 }

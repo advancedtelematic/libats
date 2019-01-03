@@ -8,9 +8,13 @@ import java.util.UUID
 import cats.syntax.either._
 import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Namespace}
 import com.advancedtelematic.libats.data.RefinedUtils._
+import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceUpdateStatus.DeviceUpdateStatus
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{
+  BsDiffGenerationFailed, BsDiffRequest, DeltaGenerationFailed, DeltaRequest,
+  CampaignLaunched, DeviceEventMessage, DeviceUpdateEvent, DeviceUpdateReport,
+  GeneratedBsDiff, GeneratedDelta, UserCreated}
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceInstallationReport
 import io.circe._
 import io.circe.generic.semiauto._
@@ -35,6 +39,12 @@ object MessageCodecs {
       ns    <- c.get[String]("namespace").map(Namespace.apply)
     } yield DeviceEventMessage(ns, event)
   }
+
+  implicit val deviceUpdateStatusEncoder: Encoder[DeviceUpdateStatus] = Encoder.enumEncoder(DeviceUpdateStatus)
+  implicit val deviceUpdateStatusDecoder: Decoder[DeviceUpdateStatus] = Decoder.enumDecoder(DeviceUpdateStatus)
+
+  implicit val deviceUpdateEventEncoder: Encoder[DeviceUpdateEvent] = deriveEncoder[DeviceUpdateEvent]
+  implicit val deviceUpdateEventDecoder: Decoder[DeviceUpdateEvent] = deriveDecoder[DeviceUpdateEvent]
 
   implicit val userCreatedEncoder: Encoder[UserCreated] = deriveEncoder
   implicit val userCreatedDecoder: Decoder[UserCreated] = deriveDecoder
@@ -140,6 +150,12 @@ object Messages {
 
   case class ImageStorageUsage(namespace: Namespace, timestamp: Instant, byteCount: Long)
 
+  final case class DeviceUpdateEvent(namespace: Namespace,
+                                     eventTime: Instant,
+                                     correlationId: CorrelationId,
+                                     deviceUuid: DeviceId,
+                                     updateStatus: DeviceUpdateStatus)
+
   @deprecated("use data type from libtuf_server", "v0.1.1-21")
   case class DeviceUpdateReport(namespace: Namespace, device: DeviceId, updateId: UpdateId, timestampVersion: Int,
                                 operationResult: Map[EcuSerial, OperationResult], resultCode: Int)
@@ -176,6 +192,8 @@ object Messages {
   implicit val treeHubCommitMessageLike = MessageLike.derive[TreehubCommit](_.commit.value)
 
   implicit val deviceEventMessageType = MessageLike[DeviceEventMessage](_.namespace.get)
+
+  implicit val deviceUpdateEventType = MessageLike[DeviceUpdateEvent](_.namespace.get)
 
   @deprecated("use data type from libtuf_server", "v0.1.1-21")
   implicit val deviceUpdateReportMessageLike = MessageLike[DeviceUpdateReport](_.device.toString)
