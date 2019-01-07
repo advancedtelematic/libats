@@ -47,4 +47,5 @@ object DataType {
     implicit val DecoderInstance: Decoder[CorrelationId] = Decoder.decodeString.emap(CorrelationId.fromString)
     implicit val EncoderInstance: Encoder[CorrelationId] = Encoder.encodeString.contramap(_.toString)
   }
+
 }

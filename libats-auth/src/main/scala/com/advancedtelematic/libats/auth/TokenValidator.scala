@@ -3,7 +3,6 @@ package com.advancedtelematic.libats.auth
 import akka.actor.ActorSystem
 import akka.http.scaladsl.client.RequestBuilding._
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.{FormData, StatusCodes, Uri}
 import akka.http.scaladsl.model.headers.{Authorization, BasicHttpCredentials, OAuth2BearerToken}
 import akka.http.scaladsl.unmarshalling.Unmarshal

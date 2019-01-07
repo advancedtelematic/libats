@@ -1,4 +1,4 @@
-package com.advancedtelematic.libats.test.data
+package com.advancedtelematic.libats.data
 
 import java.util.UUID
 
