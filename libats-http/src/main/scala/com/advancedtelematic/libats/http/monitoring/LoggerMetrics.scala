@@ -4,12 +4,12 @@ import akka.http.scaladsl.util.FastFuture
 import ch.qos.logback.classic.LoggerContext
 import com.advancedtelematic.libats.http.HealthMetrics
 import com.codahale.metrics.logback.InstrumentedAppender
-import com.codahale.metrics.{Metric, MetricFilter, MetricRegistry}
+import com.codahale.metrics.{MetricFilter, MetricRegistry}
 import io.circe.Json
 import io.circe.syntax._
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 trait LoggerMetricsSupport {
@@ -30,12 +30,10 @@ trait LoggerMetricsSupport {
 
 class LoggerMetrics(metricRegistry: MetricRegistry) extends HealthMetrics {
 
-  lazy val filter: MetricFilter = new MetricFilter {
-    override def matches(name: String, metric: Metric): Boolean = name.startsWith("log")
-  }
+  lazy val filter: MetricFilter = (name: String, _) => name.startsWith("log")
 
   override def metricsJson: Future[Json] = FastFuture.successful {
-    val meters = metricRegistry.getMeters(filter)
+    val meters = metricRegistry.getMeters(filter).asScala
 
     meters.mapValues { v =>
       Map("count" -> v.getCount.asJson, "rate.1m" -> v.getOneMinuteRate.asJson)
