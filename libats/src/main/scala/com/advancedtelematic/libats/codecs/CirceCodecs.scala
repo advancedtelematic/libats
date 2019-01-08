@@ -16,6 +16,7 @@ import java.util.UUID
 
 import com.advancedtelematic.libats.data.DataType.HashMethod.HashMethod
 import com.advancedtelematic.libats.data.DataType.{Checksum, HashMethod, Namespace}
+import com.advancedtelematic.libats.data.ValidatedStringConstructor
 import io.circe.generic.semiauto._
 
 import scala.util.Try
@@ -83,12 +84,30 @@ trait CirceAts {
 
 object CirceAts extends CirceAts
 
+trait CirceValidatedString {
+
+  implicit def validatedStringConstructorEncoder[T](implicit cons: ValidatedStringConstructor[T]): Encoder[T] =
+    Encoder.encodeString.contramap(cons.value)
+
+  implicit def validatedStringConstructorDecoder[T](implicit cons: ValidatedStringConstructor[T]): Decoder[T] =
+    Decoder.decodeString.emap(s => cons.apply(s).leftMap(_.msg))
+
+  implicit def validatedStringConstructorKeyEncoder[T](implicit cons: ValidatedStringConstructor[T]): KeyEncoder[T] =
+    KeyEncoder[String].contramap(cons.value)
+
+  implicit def validatedStringConstructorKeyDecoder[T](implicit cons: ValidatedStringConstructor[T]): KeyDecoder[T] =
+    KeyDecoder.instance(cons.apply(_).toOption)
+}
+
+object CirceValidatedString extends CirceValidatedString
+
 trait CirceCodecs extends CirceDateTime
   with CirceUuid
   with CirceAnyVal
   with CirceRefined
   with CirceUri
   with CirceAts
+  with CirceValidatedString
 
 object CirceCodecs extends CirceCodecs
 
