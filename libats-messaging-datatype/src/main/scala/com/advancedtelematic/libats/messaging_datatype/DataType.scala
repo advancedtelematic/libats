@@ -4,7 +4,7 @@ import java.time.Instant
 import java.util.UUID
 
 import com.advancedtelematic.libats.data.DataType.HashMethod.HashMethod
-import com.advancedtelematic.libats.data.DataType.{SmartStringConstructor, ValidChecksum, ValidationError}
+import com.advancedtelematic.libats.data.DataType.ValidChecksum
 import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
 import eu.timepit.refined.api.{Refined, Validate}
 import io.circe.Json
@@ -37,18 +37,6 @@ object DataType {
       hash => s"$hash is not a sha-256 commit hash",
       ValidCommit()
     )
-
-  final case class ValidEcuSerial()
-  type EcuSerial = Refined[String, ValidEcuSerial]
-
-  implicit val validEcuSerial: Validate.Plain[String, ValidEcuSerial] =
-    validInBetween(min = 1, max = 64, ValidEcuSerial())
-
-  case class EcuIdentifier private(value: String) extends SmartStringConstructor[String] {
-    override def apply(a: String): Either[ValidationError, EcuIdentifier] =
-      if (a.length < 0 || a.length > 64) Left(ValidationError("nope"))
-      else                               Right(EcuIdentifier(a))
-  }
 
   case class DeviceId(uuid: UUID) extends UUIDKey
   object DeviceId extends UUIDKeyObj[DeviceId]
