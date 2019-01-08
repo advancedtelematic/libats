@@ -38,12 +38,6 @@ object DataType {
       ValidCommit()
     )
 
-  final case class ValidEcuSerial()
-  type EcuSerial = Refined[String, ValidEcuSerial]
-
-  implicit val validEcuSerial: Validate.Plain[String, ValidEcuSerial] =
-    validInBetween(min = 1, max = 64, ValidEcuSerial())
-
   case class DeviceId(uuid: UUID) extends UUIDKey
   object DeviceId extends UUIDKeyObj[DeviceId]
 
