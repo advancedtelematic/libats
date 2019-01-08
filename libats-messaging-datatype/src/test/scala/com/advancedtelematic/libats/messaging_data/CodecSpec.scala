@@ -2,13 +2,13 @@ package com.advancedtelematic.libats.messaging_data
 
 import cats.syntax.show._
 import com.advancedtelematic.libats.data.DataType.{HashMethod, Namespace, ValidChecksum}
-import com.advancedtelematic.libats.data.{EcuIdentifier, SmartStringConstructor}
 import com.advancedtelematic.libats.data.RefinedUtils._
+import com.advancedtelematic.libats.data.{EcuIdentifier, ValidatedStringConstructor}
 import com.advancedtelematic.libats.messaging_datatype.DataType._
 import com.advancedtelematic.libats.messaging_datatype.MessageCodecs._
 import com.advancedtelematic.libats.messaging_datatype.Messages._
-import io.circe.syntax._
 import io.circe.parser.decode
+import io.circe.syntax._
 import org.scalatest.{FunSuite, Matchers}
 
 class CodecSpec extends FunSuite with Matchers {
@@ -22,8 +22,8 @@ class CodecSpec extends FunSuite with Matchers {
   val operationResultFailed =
     OperationResult(targetA, hashA, 22, 19, "Failed")
 
-  val ecu1 = SmartStringConstructor[EcuIdentifier]("ecu1").right.get
-  val ecu2 = SmartStringConstructor[EcuIdentifier]("ecu2").right.get
+  val ecu1 = ValidatedStringConstructor[EcuIdentifier]("ecu1").right.get
+  val ecu2 = ValidatedStringConstructor[EcuIdentifier]("ecu2").right.get
 
   val device = DeviceId.generate
   val update = UpdateId.generate

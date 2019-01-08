@@ -4,11 +4,25 @@ import scala.util.control.NoStackTrace
 
 case class ValidationError(msg: String) extends Throwable with NoStackTrace
 
-trait SmartStringConstructor[T] {
+trait ValidatedStringConstructor[T] {
   def apply(s: String): Either[ValidationError, T]
   def value(t: T): String
 }
 
-object SmartStringConstructor {
-  def apply[T](s: String)(implicit const: SmartStringConstructor[T]): Either[ValidationError, T] = const.apply(s)
+object ValidatedStringConstructor {
+  def apply[T](s: String)(implicit const: ValidatedStringConstructor[T]): Either[ValidationError, T] = const.apply(s)
+}
+
+abstract class ValidatedStringWrapper(val value: String) {
+
+  require(value != null)
+
+  def hashSeed: Int
+  def canEqual(that: Any): Boolean
+
+  override def toString: String = this.getClass.getSimpleName + "(" + value + ")"
+
+  override def hashCode(): Int = hashSeed * value.hashCode
+
+  override def equals(that: Any): Boolean = canEqual(that) && this.hashCode() == that.hashCode()
 }

@@ -5,7 +5,6 @@ import java.net.URI
 import java.time.Instant
 import java.util.UUID
 
-import com.advancedtelematic.libats.codecs.CirceSmartConstructor.{keyDecoderEcuIdentifier, keyEncoderEcuIdentifier}
 import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Namespace}
 import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceUpdateStatus.DeviceUpdateStatus
