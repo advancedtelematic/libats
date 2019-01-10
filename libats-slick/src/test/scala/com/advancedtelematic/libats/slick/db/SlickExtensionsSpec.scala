@@ -11,12 +11,13 @@ import scala.concurrent.ExecutionContext
 import scala.util.control.NoStackTrace
 
 object SlickExtensionsSpec {
+  import SlickValidatedGeneric.validatedGenericMapper
 
-  case class Book(id: Long, title: String, code: Option[String] = None)
+  case class Book(id: Long, title: BookTitle, code: Option[String] = None)
 
   class BooksTable(tag: Tag) extends Table[Book](tag, "books") {
     def id = column[Long]("id", O.PrimaryKey)
-    def title = column[String]("title")
+    def title = column[BookTitle]("title")
     def code = column[Option[String]]("code")
 
     override def * = (id, title, code) <> ((Book.apply _).tupled, Book.unapply)
@@ -52,11 +53,11 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
 
   test("resultHead on a Query returns the first query result") {
     val f = for {
-      _ <- db.run(books += Book(10, "Some book"))
+      _ <- db.run(books += Book(10, BookTitle("Some book").right.get))
       inserted <- db.run(books.resultHead(Error))
     } yield inserted
 
-    f.futureValue shouldBe Book(10, "Some book")
+    f.futureValue shouldBe Book(10, BookTitle("Some book").right.get)
   }
 
   test("resultHead on a Query returns the error in arg") {
@@ -66,7 +67,7 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
 
   test("maybeFilter uses filter if condition is defined") {
     val f = for {
-      _ <- db.run(books += Book(20, "Some book", Option("20 some code")))
+      _ <- db.run(books += Book(20, BookTitle("Some book").right.get, Option("20 some code")))
       result <- db.run(books.maybeFilter(_.id === Option(20l)).result)
     } yield result
 
@@ -76,7 +77,7 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
 
   test("maybeFilter ignores filter if condition is None") {
     val f = for {
-      _ <- db.run(books += Book(30, "Some book"))
+      _ <- db.run(books += Book(30, BookTitle("Some book").right.get))
       result <- db.run(books.maybeFilter(_.id === Option.empty[Long]).result)
     } yield result
 
@@ -86,7 +87,7 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
 
   test("maybeContains uses string if it is defined") {
     val f = for {
-      _ <- db.run(books += Book(40, "A very interesting book", Some("30 some code")))
+      _ <- db.run(books += Book(40, BookTitle("A very interesting book").right.get, Some("30 some code")))
       result <- db.run(books.maybeContains(_.title, Some("interesting")).result)
     } yield result
 
@@ -119,7 +120,7 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
   }
 
   test("handleForeignKeyError ignores the error when FK exists") {
-    val b = Book(15, "The Count of Monte Cristo", Some("9781377261379"))
+    val b = Book(15, BookTitle("The Count of Monte Cristo").right.get, Some("9781377261379"))
     val bm = BookMeta(15, 15, 0)
     val f = db.run((books += b).andThen(bookMeta += bm).handleForeignKeyError(Error))
 

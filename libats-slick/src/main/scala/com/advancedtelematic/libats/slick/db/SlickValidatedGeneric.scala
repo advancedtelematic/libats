@@ -8,10 +8,7 @@ import scala.reflect.ClassTag
 
 object SlickValidatedGeneric {
 
-  private def validatedGenericMapper[T, R: BaseColumnType](implicit gen: ValidatedGeneric[T, R], classTag: ClassTag[T]): BaseColumnType[T] =
+  implicit def validatedGenericMapper[T, R](implicit gen: ValidatedGeneric[T, R], rtype: BaseColumnType[R], classTag: ClassTag[T]): BaseColumnType[T] =
     MappedColumnType.base[T, R](gen.to, gen.from(_).valueOr(throw _))
-
-  implicit def validatedStringMapper[T](implicit gen: ValidatedGeneric[T, String], classTag: ClassTag[T]): BaseColumnType[T] =
-    validatedGenericMapper[T, String]
 
 }
