@@ -1,5 +1,6 @@
 package com.advancedtelematic.libats.slick.db
 
+import com.advancedtelematic.libats.data.{ValidatedGeneric, ValidationError}
 import com.advancedtelematic.libats.test.DatabaseSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
@@ -12,6 +13,17 @@ import scala.util.control.NoStackTrace
 
 object SlickExtensionsSpec {
   import SlickValidatedGeneric.validatedGenericMapper
+
+  final case class BookTitle(title: String) extends AnyVal
+  object BookTitle {
+    implicit val validatedBookTitle: ValidatedGeneric[BookTitle, String] = new ValidatedGeneric[BookTitle, String] {
+      override def to(t: BookTitle): String = t.title
+
+      override def from(r: String): Either[ValidationError, BookTitle] =
+        if (r contains "invalid") Left(ValidationError("The book title is invalid."))
+        else Right(new BookTitle(r))
+    }
+  }
 
   case class Book(id: Long, title: BookTitle, code: Option[String] = None)
 
@@ -44,6 +56,7 @@ object SlickExtensionsSpec {
 class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with DatabaseSpec {
   import SlickExtensions._
   import SlickExtensionsSpec._
+  import SlickExtensionsSpec.BookTitle.validatedBookTitle
 
   val Error = new Exception("Expected Error") with NoStackTrace
 
@@ -53,11 +66,11 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
 
   test("resultHead on a Query returns the first query result") {
     val f = for {
-      _ <- db.run(books += Book(10, BookTitle("Some book").right.get))
+      _ <- db.run(books += Book(10, validatedBookTitle.from("Some book").right.get))
       inserted <- db.run(books.resultHead(Error))
     } yield inserted
 
-    f.futureValue shouldBe Book(10, BookTitle("Some book").right.get)
+    f.futureValue shouldBe Book(10, validatedBookTitle.from("Some book").right.get)
   }
 
   test("resultHead on a Query returns the error in arg") {
@@ -67,7 +80,7 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
 
   test("maybeFilter uses filter if condition is defined") {
     val f = for {
-      _ <- db.run(books += Book(20, BookTitle("Some book").right.get, Option("20 some code")))
+      _ <- db.run(books += Book(20, validatedBookTitle.from("Some book").right.get, Option("20 some code")))
       result <- db.run(books.maybeFilter(_.id === Option(20l)).result)
     } yield result
 
@@ -77,7 +90,7 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
 
   test("maybeFilter ignores filter if condition is None") {
     val f = for {
-      _ <- db.run(books += Book(30, BookTitle("Some book").right.get))
+      _ <- db.run(books += Book(30, validatedBookTitle.from("Some book").right.get))
       result <- db.run(books.maybeFilter(_.id === Option.empty[Long]).result)
     } yield result
 
@@ -87,7 +100,7 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
 
   test("maybeContains uses string if it is defined") {
     val f = for {
-      _ <- db.run(books += Book(40, BookTitle("A very interesting book").right.get, Some("30 some code")))
+      _ <- db.run(books += Book(40, validatedBookTitle.from("A very interesting book").right.get, Some("30 some code")))
       result <- db.run(books.maybeContains(_.title, Some("interesting")).result)
     } yield result
 
@@ -120,7 +133,7 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
   }
 
   test("handleForeignKeyError ignores the error when FK exists") {
-    val b = Book(15, BookTitle("The Count of Monte Cristo").right.get, Some("9781377261379"))
+    val b = Book(15, validatedBookTitle.from("The Count of Monte Cristo").right.get, Some("9781377261379"))
     val bm = BookMeta(15, 15, 0)
     val f = db.run((books += b).andThen(bookMeta += bm).handleForeignKeyError(Error))
 
