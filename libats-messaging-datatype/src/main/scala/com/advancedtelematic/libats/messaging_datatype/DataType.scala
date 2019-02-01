@@ -65,7 +65,7 @@ object DataType {
 
   final case class InstallationResult(success: Boolean, code: String, description: String)
 
-  final case class EcuInstallationReport(result: InstallationResult, target: Seq[String], report: Option[Json])
+  final case class EcuInstallationReport(result: InstallationResult, target: Seq[String], rawReport: Option[Array[Byte]] = None)
 
   final case class EventType(id: String, version: Int)
 
@@ -75,10 +75,4 @@ object DataType {
                          deviceTime: Instant,
                          receivedAt: Instant,
                          payload: Json)
-
-  object DeviceUpdateStatus extends Enumeration {
-    type DeviceUpdateStatus = Value
-
-    val Available, InFlight, Canceled, Failed, Finished = Value
-  }
 }
