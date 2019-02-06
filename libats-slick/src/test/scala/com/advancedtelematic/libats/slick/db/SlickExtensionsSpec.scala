@@ -37,6 +37,16 @@ object SlickExtensionsSpec {
   }
 
   protected val bookMeta = TableQuery[BookMetaTable]
+
+  case class BookTag(tag: Int)
+
+  class BookTagTable(tag: Tag) extends Table[BookTag](tag, "book_tags") {
+    def bookTag = column[Int]("tag")
+
+    override def * = bookTag <> (BookTag.apply, BookTag.unapply)
+  }
+
+  protected val bookTags = TableQuery[BookTagTable]
 }
 
 
@@ -45,6 +55,9 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
   import SlickExtensionsSpec._
 
   val Error = new Exception("Expected Error") with NoStackTrace
+  val ErrorBookIdFk = new Exception("book_id_fk error") with NoStackTrace
+  val ErrorBookTagFk = new Exception("book_tag_fk error") with NoStackTrace
+  val errorMap = Map("book_id_fk" -> ErrorBookIdFk, "book_tag_fk" -> ErrorBookTagFk)
 
   import ExecutionContext.Implicits.global
 
@@ -118,10 +131,33 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
     f.failed.futureValue shouldBe Error
   }
 
+  test("handleForeignKeyError throws the expected error if one FK is missing") {
+    val b = Book(50, "Beyond Good and Evil", Some("81781857261933"))
+    val bm = BookMeta(b.id, 51, 0)
+    val f = db.run {
+      (books += b).andThen(bookMeta += bm).handleForeignKeyError(errorMap)
+    }
+
+    f.failed.futureValue shouldBe ErrorBookTagFk
+  }
+
+  test("handleForeignKeyError throws the expected error if the other FK is missing") {
+    val t = BookTag(1)
+    val bm = BookMeta(60, 61, t.tag)
+    val f = db.run {
+      (bookTags += t).andThen(bookMeta += bm).handleForeignKeyError(errorMap)
+    }
+
+    f.failed.futureValue shouldBe ErrorBookIdFk
+  }
+
   test("handleForeignKeyError ignores the error when FK exists") {
-    val b = Book(15, "The Count of Monte Cristo", Some("9781377261379"))
-    val bm = BookMeta(15, 15, 0)
-    val f = db.run((books += b).andThen(bookMeta += bm).handleForeignKeyError(Error))
+    val t = BookTag(2)
+    val b = Book(70, "The Count of Monte Cristo", Some("9781377261379"))
+    val bm = BookMeta(b.id, 71, t.tag)
+    val f = db.run {
+      (books += b).andThen(bookTags += t).andThen(bookMeta += bm).handleForeignKeyError(Error)
+    }
 
     f.futureValue shouldBe 1
   }

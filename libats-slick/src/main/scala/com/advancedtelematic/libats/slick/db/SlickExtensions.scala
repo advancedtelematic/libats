@@ -77,6 +77,14 @@ trait SlickResultExtensions {
     def handleForeignKeyError(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] =
       mapError { case NoReferencedRow(_) => error }
 
+    def handleForeignKeyError(errors: Map[String, Throwable])(implicit ec: ExecutionContext): DBIO[T] = {
+      def fkMatches(e: SQLIntegrityConstraintViolationException) =
+        errors.find(t => e.getMessage.contains(t._1)).map(_._2)
+      mapError {
+        case NoReferencedRow(e) if fkMatches(e).isDefined => fkMatches(e).get
+      }
+    }
+
     def handleIntegrityErrors(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] =
       mapError {
         case IntegrityConstraintViolation(_) => error
