@@ -16,7 +16,7 @@ import com.advancedtelematic.libats.data.{ErrorCode, ErrorCodes, ErrorRepresenta
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.syntax._
 import com.advancedtelematic.libats.codecs.CirceUuid._
-import io.circe.Json
+import io.circe.{DecodingFailure, Json}
 import cats.syntax.option._
 import cats.syntax.show
 import shapeless.{Generic, HNil}
@@ -72,6 +72,11 @@ object Errors {
       statusCode -> ErrorRepresentation(code, desc, None, uuid.some)
   }
 
+  private val onDecodingError: PF = {
+    case DecodingFailure(msg, _) =>
+      StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, msg)
+  }
+
   private val onJsonError: PF = {
     case JsonError(code, statusCode, json, description, errorId) =>
       statusCode -> ErrorRepresentation(code, description, json.some, errorId.some)
@@ -95,6 +100,7 @@ object Errors {
   // Add more handlers here, or use RawError
   private val toErrorRepresentation: PartialFunction[Throwable, (StatusCode, ErrorRepresentation)] =
     Seq(
+      onDecodingError,
       onJsonError,
       onError,
       onRemoteServiceError,
