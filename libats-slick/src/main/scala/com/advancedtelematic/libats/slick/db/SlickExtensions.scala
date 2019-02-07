@@ -34,6 +34,11 @@ object SqlExceptions {
       case e: SQLIntegrityConstraintViolationException if e.getErrorCode == 1452 => Some(e)
       case _ => None
     }
+
+    def unapply(tuple: (Throwable, Map[String, Throwable])): Option[Throwable] =
+      NoReferencedRow.unapply(tuple._1).flatMap { e =>
+        tuple._2.find(t => e.getMessage.contains(t._1)).map(_._2)
+      }
   }
 
   // ER_KEY_NOT_FOUND See https://mariadb.com/kb/en/library/mariadb-error-codes/
@@ -77,13 +82,12 @@ trait SlickResultExtensions {
     def handleForeignKeyError(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] =
       mapError { case NoReferencedRow(_) => error }
 
-    def handleForeignKeyError(errors: Map[String, Throwable])(implicit ec: ExecutionContext): DBIO[T] = {
-      def fkMatches(e: SQLIntegrityConstraintViolationException) =
-        errors.find(t => e.getMessage.contains(t._1)).map(_._2)
-      mapError {
-        case NoReferencedRow(e) if fkMatches(e).isDefined => fkMatches(e).get
+    def handleForeignKeyError(errors: Map[String, Throwable])(implicit ec: ExecutionContext): DBIO[T] =
+      recover {
+        case Failure(t) => (t, errors) match {
+          case NoReferencedRow(e) => DBIO.failed(e)
+        }
       }
-    }
 
     def handleIntegrityErrors(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] =
       mapError {
