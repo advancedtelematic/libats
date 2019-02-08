@@ -29,15 +29,14 @@ object SlickPipeToUnit {
 
 object SqlExceptions {
 
-  object NoReferencedRow {
-    def unapply(t: Throwable): Option[SQLIntegrityConstraintViolationException] = t match {
-      case e: SQLIntegrityConstraintViolationException if e.getErrorCode == 1452 => Some(e)
-      case _ => None
-    }
+  sealed trait IntegrityConstraintViolationError extends Throwable
+  case class NoReferencedRow(message: String) extends IntegrityConstraintViolationError
 
-    def unapply(tuple: (Throwable, Map[String, Throwable])): Option[Throwable] =
-      NoReferencedRow.unapply(tuple._1).flatMap { e =>
-        tuple._2.find(t => e.getMessage.contains(t._1)).map(_._2)
+  object IntegrityConstraintViolationError {
+    def unapply(throwable: Throwable): Option[IntegrityConstraintViolationError] =
+      throwable match {
+        case e: SQLIntegrityConstraintViolationException if e.getErrorCode == 1452 => Some(NoReferencedRow(e.getMessage))
+        case _ => None
       }
   }
 
@@ -79,13 +78,15 @@ trait SlickResultExtensions {
         })
       }
 
-    def handleForeignKeyError(error: Throwable)(implicit ec: ExecutionContext): DBIO[T] =
-      mapError { case NoReferencedRow(_) => error }
-
-    def handleForeignKeyError(errors: Map[String, Throwable])(implicit ec: ExecutionContext): DBIO[T] =
+    def handleForeignKeyError(defaultError: Throwable, errorsPF: PartialFunction[IntegrityConstraintViolationError, Throwable] = PartialFunction.empty)
+                             (implicit ec: ExecutionContext): DBIO[T] =
       recover {
-        case Failure(t) => (t, errors) match {
-          case NoReferencedRow(e) => DBIO.failed(e)
+        case Failure(t) => t match {
+          case IntegrityConstraintViolationError(ice) =>
+            if (errorsPF.isDefinedAt(ice))
+              DBIO.failed(errorsPF(ice))
+            else
+              DBIO.failed(defaultError)
         }
       }
 

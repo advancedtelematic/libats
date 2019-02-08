@@ -1,5 +1,6 @@
 package com.advancedtelematic.libats.slick.db
 
+import com.advancedtelematic.libats.slick.db.SqlExceptions.{NoReferencedRow, IntegrityConstraintViolationError}
 import com.advancedtelematic.libats.test.DatabaseSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
@@ -57,7 +58,6 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
   val Error = new Exception("Expected Error") with NoStackTrace
   val ErrorBookIdFk = new Exception("book_id_fk error") with NoStackTrace
   val ErrorBookTagFk = new Exception("book_tag_fk error") with NoStackTrace
-  val errorMap = Map("book_id_fk" -> ErrorBookIdFk, "book_tag_fk" -> ErrorBookTagFk)
 
   import ExecutionContext.Implicits.global
 
@@ -135,7 +135,10 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
     val b = Book(50, "Beyond Good and Evil", Some("81781857261933"))
     val bm = BookMeta(b.id, 51, 0)
     val f = db.run {
-      (books += b).andThen(bookMeta += bm).handleForeignKeyError(errorMap)
+      (books += b).andThen(bookMeta += bm).handleForeignKeyError(Error, {
+        case NoReferencedRow(msg) if msg.contains("book_id_fk") => ErrorBookIdFk
+        case NoReferencedRow(msg) if msg.contains("book_tag_fk") => ErrorBookTagFk
+      })
     }
 
     f.failed.futureValue shouldBe ErrorBookTagFk
@@ -145,7 +148,10 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
     val t = BookTag(1)
     val bm = BookMeta(60, 61, t.tag)
     val f = db.run {
-      (bookTags += t).andThen(bookMeta += bm).handleForeignKeyError(errorMap)
+      (bookTags += t).andThen(bookMeta += bm).handleForeignKeyError(Error, {
+        case NoReferencedRow(msg) if msg.contains("book_id_fk") => ErrorBookIdFk
+        case NoReferencedRow(msg) if msg.contains("book_tag_fk") => ErrorBookTagFk
+      })
     }
 
     f.failed.futureValue shouldBe ErrorBookIdFk
