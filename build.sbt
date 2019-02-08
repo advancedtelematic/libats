@@ -1,13 +1,13 @@
 val Library = new {
   object Version {
-    val akka = "2.5.13"
-    val akkaHttp = "10.1.1"
-    val akkaHttpCirce = "1.21.0"
-    val circe = "0.9.3"
+    val akka = "2.5.20"
+    val akkaHttp = "10.1.7"
+    val akkaHttpCirce = "1.25.2"
+    val circe = "0.11.1"
     val refined = "0.8.7"
     val scalaTest = "3.0.5"
     val metricsV = "3.2.5"
-    val cats = "1.1.0"
+    val cats = "1.5.0"
   }
 
   val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
