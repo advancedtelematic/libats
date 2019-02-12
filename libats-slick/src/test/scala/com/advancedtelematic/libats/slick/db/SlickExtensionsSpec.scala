@@ -136,8 +136,8 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
     val bm = BookMeta(b.id, 51, 0)
     val f = db.run {
       (books += b).andThen(bookMeta += bm).handleForeignKeyError(Error, {
-        case NoReferencedRow(msg) if msg.contains("book_id_fk") => ErrorBookIdFk
-        case NoReferencedRow(msg) if msg.contains("book_tag_fk") => ErrorBookTagFk
+        case NoReferencedRow("book_id_fk") => ErrorBookIdFk
+        case NoReferencedRow("book_tag_fk") => ErrorBookTagFk
       })
     }
 
@@ -149,8 +149,8 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
     val bm = BookMeta(60, 61, t.tag)
     val f = db.run {
       (bookTags += t).andThen(bookMeta += bm).handleForeignKeyError(Error, {
-        case NoReferencedRow(msg) if msg.contains("book_id_fk") => ErrorBookIdFk
-        case NoReferencedRow(msg) if msg.contains("book_tag_fk") => ErrorBookTagFk
+        case NoReferencedRow("book_id_fk") => ErrorBookIdFk
+        case NoReferencedRow("book_tag_fk") => ErrorBookTagFk
       })
     }
 

@@ -30,12 +30,16 @@ object SlickPipeToUnit {
 object SqlExceptions {
 
   sealed trait IntegrityConstraintViolationError extends Throwable
-  case class NoReferencedRow(message: String) extends IntegrityConstraintViolationError
+  case class NoReferencedRow(failedForeignKey: String) extends IntegrityConstraintViolationError
 
   object IntegrityConstraintViolationError {
     def unapply(throwable: Throwable): Option[IntegrityConstraintViolationError] =
       throwable match {
-        case e: SQLIntegrityConstraintViolationException if e.getErrorCode == 1452 => Some(NoReferencedRow(e.getMessage))
+        case e: SQLIntegrityConstraintViolationException if e.getErrorCode == 1452 =>
+          """.*CONSTRAINT `(.*)` FOREIGN KEY.*""".r
+            .findFirstMatchIn(e.getMessage)
+            .map(_.group(1))
+            .map(NoReferencedRow)
         case _ => None
       }
   }
