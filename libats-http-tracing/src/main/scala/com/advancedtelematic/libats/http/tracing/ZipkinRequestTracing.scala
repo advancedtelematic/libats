@@ -37,6 +37,9 @@ class ZipkinTracing(httpTracing: HttpTracing) extends Tracing {
   private def traceRequest(req: HttpRequest): Boolean =
     req.uri.path.startsWith(Uri.Path("/health")) == false
 
+  private def includeHeader(headerName: String): Boolean =
+    headerName.equals("Authorization") == false
+
   override def traceRequests: Directive1[RequestTracing] = extractRequest.flatMap {
     case req if traceRequest(req) =>
       val span = createAkkaHandler(httpTracing).handleReceive(extractor(httpTracing), req)
@@ -52,7 +55,7 @@ class ZipkinTracing(httpTracing: HttpTracing) extends Tracing {
           .injector((_: HttpResponse, key: String, value: String) => headers.put(key, value))
           .inject(span.context(), resp)
 
-        val respWithHeaders = headers.foldLeft(resp) { case (acc, (k, v)) =>
+        val respWithHeaders = headers.filterKeys(includeHeader).foldLeft(resp) { case (acc, (k, v)) =>
           acc.addHeader(RawHeader(k, v))
         }
 
