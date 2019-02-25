@@ -1,4 +1,4 @@
-<configuration>
+<included>
     <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%.-1level|%date{ISO8601, UTC}|%logger{36}|%message%n%exception</pattern>
@@ -28,4 +28,4 @@
     <root level="${ROOT_LOG_LEVEL:-info}">
         <appender-ref ref="${LOG_APPENDER:-stdout}" />
     </root>
-</configuration>
+</included>

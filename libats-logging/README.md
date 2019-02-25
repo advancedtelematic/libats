@@ -1,10 +1,17 @@
 # libats logging support
 
 This module provides default settings for logging in libats
-services. Simply include this module in your service and make sure
-your service **does not ** contain any `logback.xml` file in it's
-classpath, or make sure your settings are compatible with the settings
-below.
+services. Simply include this module in your service. It comes with a configuration file
+called `logback-base.xml` which you can include in your service's logback.xml like this:
+
+```xml
+<configuration>
+    <include resource="logback-libats.xml"/>
+</configuration>
+```
+
+You can also extend it to a `logback.xml` file after changing the top-level `<included>` element
+to `<configuration>`.
 
 Logging can be configured through the `LOG_APPENDER` environment variable.
 
