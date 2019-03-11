@@ -9,10 +9,9 @@ import com.advancedtelematic.libats.codecs.CirceValidatedGeneric
 import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Namespace}
 import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.data.RefinedUtils._
-import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceUpdateStatus.DeviceUpdateStatus
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceUpdateEvent, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceUpdateEvent, DeviceUpdateAvailable, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceInstallationReport
 import io.circe._
 import io.circe.generic.semiauto._
@@ -38,11 +37,17 @@ object MessageCodecs {
     } yield DeviceEventMessage(ns, event)
   }
 
-  implicit val deviceUpdateStatusEncoder: Encoder[DeviceUpdateStatus] = Encoder.enumEncoder(DeviceUpdateStatus)
-  implicit val deviceUpdateStatusDecoder: Decoder[DeviceUpdateStatus] = Decoder.enumDecoder(DeviceUpdateStatus)
+  implicit val deviceUpdateEventEncoder: Encoder[DeviceUpdateEvent] = deriveEncoder
+  implicit val deviceUpdateEventDecoder: Decoder[DeviceUpdateEvent] = deriveDecoder
 
-  implicit val deviceUpdateEventEncoder: Encoder[DeviceUpdateEvent] = deriveEncoder[DeviceUpdateEvent]
-  implicit val deviceUpdateEventDecoder: Decoder[DeviceUpdateEvent] = deriveDecoder[DeviceUpdateEvent]
+  implicit val deviceUpdateAvailableEncoder: Encoder[DeviceUpdateAvailable] = deriveEncoder
+  implicit val deviceUpdateAvailableDecoder: Decoder[DeviceUpdateAvailable] = deriveDecoder
+
+  implicit val deviceUpdateCanceledEncoder: Encoder[DeviceUpdateCanceled] = deriveEncoder
+  implicit val deviceUpdateCanceledDecoder: Decoder[DeviceUpdateCanceled] = deriveDecoder
+
+  implicit val deviceUpdateCompletedEncoder: Encoder[DeviceUpdateCompleted] = deriveEncoder
+  implicit val deviceUpdateCompletedDecoder: Decoder[DeviceUpdateCompleted] = deriveDecoder
 
   implicit val userCreatedEncoder: Encoder[UserCreated] = deriveEncoder
   implicit val userCreatedDecoder: Decoder[UserCreated] = deriveDecoder
@@ -146,16 +151,42 @@ object Messages {
 
   case class ImageStorageUsage(namespace: Namespace, timestamp: Instant, byteCount: Long)
 
-  final case class DeviceUpdateEvent(namespace: Namespace,
-                                     eventTime: Instant,
-                                     correlationId: CorrelationId,
-                                     deviceUuid: DeviceId,
-                                     updateStatus: DeviceUpdateStatus)
-
   @deprecated("use data type from libtuf_server", "v0.1.1-21")
   case class DeviceUpdateReport(namespace: Namespace, device: DeviceId, updateId: UpdateId, timestampVersion: Int,
                                 operationResult: Map[EcuIdentifier, OperationResult], resultCode: Int)
 
+  sealed trait DeviceUpdateEvent {
+    def namespace: Namespace
+    def eventTime: Instant
+    def correlationId: CorrelationId
+    def deviceUuid: DeviceId
+  }
+
+  final case class DeviceUpdateAvailable(
+      namespace: Namespace,
+      eventTime: Instant,
+      correlationId: CorrelationId,
+      deviceUuid: DeviceId
+  ) extends DeviceUpdateEvent
+
+  final case class DeviceUpdateCanceled(
+      namespace: Namespace,
+      eventTime: Instant,
+      correlationId: CorrelationId,
+      deviceUuid: DeviceId
+  ) extends DeviceUpdateEvent
+
+  final case class DeviceUpdateCompleted(
+      namespace: Namespace,
+      eventTime: Instant,
+      correlationId: CorrelationId,
+      deviceUuid: DeviceId,
+      result: InstallationResult,
+      ecuReports: Map[EcuIdentifier, EcuInstallationReport],
+      rawReport: Option[String] = None
+  ) extends DeviceUpdateEvent
+
+  @deprecated("Use DeviceUpdateCompleted", "0.2.1")
   final case class DeviceInstallationReport(namespace: Namespace, device: DeviceId,
                                             correlationId: CorrelationId,
                                             result: InstallationResult,
