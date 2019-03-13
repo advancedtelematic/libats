@@ -11,7 +11,7 @@ import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.data.RefinedUtils._
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceUpdateEvent, DeviceUpdateAvailable, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceUpdateEvent, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceInstallationReport
 import io.circe._
 import io.circe.generic.semiauto._
@@ -40,8 +40,8 @@ object MessageCodecs {
   implicit val deviceUpdateEventEncoder: Encoder[DeviceUpdateEvent] = deriveEncoder
   implicit val deviceUpdateEventDecoder: Decoder[DeviceUpdateEvent] = deriveDecoder
 
-  implicit val deviceUpdateAvailableEncoder: Encoder[DeviceUpdateAvailable] = deriveEncoder
-  implicit val deviceUpdateAvailableDecoder: Decoder[DeviceUpdateAvailable] = deriveDecoder
+  implicit val deviceUpdateAvailableEncoder: Encoder[DeviceUpdateAssigned] = deriveEncoder
+  implicit val deviceUpdateAvailableDecoder: Decoder[DeviceUpdateAssigned] = deriveDecoder
 
   implicit val deviceUpdateCanceledEncoder: Encoder[DeviceUpdateCanceled] = deriveEncoder
   implicit val deviceUpdateCanceledDecoder: Decoder[DeviceUpdateCanceled] = deriveDecoder
@@ -162,7 +162,7 @@ object Messages {
     def deviceUuid: DeviceId
   }
 
-  final case class DeviceUpdateAvailable(
+  final case class DeviceUpdateAssigned(
       namespace: Namespace,
       eventTime: Instant,
       correlationId: CorrelationId,
