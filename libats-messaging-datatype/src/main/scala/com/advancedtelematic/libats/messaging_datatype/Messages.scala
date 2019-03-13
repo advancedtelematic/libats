@@ -162,7 +162,22 @@ object Messages {
     def deviceUuid: DeviceId
   }
 
+  final case class DeviceUpdateAssignmentRequested(
+      namespace: Namespace,
+      eventTime: Instant,
+      correlationId: CorrelationId,
+      deviceUuid: DeviceId,
+      sourceUpdateId: String
+  ) extends DeviceUpdateEvent
+
   final case class DeviceUpdateAssigned(
+      namespace: Namespace,
+      eventTime: Instant,
+      correlationId: CorrelationId,
+      deviceUuid: DeviceId
+  ) extends DeviceUpdateEvent
+
+  final case class DeviceUpdateCancelRequested(
       namespace: Namespace,
       eventTime: Instant,
       correlationId: CorrelationId,
