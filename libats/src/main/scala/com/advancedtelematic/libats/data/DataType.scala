@@ -9,6 +9,10 @@ import io.circe.{Decoder, Encoder}
 import scala.language.postfixOps
 
 object DataType {
+
+  type ResultCode = String
+  type FailureCode <: ResultCode
+
   final case class Namespace(get: String) extends AnyVal
 
   case class Checksum(method: HashMethod, hash: Refined[String, ValidChecksum])
