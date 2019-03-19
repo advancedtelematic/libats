@@ -10,8 +10,7 @@ import scala.language.postfixOps
 
 object DataType {
 
-  type ResultCode = String
-  type FailureCode <: ResultCode
+  final case class ResultCode(value: String) extends AnyVal
 
   final case class Namespace(get: String) extends AnyVal
 
