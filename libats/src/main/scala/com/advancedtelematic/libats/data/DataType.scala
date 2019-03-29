@@ -14,8 +14,6 @@ object DataType {
 
   final case class Namespace(get: String) extends AnyVal
 
-  final case class DeviceOemId(value: String) extends AnyVal
-
   case class Checksum(method: HashMethod, hash: Refined[String, ValidChecksum])
 
   object HashMethod extends Enumeration {
