@@ -4,7 +4,7 @@ import java.time.Instant
 import java.util.UUID
 
 import com.advancedtelematic.libats.data.DataType.HashMethod.HashMethod
-import com.advancedtelematic.libats.data.DataType.ValidChecksum
+import com.advancedtelematic.libats.data.DataType.{ResultCode, ResultDescription, ValidChecksum}
 import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
 import eu.timepit.refined.api.{Refined, Validate}
 import io.circe.Json
@@ -63,7 +63,7 @@ object DataType {
     def isSuccess:Boolean = resultCode == 0 || resultCode == 1
   }
 
-  final case class InstallationResult(success: Boolean, code: String, description: String)
+  final case class InstallationResult(success: Boolean, code: ResultCode, description: ResultDescription)
 
   final case class EcuInstallationReport(result: InstallationResult, target: Seq[String], rawReport: Option[Array[Byte]] = None)
 
