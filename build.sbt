@@ -96,6 +96,7 @@ lazy val libats_http = (project in file("libats-http"))
   .settings(libraryDependencies ++= Library.jvmMetrics)
   .settings(Publish.settings)
   .dependsOn(libats)
+  .dependsOn(libats_metrics)
 
 lazy val libats_http_tracing = (project in file("libats-http-tracing"))
   .settings(name := "libats-http-tracing")
