@@ -10,10 +10,7 @@ import scala.language.postfixOps
 
 object DataType {
 
-  final case class Namespace(get: String) extends AnyVal {
-    // Note we can't do Namespace(uuid: UUID) extends UUIDKey because we have to support the legacy namespace format.
-    def generate = Namespace(UUID.randomUUID().toString)
-  }
+  final case class Namespace(get: String) extends AnyVal
 
   final case class ResultCode(value: String) extends AnyVal
   final case class ResultDescription(value: String) extends AnyVal
