@@ -119,6 +119,14 @@ trait SlickResultExtensions {
           case _ => true.bind
         }
       }
+
+    def maybeContainsCaseInsensitive(f: E => Rep[_], exp: Option[String]): Query[E, U, Seq] =
+      query.withFilter { e: E =>
+        exp match {
+          case Some(s) if s.nonEmpty => f(e).mappedTo[String].toLowerCase.like(s"%${s.toLowerCase}%")
+          case _ => true.bind
+        }
+      }
   }
 
   implicit class DBIOSeqOps[+T](io: DBIO[Seq[T]]) {
