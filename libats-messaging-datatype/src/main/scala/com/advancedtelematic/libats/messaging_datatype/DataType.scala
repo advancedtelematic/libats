@@ -44,6 +44,8 @@ object DataType {
   case class UpdateId(uuid: UUID) extends UUIDKey
   object UpdateId extends UUIDKeyObj[UpdateId]
 
+  final case class SourceUpdateId(value: String) extends AnyVal
+
   @deprecated("use data type from libtuf-server", "0.0.1-109")
   case class ValidTargetFilename()
   @deprecated("use data type from libtuf-server", "v0.1.1-21")
