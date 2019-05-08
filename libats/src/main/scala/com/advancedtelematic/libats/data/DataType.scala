@@ -10,7 +10,12 @@ import scala.language.postfixOps
 
 object DataType {
 
+  // The underlying type is String instead of UUID because we need to support the legacy format of the namespaces
   final case class Namespace(get: String) extends AnyVal
+
+  object Namespace {
+    def generate: Namespace = new Namespace(s"urn:here-ota:namespace:${UUID.randomUUID().toString}")
+  }
 
   final case class ResultCode(value: String) extends AnyVal
   final case class ResultDescription(value: String) extends AnyVal
