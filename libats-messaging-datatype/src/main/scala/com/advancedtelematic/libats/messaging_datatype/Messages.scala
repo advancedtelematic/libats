@@ -97,6 +97,9 @@ object MessageCodecs {
   implicit val updateTypeEncoder: Encoder[UpdateType] = Encoder.enumEncoder(UpdateType)
   implicit val updateTypeDecoder: Decoder[UpdateType] = Decoder.enumDecoder(UpdateType)
 
+  implicit val sourceUpdateIdEncoder: Encoder[SourceUpdateId] = deriveEncoder
+  implicit val sourceUpdateIdDecoder: Decoder[SourceUpdateId] = deriveDecoder
+
   // For backwards compatibility reasons we have a decoder that can parse DeviceUpdateReport
   // without a statusCode.
   @deprecated("use data type from libtuf-server", "v0.1.1-21")
@@ -167,10 +170,17 @@ object Messages {
       eventTime: Instant,
       correlationId: CorrelationId,
       deviceUuid: DeviceId,
-      sourceUpdateId: String
+      sourceUpdateId: SourceUpdateId
   ) extends DeviceUpdateEvent
 
   final case class DeviceUpdateAssigned(
+      namespace: Namespace,
+      eventTime: Instant,
+      correlationId: CorrelationId,
+      deviceUuid: DeviceId
+  ) extends DeviceUpdateEvent
+
+  final case class DeviceUpdateAssignmentRejected(
       namespace: Namespace,
       eventTime: Instant,
       correlationId: CorrelationId,
