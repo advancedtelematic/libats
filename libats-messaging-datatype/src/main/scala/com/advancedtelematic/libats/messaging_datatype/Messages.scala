@@ -180,6 +180,13 @@ object Messages {
       deviceUuid: DeviceId
   ) extends DeviceUpdateEvent
 
+  final case class DeviceUpdateAssignmentRejected(
+      namespace: Namespace,
+      eventTime: Instant,
+      correlationId: CorrelationId,
+      deviceUuid: DeviceId
+  ) extends DeviceUpdateEvent
+
   final case class DeviceUpdateCancelRequested(
       namespace: Namespace,
       eventTime: Instant,
