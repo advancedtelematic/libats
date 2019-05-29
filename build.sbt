@@ -71,6 +71,7 @@ lazy val commonConfigs = Seq.empty
 
 lazy val commonSettings = Seq(
   organization := "com.advancedtelematic",
+  licenses += ("MPL-2.0", url("http://mozilla.org/MPL/2.0/")),
   scalaVersion := "2.12.7",
   scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature", "-Ypartial-unification", "-Xexperimental"),
   resolvers += "ATS Releases" at "http://nexus.advancedtelematic.com:8081/content/repositories/releases",
