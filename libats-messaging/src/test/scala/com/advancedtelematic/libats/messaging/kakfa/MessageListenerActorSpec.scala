@@ -9,7 +9,7 @@ import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor
 import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor.Subscribe
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike, Matchers}
-import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
+import org.scalatest.concurrent.{Eventually, PatienceConfiguration, ScalaFutures}
 import org.scalatest.time.{Millis, Seconds, Span}
 
 import scala.concurrent.{Future, Promise}
@@ -40,7 +40,8 @@ class MessageListenerActorSpec extends TestKit(ActorSystem("KafkaClientSpec"))
   with Matchers
   with BeforeAndAfterAll
   with ScalaFutures
-  with PatienceConfiguration  {
+  with PatienceConfiguration
+  with Eventually {
 
   import MsgListenerSpecItem._
 
@@ -71,22 +72,15 @@ class MessageListenerActorSpec extends TestKit(ActorSystem("KafkaClientSpec"))
 
     val monitor = new StorageListenerMonitor
 
-    val promise = Promise[Done]()
-
-    val sink = Sink.ignore.mapMaterializedValue { doneF =>
-      doneF.onComplete(promise.complete)
-      doneF
-    }
-
-    val actor = system.actorOf(Props(new MessageBusListenerActor(source, monitor, sink)))
+    val actor = system.actorOf(Props(new MessageBusListenerActor(source, monitor, Sink.ignore)))
 
     actor ! Subscribe
 
-    promise.future.failed.futureValue
-
-    monitor.error shouldBe 1
-    monitor.finished shouldBe 0
-    monitor.processed shouldBe 0
+    eventually {
+      monitor.error shouldBe 1
+      monitor.finished shouldBe 0
+      monitor.processed shouldBe 0
+    }
   }
 
   override protected def afterAll(): Unit = {
