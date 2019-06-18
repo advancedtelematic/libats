@@ -1,7 +1,7 @@
 name := "libats-auth"
 
 libraryDependencies ++= {
-  val JsonWebSecurityV = "0.4.5-2-gaabd5ef"
+  val JsonWebSecurityV = "0.4.5-7-g0239acb"
 
   Seq(
     "com.advancedtelematic" %% "jw-security-core" % JsonWebSecurityV,
