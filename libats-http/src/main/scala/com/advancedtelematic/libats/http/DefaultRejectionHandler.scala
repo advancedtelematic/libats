@@ -16,7 +16,7 @@ import io.circe.generic.auto._
 
 /**
   * When validation, JSON deserialisation fail or a duplicate entry
-  * occures in the database, we complete the request by returning the
+  * occurs in the database, we complete the request by returning the
   * correct status code and JSON error message (see Errors.scala).
   */
 
@@ -33,5 +33,8 @@ object DefaultRejectionHandler {
   }.handle {
     case MalformedRequestContentRejection(_, DecodingFailure(msg, _)) =>
       complete(StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, msg))
+  }.handle {
+    case MalformedQueryParamRejection(name, msg, _) ⇒
+      complete(StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, "The query parameter '" + name + "' was malformed"))
   }.result().withFallback(RejectionHandler.default)
 }
