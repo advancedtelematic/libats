@@ -1,7 +1,7 @@
 package com.advancedtelematic.libats.http.tracing
 
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
+import akka.http.scaladsl.model.{HttpHeader, HttpRequest, HttpResponse, Uri}
 import akka.http.scaladsl.server.Directive1
 import brave.http.{HttpServerAdapter, HttpServerHandler, HttpTracing}
 import brave.propagation.TraceContext
@@ -11,6 +11,7 @@ import zipkin2.reporter.AsyncReporter
 import zipkin2.reporter.okhttp3.OkHttpSender
 
 import scala.collection.concurrent.TrieMap
+
 
 object ZipkinRequestTracing {
   def apply(uri: Uri, serviceName: String): ZipkinTracing = {
@@ -37,13 +38,24 @@ class ZipkinTracing(httpTracing: HttpTracing) extends Tracing {
   private def traceRequest(req: HttpRequest): Boolean =
     req.uri.path.startsWith(Uri.Path("/health")) == false
 
+  private def filterHeader(name: String, value: String): Option[(String, String)] = {
+    if (name.toLowerCase == "authorization")
+      Option(name -> "<removed>")
+    else if (name.toLowerCase == "timeout-access")
+      None
+    else
+      Option(name -> value)
+  }
+
   override def traceRequests: Directive1[RequestTracing] = extractRequest.flatMap {
     case req if traceRequest(req) =>
       val span = createAkkaHandler(httpTracing).handleReceive(extractor(httpTracing), req)
 
-      req.headers.foreach { h =>
-        span.tag(h.name(), h.value())
-      }
+      req.headers
+        .flatMap(h => filterHeader(h.name(), h.value()))
+        .foreach { case (name, value) =>
+          span.tag(name, value)
+        }
 
       mapResponse { resp =>
         val headers = TrieMap.empty[String, String]
