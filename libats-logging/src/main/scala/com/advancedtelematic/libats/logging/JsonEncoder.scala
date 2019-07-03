@@ -18,6 +18,7 @@ class JsonEncoder extends ch.qos.logback.core.encoder.EncoderBase[ILoggingEvent]
   private var includeHttpQuery = false
   private var prettyPrint = false
   private var loggerLength = 36
+  private var msgIsJson = false
 
   private val throwableProxyConverter = new ThrowableProxyConverter
   private val abbreviator = new TargetLengthBasedClassNameAbbreviator(loggerLength)
@@ -36,6 +37,8 @@ class JsonEncoder extends ch.qos.logback.core.encoder.EncoderBase[ILoggingEvent]
 
   def setIncludeQuery(value: Boolean): Unit = includeHttpQuery = value
 
+  def setMsgIsJson(value: Boolean): Unit = msgIsJson = value
+
   override def start(): Unit = {
     throwableProxyConverter.start()
     super.start()
@@ -46,6 +49,13 @@ class JsonEncoder extends ch.qos.logback.core.encoder.EncoderBase[ILoggingEvent]
     super.stop()
   }
 
+  private def formatMsgJson(msg: String): Json = {
+    if(msgIsJson)
+      io.circe.jawn.parse(msg).toOption.getOrElse(msg.asJson)
+    else
+      msg.asJson
+  }
+
   override def encode(event: ILoggingEvent): Array[Byte] = {
     val mdc = event.getMDCPropertyMap.asScala.mapValues(_.asJson)
 
@@ -53,7 +63,7 @@ class JsonEncoder extends ch.qos.logback.core.encoder.EncoderBase[ILoggingEvent]
       "at" -> Instant.ofEpochMilli(event.getTimeStamp).asJson,
       "level" -> event.getLevel.asJson,
       "logger" -> abbreviator.abbreviate(event.getLoggerName).asJson,
-      "msg" -> event.getFormattedMessage.asJson
+      "msg" -> formatMsgJson(event.getFormattedMessage)
     )
       .withValue(includeContext, "ctx" -> event.getLoggerContextVO.toString.asJson)
       .withValue(includeThread, "thread" -> event.getThreadName.asJson)
