@@ -26,7 +26,7 @@ trait ServiceHttpClientSupport {
   }
 }
 
-abstract class ServiceHttpClient(httpClient: HttpRequest => Future[HttpResponse])
+abstract class ServiceHttpClient(_httpClient: HttpRequest => Future[HttpResponse])
                                 (implicit system: ActorSystem, mat: Materializer) {
   import io.circe.syntax._
   import system.dispatcher
@@ -37,6 +37,8 @@ abstract class ServiceHttpClient(httpClient: HttpRequest => Future[HttpResponse]
   protected implicit val unitFromEntityUnmarshaller: FromEntityUnmarshaller[Unit] = Unmarshaller.strict(_.discardBytes())
 
   private def defaultErrorHandler[T](): PartialFunction[RemoteServiceError, Future[T]] = PartialFunction.empty
+
+  protected def httpClient = _httpClient
 
   protected def execJsonHttp[Res : ClassTag : FromEntityUnmarshaller, Req : Encoder]
   (request: HttpRequest, entity: Req)
