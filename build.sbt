@@ -6,6 +6,7 @@ val Library = new {
     val circe = "0.11.1"
     val refined = "0.8.7"
     val scalaTest = "3.0.5"
+    val scalaCheck = "1.14.0"
     val metricsV = "3.2.5"
     val cats = "1.5.0"
   }
@@ -42,6 +43,8 @@ val Library = new {
   val refined = "eu.timepit" %% "refined" % Version.refined
 
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test,provided"
+
+  val scalacheck = "org.scalacheck" %% "scalacheck"% Version.scalaCheck % "test,provided"
 
   val jvmMetrics =  Seq(
     "io.dropwizard.metrics" % "metrics-core" % Version.metricsV,
@@ -193,7 +196,8 @@ lazy val libats_logging = (project in file("libats-logging"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
   .settings(commonSettings)
-  .settings(libraryDependencies ++= Library.circe :+ Library.logback)
+  .settings(libraryDependencies ++= Library.circe :+ Library.logback :+
+    Library.scalatest :+ Library.scalacheck)
   .settings(name := "libats-logging")
   .settings(Publish.settings)
 
