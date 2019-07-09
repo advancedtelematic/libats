@@ -1,26 +1,33 @@
 package com.advancedtelematic.libats.http.tracing
 
-import akka.http.scaladsl.model.{HttpRequest, Uri}
-import akka.http.scaladsl.server.{Directive1, Directives}
-import com.advancedtelematic.libats.http.tracing.Tracing.{RequestTracing, Tracing}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse, Uri}
+import akka.http.scaladsl.server.Directive1
 import com.typesafe.config.{Config, ConfigException}
 import org.slf4j.LoggerFactory
+
+import scala.concurrent.{ExecutionContext, Future}
 
 object Tracing {
   private lazy val _log = LoggerFactory.getLogger(this.getClass)
 
   trait Tracing {
-    def traceRequests: Directive1[RequestTracing]
+    def traceRequests: Directive1[ServerRequestTracing]
 
     def shutdown(): Unit
   }
 
-  trait RequestTracing {
-    def newChild: RequestTracing
+  trait AkkaHttpClientTracing {
+    def trace(fn: HttpRequest => Future[HttpResponse])(implicit ec: ExecutionContext): HttpRequest => Future[HttpResponse]
+  }
 
-    def headers(request: HttpRequest): Map[String, String]
+  trait ServerRequestTracing {
+    def traceId: Long
+
+    def newChild: ServerRequestTracing
 
     def finishSpan(): Unit
+
+    def httpClientTracing(remoteServiceName: String): AkkaHttpClientTracing
   }
 
   def fromConfig(config: Config, serviceName: String): Tracing =
@@ -28,7 +35,7 @@ object Tracing {
       if (config.getBoolean("ats.http.tracing.enabled")) {
         val uri = Uri(config.getString("ats.http.tracing.zipkin_uri"))
         _log.info(s"zipkin tracing enabled to $uri")
-        ZipkinRequestTracing(uri, serviceName)
+        ZipkinServerRequestTracing(uri, serviceName)
       } else {
         _log.info("Request tracing disabled in config")
         new NullTracing
@@ -38,18 +45,4 @@ object Tracing {
         _log.warn("Request tracing disabled, zipkin configuration missing")
         new NullTracing
     }
-}
-
-class NullRequestTracing extends RequestTracing  {
-  override def newChild: RequestTracing = this
-
-  override def headers(request: HttpRequest): Map[String, String] = Map.empty
-
-  override def finishSpan: Unit = ()
-}
-
-class NullTracing extends Tracing {
-  override def traceRequests: Directive1[RequestTracing] = Directives.provide(new NullRequestTracing)
-
-  override def shutdown: Unit = ()
 }
