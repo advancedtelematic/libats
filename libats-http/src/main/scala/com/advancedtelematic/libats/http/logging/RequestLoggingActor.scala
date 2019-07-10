@@ -7,8 +7,6 @@ import akka.routing.RoundRobinPool
 import com.advancedtelematic.libats.http.logging.RequestLoggingActor.LogMsg
 import com.typesafe.config.ConfigFactory
 
-import scala.util.Random
-
 object RequestLoggingActor {
   case class LogMsg(formattedMsg: String, metrics: Map[String, String])
 

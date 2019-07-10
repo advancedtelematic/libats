@@ -30,15 +30,21 @@ class ZipkinAkkaHttpClientTracing(httpTracing: HttpTracing, currentSpan: Span, s
       .tag("http.method", req.method.value)
       .tag("http.uri", req.uri.toString())
       .start()
+      .annotate(s"$serverName-client-send")
 
     val tracedReq = injectTracingHeaders(httpTracing, child, req)
 
     fn(tracedReq).map { resp =>
-      child.finish()
+      child
+        .tag("http.response_code", resp.status.intValue().toString)
+        .annotate(s"$serverName-client-receive")
+        .finish()
       resp
     }.recoverWith {
       case ex =>
-        child.finish()
+        child
+          .annotate(s"$serverName-client-receive")
+          .error(ex)
         FastFuture.failed(ex)
     }
   }
