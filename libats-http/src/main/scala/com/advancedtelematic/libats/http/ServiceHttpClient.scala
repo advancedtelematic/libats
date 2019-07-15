@@ -18,6 +18,7 @@ import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.util.Try
 
+case class UnmarshalledHttpResponse[T](httpResponse: HttpResponse, unmarshalledResponse: T)
 
 trait ServiceHttpClientSupport {
   def defaultHttpClient(implicit system: ActorSystem, mat: Materializer): HttpRequest => Future[HttpResponse] = {
@@ -62,13 +63,21 @@ abstract class ServiceHttpClient(_httpClient: HttpRequest => Future[HttpResponse
   protected def execHttp[T : ClassTag](request: HttpRequest)
                                       (errorHandler: PartialFunction[RemoteServiceError, Future[T]] = defaultErrorHandler())
                                       (implicit um: FromEntityUnmarshaller[T]): Future[T] =
+    execHttp2(request)(errorHandler).map(_.unmarshalledResponse)
+
+
+  protected def execHttp2[T : ClassTag](request: HttpRequest)
+                                      (errorHandler: PartialFunction[RemoteServiceError, Future[T]] = defaultErrorHandler())
+                                      (implicit um: FromEntityUnmarshaller[T]): Future[UnmarshalledHttpResponse[T]] =
     httpClient(request).flatMap {
       case r @ HttpResponse(status, _, _, _) if status.isSuccess() =>
-        um(r.entity)
+        um(r.entity).map(UnmarshalledHttpResponse(r, _))
       case r =>
         tryErrorParsing(r).flatMap { error =>
           if (errorHandler.isDefinedAt(error))
-            errorHandler(error).recoverWith { case ex => r.discardEntityBytes(); Future.failed(ex) }
+            errorHandler(error)
+              .map(UnmarshalledHttpResponse(r, _))
+              .recoverWith { case ex => r.discardEntityBytes(); Future.failed(ex) }
           else {
             log.debug(s"request failed: $request")
             val e = error.copy(msg = s"${this.getClass.getSimpleName}|Unexpected response from remote server at ${request.uri}|${request.method.value}|${r.status.intValue()}|${error.msg}")
