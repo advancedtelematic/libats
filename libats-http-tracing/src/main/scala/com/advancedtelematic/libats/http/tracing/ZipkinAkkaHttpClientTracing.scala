@@ -24,25 +24,29 @@ class ZipkinAkkaHttpClientTracing(httpTracing: HttpTracing, currentSpan: Span, s
   }
 
   override def trace(fn: HttpRequest => Future[HttpResponse])(implicit ec: ExecutionContext): HttpRequest => Future[HttpResponse] = (req: HttpRequest) => {
-    val child = httpTracing.tracing().tracer().newChild(currentSpan.context())
+    val tracing = httpTracing.tracing()
+
+    val newSpan = Option(currentSpan.context())
+      .map(tracing.tracer().newChild)
+      .getOrElse(tracing.tracer().withSampler(tracing.sampler()).newTrace())
       .kind(Span.Kind.CLIENT)
       .remoteServiceName(serverName)
       .tag("http.method", req.method.value)
       .tag("http.uri", req.uri.toString())
-      .start()
       .annotate(s"$serverName-client-send")
+      .start()
 
-    val tracedReq = injectTracingHeaders(httpTracing, child, req)
+    val tracedReq = injectTracingHeaders(httpTracing, newSpan, req)
 
     fn(tracedReq).map { resp =>
-      child
+      newSpan
         .tag("http.response_code", resp.status.intValue().toString)
         .annotate(s"$serverName-client-receive")
         .finish()
       resp
     }.recoverWith {
       case ex =>
-        child
+        newSpan
           .annotate(s"$serverName-client-receive")
           .error(ex)
         FastFuture.failed(ex)
