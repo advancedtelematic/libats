@@ -7,24 +7,25 @@ package com.advancedtelematic.libats.messaging.kafka
 
 import java.util.concurrent.TimeUnit
 
-import akka.NotUsed
+import akka.{NotUsed, event}
 import akka.actor.ActorSystem
-import akka.kafka.ConsumerMessage.{CommittableMessage, CommittableOffsetBatch}
+import akka.event.Logging
+import akka.kafka.ConsumerMessage.CommittableOffsetBatch
 import akka.kafka.scaladsl.Consumer
 import akka.kafka.scaladsl.Consumer.Control
 import akka.kafka.{ConsumerSettings, ProducerSettings, Subscription, Subscriptions}
 import akka.stream.scaladsl.Source
+import com.advancedtelematic.libats.messaging.MessageBusPublisher
+import com.advancedtelematic.libats.messaging.MsgOperation.MsgOperation
+import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import com.typesafe.config.Config
 import io.circe.syntax._
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerRecord, RecordMetadata}
 import org.apache.kafka.common.serialization._
-import com.advancedtelematic.libats.messaging.MessageBusPublisher
-import com.advancedtelematic.libats.messaging.MessageListener.MsgOperation
-import com.advancedtelematic.libats.messaging_datatype.MessageLike
 
-import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 object KafkaClient {
 
@@ -77,8 +78,11 @@ object KafkaClient {
       val handlerParallelism = config.getInt("messaging.listener.parallelism")
       val batchInterval = config.getDuration("messaging.listener.batch.interval", TimeUnit.MILLISECONDS)
       val batchMax = config.getInt("messaging.listener.batch.max")
+      val log = Logging.getLogger(system, this.getClass)
+
       Consumer.committableSource(cfgSettings, subscriptions)
         .filter(_.record.value() != null)
+        .map { msg => log.debug(s"Parsed ${msg.record.value()}") ; msg }
         .mapAsync(handlerParallelism)(msg => op(msg.record.value()).map(_ => msg))
         .groupedWithin(batchMax, FiniteDuration(batchInterval, TimeUnit.MILLISECONDS))
         .filter(_.nonEmpty)
@@ -88,7 +92,6 @@ object KafkaClient {
             .foldLeft(CommittableOffsetBatch.empty)( (batch, msg) => batch.updated(msg.committableOffset))
             .commitScaladsl().map(_ => group)
         }.mapConcat(_.map(_.record.value()))
-
     }
 
   private def consumerSettings[T](system: ActorSystem, config: Config)

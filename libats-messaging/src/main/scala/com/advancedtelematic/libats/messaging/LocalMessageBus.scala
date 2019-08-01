@@ -5,11 +5,11 @@
 
 package com.advancedtelematic.libats.messaging
 
-import akka.{Done, NotUsed}
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
-import com.advancedtelematic.libats.messaging.MessageListener.MsgOperation
+import com.advancedtelematic.libats.messaging.MsgOperation.MsgOperation
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import com.typesafe.config.Config
 
