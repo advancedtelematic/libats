@@ -24,6 +24,7 @@
     <logger name="com.zaxxer.hikari" level="${HIKARI_LOG_LEVEL:-INHERITED}" />
     <logger name="slick.backend.DatabaseComponent.action" level="${SLICK_LOG_LEVEL:-INHERITED}" />
     <logger name="com.advancedtelematic" level="${ATS_LOG_LEVEL:-INHERITED}" />
+    <logger name="com.advancedtelematic.libats.messaging.kafka" level="${ATS_KAFKA_LOG_LEVEL:-INHERITED}" />
 
     <root level="${ROOT_LOG_LEVEL:-info}">
         <appender-ref ref="${LOG_APPENDER:-stdout}" />
