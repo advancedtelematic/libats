@@ -62,19 +62,14 @@ When using BootMigrations, both SQL and Scala migrations are executed
 synchronously.
 
 This means the app will not respond to `HTTP GET /health` until the
-migrations are executed, which can take more time than marathon is
+migrations are executed, which can take more time than kubernetes is
 configured to wait. This means that to run the migration you might
-need to adjust the marathon timeout for your current deployment and
+need to adjust the liveness timeout for your current deployment and
 adjust it back after running the migration.
 
-If your service is capable of supporting asynchronous migrations, you
-can instead mixin `AsyncMigrations` You will need to call the
-`migrate` method, which returns a future on which you need to await
-after you bind the service http handler. See
-https://github.com/advancedtelematic/libats/blob/master/libats-slick/src/main/scala/com/advancedtelematic/libats/slick/db/BootMigrations.scala[BootMigrations.scala]
-
-Alternatively, you can set `ASYNC_MIGRATE=true` and this will cause
-migrations to run in the background.
+You can instead set `ASYNC_MIGRATE=true` and this will cause
+migrations to run in the background while the server starts and
+continues serving requests.
 
 === App level migrations
 
