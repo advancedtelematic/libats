@@ -31,13 +31,17 @@ trait DatabaseSpec extends BeforeAndAfterAll {
 
   private lazy val testDbConfig: Config = config.getConfig("database")
 
-  private lazy val slickDbConfig: Config = {
+  private [libats] lazy val slickDbConfig: Config = {
     val withSchemaName =
       ConfigFactory.parseMap(Map("catalog" -> schemaName.toLowerCase).asJava)
     withSchemaName.withFallback(testDbConfig)
   }
 
-  private def resetDatabase() = {
+  protected [libats] def cleanDatabase(): Unit = {
+    flyway.clean()
+  }
+
+  private lazy val flyway = {
     val url = slickDbConfig.getString("url")
     val user = slickDbConfig.getConfig("properties").getString("user")
     val password = slickDbConfig.getConfig("properties").getString("password")
@@ -48,6 +52,10 @@ trait DatabaseSpec extends BeforeAndAfterAll {
     flyway.setDataSource(url, user, password)
     flyway.setSchemas(schemaName)
     flyway.setLocations("classpath:db.migration")
+    flyway
+  }
+
+  private def resetDatabase() = {
     flyway.clean()
     flyway.migrate()
   }

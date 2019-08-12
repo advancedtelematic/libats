@@ -6,43 +6,64 @@
 package com.advancedtelematic.libats.slick.db
 
 import com.advancedtelematic.libats.http.BootApp
+import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
+import cats.implicits._
 
-trait AsyncMigrations {
-  self: BootApp =>
+protected [db] object RunMigrations {
+  private lazy val _log = LoggerFactory.getLogger(this.getClass)
 
-  private val _migrateLog = LoggerFactory.getLogger(this.getClass)
+  def apply(config: Config): Try[Int] = Try {
+    _log.info("Running migrations")
 
-  def migrate: Future[Int] = Future {
-    if (config.getBoolean("database.migrate")) {
-      _migrateLog.info("Running migrations")
+    val url = config.getString("database.url")
+    val user = config.getString("database.properties.user")
+    val password = config.getString("database.properties.password")
+    val schemaO = Either.catchOnly[ConfigException.Missing](config.getString("database.catalog")).toOption
 
-      val url = config.getString("database.url")
-      val user = config.getString("database.properties.user")
-      val password = config.getString("database.properties.password")
+    val flyway = new Flyway
+    flyway.setDataSource(url, user, password)
 
-      val flyway = new Flyway
-      flyway.setDataSource(url, user, password)
+    schemaO.foreach { schema =>
+      flyway.setSchemas(schema)
+    }
 
-      val count = flyway.migrate()
-      _migrateLog.info(s"Ran $count migrations")
+    val count = flyway.migrate()
+    _log.info(s"Ran $count migrations")
 
-      count
-    } else
-      0
+    count
   }
 }
 
-trait BootMigrations extends AsyncMigrations {
+object RunMigrationsApp extends App {
+  private val log = LoggerFactory.getLogger(this.getClass)
+  lazy val config = ConfigFactory.load()
+
+  RunMigrations(config) match {
+    case Success(_) =>
+      System.exit(0)
+    case Failure(ex) =>
+      log.error("Could not run migrations", ex)
+      System.exit(1)
+  }
+}
+
+trait BootMigrations {
   self: BootApp =>
 
+  private def migrateIfEnabled: Future[Unit] = Future {
+    if (config.getBoolean("database.migrate")) {
+      RunMigrations(config)
+    }
+  }
+
   if(config.getBoolean("ats.database.asyncMigrations")) {
-    migrate.onComplete {
+    migrateIfEnabled.onComplete {
       case Success(_) =>
         log.info("Finished running migrations")
       case Failure(ex) =>
@@ -50,6 +71,6 @@ trait BootMigrations extends AsyncMigrations {
         system.terminate()
     }
   } else {
-    Await.result(migrate, Duration.Inf)
+    Await.result(migrateIfEnabled, Duration.Inf)
   }
 }
