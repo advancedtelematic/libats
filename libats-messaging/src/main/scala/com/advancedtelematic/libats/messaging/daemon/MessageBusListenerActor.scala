@@ -83,7 +83,7 @@ object MessageBusListenerActor {
   private lazy val log = LoggerFactory.getLogger(this.getClass)
 
   def loggingSink[M](implicit ml: MessageLike[M]): Sink[M, Future[Done]] = Sink.foreach[M] { msg =>
-    log.info(s"Processed ${ml.streamName} - ${ml.id(msg)}")
+    log.debug(s"Processed ${ml.streamName} - ${ml.id(msg)}")
   }
 
   def props[M](source: Source[M, NotUsed], monitor: ListenerMonitor)(implicit ml: MessageLike[M]): Props
