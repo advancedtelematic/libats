@@ -73,7 +73,7 @@ object RunMigrationsApp extends App {
 trait CheckMigrations {
   self: BootApp =>
 
-  if(!config.getBoolean("database.skip_migration_check")) {
+  if(!config.getBoolean("ats.database.skip_migration_check")) {
     RunMigrations.schemaIsCompatible(config) match {
       case Success(false) =>
         log.error("Outdated migrations, terminating")
