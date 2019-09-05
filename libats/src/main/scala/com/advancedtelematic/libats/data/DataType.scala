@@ -40,15 +40,20 @@ object DataType {
   final case class MultiTargetUpdateId(value: UUID) extends CorrelationId {
     override def toString: String = s"urn:here-ota:mtu:$value"
   }
+  final case class AutoUpdateId(value: UUID) extends CorrelationId {
+    override def toString: String = s"urn:here-ota:auto-update:$value"
+  }
 
   object CorrelationId {
-    private[this] val CorrelationIdRe = """^urn:here-ota:(mtu|campaign):([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})$"""r
+    private[this] val CorrelationIdRe = """^urn:here-ota:(mtu|auto-update|campaign):([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})$"""r
 
     def fromString(s: String): Either[String, CorrelationId] = s match {
       case CorrelationIdRe("mtu", uuid) =>
         Right(MultiTargetUpdateId(UUID.fromString(uuid)))
       case CorrelationIdRe("campaign", uuid) =>
         Right(CampaignId(UUID.fromString(uuid)))
+      case CorrelationIdRe("auto-update", uuid) =>
+        Right(AutoUpdateId(UUID.fromString(uuid)))
       case x =>
         Left(s"Invalid correlationId: '$x'.")
     }
