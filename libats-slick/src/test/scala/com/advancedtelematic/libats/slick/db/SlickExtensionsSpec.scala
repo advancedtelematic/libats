@@ -111,6 +111,13 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
     f.failed.futureValue shouldBe Error
   }
 
+  test("insertOrUpdate fails when an integrity constraint is violated") {
+    val g = BookMeta(60, -10, 100)
+    val f = db.run(bookMeta.insertOrUpdate(g).handleIntegrityErrors(Error))
+
+    f.failed.futureValue shouldBe Error
+  }
+
   test("handleForeignKeyError throws the expected error") {
     val g = BookMeta(1, 1984, 0)
     val f = db.run((bookMeta += g).handleForeignKeyError(Error))
