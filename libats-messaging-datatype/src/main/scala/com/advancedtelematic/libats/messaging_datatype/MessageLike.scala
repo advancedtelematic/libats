@@ -1,11 +1,12 @@
 package com.advancedtelematic.libats.messaging_datatype
 
 import io.circe.generic.decoding.DerivedDecoder
-import io.circe.generic.encoding.DerivedObjectEncoder
+import io.circe.generic.encoding.DerivedAsObjectEncoder
+import io.circe.generic.semiauto._
 import io.circe.parser._
 import io.circe.{Decoder, Encoder}
 import shapeless.Lazy
-import io.circe.generic.semiauto._
+
 import scala.reflect.ClassTag
 
 object MessageLike {
@@ -32,8 +33,8 @@ object MessageLike {
   }
 
   def derive[T](idFn: T => String)(implicit ct: ClassTag[T],
-                                encode: Lazy[DerivedObjectEncoder[T]],
-                                decode: Lazy[DerivedDecoder[T]]): MessageLike[T] = new MessageLike[T] {
+                                   encode: Lazy[DerivedAsObjectEncoder[T]],
+                                   decode: Lazy[DerivedDecoder[T]]): MessageLike[T] = new MessageLike[T] {
       override def id(v: T): String = idFn(v)
 
       override implicit val encoder: Encoder[T] = deriveEncoder

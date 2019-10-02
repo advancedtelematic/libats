@@ -40,7 +40,7 @@ function mysqladmin_alive {
     docker run \
            --rm \
            --link libats_slick-mariadb \
-           mariadb:10.1 \
+           mariadb:10.2 \
            mysqladmin ping --protocol=TCP -h libats_slick-mariadb -P 3306 -u root -proot
 }
 

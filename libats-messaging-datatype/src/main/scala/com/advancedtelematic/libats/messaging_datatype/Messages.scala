@@ -1,4 +1,3 @@
-
 package com.advancedtelematic.libats.messaging_datatype
 
 import java.net.URI
@@ -8,7 +7,6 @@ import java.util.UUID
 import com.advancedtelematic.libats.codecs.CirceValidatedGeneric
 import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Namespace}
 import com.advancedtelematic.libats.data.EcuIdentifier
-import com.advancedtelematic.libats.data.RefinedUtils._
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
 import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceUpdateEvent, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
@@ -20,14 +18,11 @@ import io.circe.syntax._
 object MessageCodecs {
   import com.advancedtelematic.libats.codecs.CirceCodecs._
 
-  implicit val eventTypeEncoder: Encoder[EventType] = deriveEncoder
-  implicit val eventTypeDecoder: Decoder[EventType] = deriveDecoder
-
-  implicit val eventEncoder: Encoder[Event] = deriveEncoder[Event]
-  implicit val eventDecoder: Decoder[Event] = deriveDecoder[Event]
+  implicit val eventTypeCodec: Codec[EventType] = deriveCodec
+  implicit val eventCodec: Codec[Event] = deriveCodec
 
   implicit val deviceEventEncoder: Encoder[DeviceEventMessage] = Encoder.instance { x =>
-    eventEncoder(x.event).mapObject(_.add("namespace", x.namespace.get.asJson))
+    eventCodec(x.event).mapObject(_.add("namespace", x.namespace.get.asJson))
   }
 
   implicit val deviceEventDecoder: Decoder[DeviceEventMessage] = Decoder.instance { c =>
@@ -37,71 +32,33 @@ object MessageCodecs {
     } yield DeviceEventMessage(ns, event)
   }
 
-  implicit val deviceUpdateEventEncoder: Encoder[DeviceUpdateEvent] = deriveEncoder
-  implicit val deviceUpdateEventDecoder: Decoder[DeviceUpdateEvent] = deriveDecoder
-
-  implicit val deviceUpdateAvailableEncoder: Encoder[DeviceUpdateAssigned] = deriveEncoder
-  implicit val deviceUpdateAvailableDecoder: Decoder[DeviceUpdateAssigned] = deriveDecoder
-
-  implicit val deviceUpdateCanceledEncoder: Encoder[DeviceUpdateCanceled] = deriveEncoder
-  implicit val deviceUpdateCanceledDecoder: Decoder[DeviceUpdateCanceled] = deriveDecoder
-
-  implicit val deviceUpdateCompletedEncoder: Encoder[DeviceUpdateCompleted] = deriveEncoder
-  implicit val deviceUpdateCompletedDecoder: Decoder[DeviceUpdateCompleted] = deriveDecoder
-
-  implicit val userCreatedEncoder: Encoder[UserCreated] = deriveEncoder
-  implicit val userCreatedDecoder: Decoder[UserCreated] = deriveDecoder
-
-  implicit val campaignLaunchedEncoder: Encoder[CampaignLaunched] = deriveEncoder
-  implicit val campaignLaunchedDecoder: Decoder[CampaignLaunched] = deriveDecoder
-
-  implicit val packageIdEncoder: Encoder[PackageId] = deriveEncoder
-  implicit val packageIdDecoder: Decoder[PackageId] = deriveDecoder
-
-  implicit val deltaRequestEncoder: Encoder[DeltaRequest] = deriveEncoder
-  implicit val deltaRequestDecoder: Decoder[DeltaRequest] = deriveDecoder
-
-  implicit val generatedDeltaEncoder: Encoder[GeneratedDelta] = deriveEncoder
-  implicit val generatedDeltaDecoder: Decoder[GeneratedDelta] = deriveDecoder
-
-  implicit val bsDiffRequestIdEncoder: Encoder[BsDiffRequest] = deriveEncoder
-  implicit val bsDiffRequestIdDecoder: Decoder[BsDiffRequest] = deriveDecoder
-
-  implicit val generatedBsDiffEncoder: Encoder[GeneratedBsDiff] = deriveEncoder
-  implicit val generatedBsDiffDecoder: Decoder[GeneratedBsDiff] = deriveDecoder
-
-  implicit val deltaGenerationFailedEncoder: Encoder[DeltaGenerationFailed] = deriveEncoder
-  implicit val deltaGenerationFailedDecoder: Decoder[DeltaGenerationFailed] = deriveDecoder
-
-  implicit val bsDiffGenerationFailedEncoder: Encoder[BsDiffGenerationFailed] = deriveEncoder
-  implicit val bsDiffGenerationFailedDecoder: Decoder[BsDiffGenerationFailed] = deriveDecoder
-
-  implicit val ecuIdentifierKeyEncoder: KeyEncoder[EcuIdentifier] = CirceValidatedGeneric.validatedGenericKeyEncoder[EcuIdentifier, String]
+  implicit val ecuIdentifierKeyCodec: KeyEncoder[EcuIdentifier] = CirceValidatedGeneric.validatedGenericKeyEncoder[EcuIdentifier, String]
   implicit val ecuIdentifierKeyDecoder: KeyDecoder[EcuIdentifier] = CirceValidatedGeneric.validatedGenericKeyDecoder[EcuIdentifier, String]
 
-  implicit val operationResultEncoder: Encoder[OperationResult] = deriveEncoder
-  implicit val operationResultDecoder: Decoder[OperationResult] = deriveDecoder
+  implicit val deviceUpdateEventCodec: Codec[DeviceUpdateEvent] = deriveCodec
+  implicit val deviceUpdateAvailableCodec: Codec[DeviceUpdateAssigned] = deriveCodec
+  implicit val deviceUpdateCanceledCodec: Codec[DeviceUpdateCanceled] = deriveCodec
+  implicit val deviceUpdateCompletedCodec: Codec[DeviceUpdateCompleted] = deriveCodec
+  implicit val userCreatedCodec: Codec[UserCreated] = deriveCodec
+  implicit val campaignLaunchedCodec: Codec[CampaignLaunched] = deriveCodec
+  implicit val packageIdCodec: Codec[PackageId] = deriveCodec
+  implicit val deltaRequestCodec: Codec[DeltaRequest] = deriveCodec
+  implicit val generatedDeltaCodec: Codec[GeneratedDelta] = deriveCodec
+  implicit val bsDiffRequestIdCodec: Codec[BsDiffRequest] = deriveCodec
+  implicit val generatedBsDiffCodec: Codec[GeneratedBsDiff] = deriveCodec
+  implicit val deltaGenerationFailedCodec: Codec[DeltaGenerationFailed] = deriveCodec
+  implicit val bsDiffGenerationFailedCodec: Codec[BsDiffGenerationFailed] = deriveCodec
+  implicit val operationResultCodec: Codec[OperationResult] = deriveCodec
+  implicit val installationResultCodec: Codec[InstallationResult] = deriveCodec
+  implicit val ecuInstallationReportCodec: Codec[EcuInstallationReport] = deriveCodec
+  implicit val deviceInstallationReportCodec: Codec[DeviceInstallationReport] = deriveCodec
+  implicit val updateTypeCodec: Codec[UpdateType] = Codec.codecForEnumeration(UpdateType)
+  implicit val sourceUpdateIdCodec: Codec[SourceUpdateId] = deriveCodec
 
-  implicit val installationResultEncoder: Encoder[InstallationResult] = deriveEncoder
-  implicit val installationResultDecoder: Decoder[InstallationResult] = deriveDecoder
-
-  implicit val ecuInstallationReportEncoder: Encoder[EcuInstallationReport] = deriveEncoder
-  implicit val ecuInstallationReportDecoder: Decoder[EcuInstallationReport] = deriveDecoder
-
-  implicit val deviceInstallationReportEncoder: Encoder[DeviceInstallationReport] = deriveEncoder
-  implicit val deviceInstallationReportDecoder: Decoder[DeviceInstallationReport] = deriveDecoder
-
+  // For backwards compatibility reasons we have a decoder that can parse DeviceUpdateReport without a statusCode.
   @deprecated("use data type from libtuf-server", "v0.1.1-21")
   implicit val deviceUpdateReportEncoder: Encoder[DeviceUpdateReport] = deriveEncoder
 
-  implicit val updateTypeEncoder: Encoder[UpdateType] = Encoder.enumEncoder(UpdateType)
-  implicit val updateTypeDecoder: Decoder[UpdateType] = Decoder.enumDecoder(UpdateType)
-
-  implicit val sourceUpdateIdEncoder: Encoder[SourceUpdateId] = deriveEncoder
-  implicit val sourceUpdateIdDecoder: Decoder[SourceUpdateId] = deriveDecoder
-
-  // For backwards compatibility reasons we have a decoder that can parse DeviceUpdateReport
-  // without a statusCode.
   @deprecated("use data type from libtuf-server", "v0.1.1-21")
   implicit val deviceUpdateReportDecoder: Decoder[DeviceUpdateReport] = Decoder.instance { cursor =>
     for {

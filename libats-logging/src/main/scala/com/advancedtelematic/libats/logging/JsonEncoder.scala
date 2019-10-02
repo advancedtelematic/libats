@@ -5,7 +5,6 @@ import java.time.Instant
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.pattern.{TargetLengthBasedClassNameAbbreviator, ThrowableProxyConverter}
 import ch.qos.logback.classic.spi.ILoggingEvent
-import io.circe.java8.time._
 import io.circe.syntax._
 import io.circe.{Encoder, Json}
 
