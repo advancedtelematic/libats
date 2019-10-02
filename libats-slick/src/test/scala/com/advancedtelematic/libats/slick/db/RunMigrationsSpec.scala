@@ -17,7 +17,7 @@ class RunMigrationsSpec extends FunSuite with Matchers with ScalaFutures with Da
 
     RunMigrations(flywayConfig).get shouldBe 1
 
-    val sql = sql"select count(*) from schema_version".as[Int]
+    val sql = sql"select count(*) from flyway_schema_history".as[Int]
     db.run(sql).futureValue.head shouldBe > (1)
   }
 
