@@ -7,7 +7,7 @@ package com.advancedtelematic.libats.messaging.kafka
 
 import java.util.concurrent.TimeUnit
 
-import akka.{NotUsed, event}
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.kafka.ConsumerMessage.CommittableOffsetBatch
@@ -125,7 +125,8 @@ object KafkaClient {
 
   private[this] def producer(config: Config)
                             (implicit system: ActorSystem): KafkaProducer[Array[Byte], String] =
-    ProducerSettings(system, new ByteArraySerializer, new StringSerializer)
-      .withBootstrapServers(config.getString("host"))
-      .createKafkaProducer()
+    ProducerSettings.createKafkaProducer(
+      ProducerSettings(system, new ByteArraySerializer, new StringSerializer)
+        .withBootstrapServers(config.getString("host"))
+    )
 }
