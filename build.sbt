@@ -1,16 +1,17 @@
 val Library = new {
   object Version {
-    val akka = "2.5.23"
-    val akkaHttp = "10.1.8"
-    val akkaHttpCirce = "1.27.0"
-    val circe = "0.11.1"
-    val refined = "0.8.7"
-    val scalaTest = "3.0.5"
-    val metricsV = "3.2.5"
-    val cats = "1.5.0"
+    val akka = "2.5.25"
+    val akkaHttp = "10.1.10"
+    val akkaHttpCirce = "1.29.1"
+    val circe = "0.12.1"
+    val refined = "0.9.10"
+    val scalaTest = "3.0.8"
+    val metricsV = "4.1.0"
+    val cats = "2.0.0"
+    val logback = "1.2.3"
   }
 
-  val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
+  val logback = "ch.qos.logback" % "logback-classic" % Version.logback
 
   val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Version.akka
 
@@ -36,7 +37,6 @@ val Library = new {
     "io.circe" %% "circe-core",
     "io.circe" %% "circe-generic",
     "io.circe" %% "circe-parser",
-    "io.circe" %% "circe-java8"
   ).map(_ % Version.circe)
 
   val refined = "eu.timepit" %% "refined" % Version.refined
@@ -56,9 +56,9 @@ val Library = new {
   )
 
   val brave = Seq(
-    "io.zipkin.brave" % "brave" % "5.6.8",
-    "io.zipkin.brave" % "brave-instrumentation-http" % "5.6.8",
-    "io.zipkin.reporter2" % "zipkin-sender-okhttp3" % "2.10.0"
+    "io.zipkin.brave" % "brave" % "5.7.0",
+    "io.zipkin.brave" % "brave-instrumentation-http" % "5.7.0",
+    "io.zipkin.reporter2" % "zipkin-sender-okhttp3" % "2.10.3"
   )
 }
 
@@ -72,12 +72,14 @@ lazy val commonConfigs = Seq.empty
 lazy val commonSettings = Seq(
   organization := "com.advancedtelematic",
   licenses += ("MPL-2.0", url("http://mozilla.org/MPL/2.0/")),
-  scalaVersion := "2.12.7",
+  scalaVersion := "2.12.10",
   scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature", "-Ypartial-unification", "-Xexperimental"),
-  resolvers += "ATS Releases" at "http://nexus.advancedtelematic.com:8081/content/repositories/releases",
-  resolvers += "ATS Snapshots" at "http://nexus.advancedtelematic.com:8081/content/repositories/snapshots",
-  resolvers += "Central" at "http://nexus.advancedtelematic.com:8081/content/repositories/central",
-  resolvers += "version99 Empty loggers" at "http://version99.qos.ch",
+  resolvers ++= Seq(
+    "ATS Releases" at "http://nexus.advancedtelematic.com:8081/content/repositories/releases",
+    "ATS Snapshots" at "http://nexus.advancedtelematic.com:8081/content/repositories/snapshots",
+    "Central" at "http://nexus.advancedtelematic.com:8081/content/repositories/central",
+    "version99 Empty loggers" at "http://version99.qos.ch",
+  ).map(_.withAllowInsecureProtocol(true)),
   buildInfoOptions += BuildInfoOption.ToMap,
   buildInfoOptions += BuildInfoOption.BuildTime) ++ Versioning.settings
 
@@ -200,7 +202,7 @@ lazy val libats_logging = (project in file("libats-logging"))
 lazy val libats_root = (project in file("."))
   .enablePlugins(DependencyGraph)
   .settings(Publish.disable)
-  .settings(scalaVersion := "2.12.7")
+  .settings(scalaVersion := "2.12.10")
   .aggregate(libats, libats_http, libats_http_tracing, libats_messaging, libats_messaging_datatype,
     libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka,
     libats_metrics_finagle, libats_metrics_prometheus, libats_logging)
