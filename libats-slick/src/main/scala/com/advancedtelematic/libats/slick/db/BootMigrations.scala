@@ -46,14 +46,8 @@ protected [db] object RunMigrations {
     val password = config.getString("database.properties.password")
     val schemaO = Either.catchOnly[ConfigException.Missing](config.getString("database.catalog")).toOption
 
-    val flyway = new Flyway
-    flyway.setDataSource(url, user, password)
-
-    schemaO.foreach { schema =>
-      flyway.setSchemas(schema)
-    }
-
-    flyway
+    val flywayConfig = Flyway.configure().dataSource(url, user, password)
+    schemaO.fold(flywayConfig)(s => flywayConfig.schemas(s)).load()
   }
 }
 

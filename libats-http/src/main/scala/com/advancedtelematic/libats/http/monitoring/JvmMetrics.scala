@@ -8,7 +8,7 @@ import com.codahale.metrics.{Metric, MetricFilter, MetricRegistry, MetricSet}
 import io.circe.Json
 import io.circe.syntax._
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 
@@ -16,7 +16,7 @@ trait JvmMetricsSupport {
   self: MetricsSupport =>
 
   private def registerAll(registry: MetricRegistry, prefix: String, metricSet: MetricSet): Unit = {
-    metricSet.getMetrics.foreach {
+    metricSet.getMetrics.asScala.foreach {
       case (metricPrefix, set: MetricSet) =>
         registerAll(registry, prefix + "." + metricPrefix, set)
       case (metricPrefix, metric) =>
@@ -39,7 +39,7 @@ class JvmMetrics(metrics: MetricRegistry) extends HealthMetrics {
 
   override def metricsJson: Future[Json] = FastFuture.successful {
     val jvm = metrics.getGauges(filter)
-    val data = jvm.mapValues(_.getValue.toString)
+    val data = jvm.asScala.mapValues(_.getValue.toString)
     data.toMap.asJson
   }
 }

@@ -1,19 +1,15 @@
 package com.advancedtelematic.libats.slick.db
 
-import org.flywaydb.core.api.migration.MigrationChecksumProvider
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration
-
-import scala.concurrent.{Await, Future}
 import java.sql.Connection
 
+import org.flywaydb.core.api.migration.{BaseJavaMigration, Context}
 import slick.jdbc.JdbcBackend.{BaseSession, DatabaseDef}
+import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.{JdbcBackend, JdbcDataSource}
 import slick.util.AsyncExecutor
 
 import scala.concurrent.duration.Duration
-
-
-import slick.jdbc.MySQLProfile.api._
+import scala.concurrent.{Await, Future}
 
 object MigrationDatabase {
   def apply(conn: Connection): MigrationDatabase = new MigrationDatabase(conn)
@@ -35,14 +31,14 @@ object MigrationDatabase {
   }
 }
 
-trait AppMigration extends JdbcMigration with MigrationChecksumProvider {
+trait AppMigration extends BaseJavaMigration {
 
   override def getChecksum: Integer = 0
 
   def migrate(implicit db: Database): Future[Unit]
 
-  override def migrate(connection: Connection): Unit = {
-    val f = migrate(MigrationDatabase(connection))
+  override def migrate(context: Context): Unit = {
+    val f = migrate(MigrationDatabase(context.getConnection))
     Await.result(f, Duration.Inf)
   }
 }

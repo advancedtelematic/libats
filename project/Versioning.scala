@@ -1,9 +1,5 @@
-import com.typesafe.sbt.SbtGit._
-import com.typesafe.sbt.SbtGit.GitKeys._
-import sbt._
-import sbt.Keys._
-import com.typesafe.sbt.SbtGit._
 import com.typesafe.sbt.GitVersioning
+import com.typesafe.sbt.SbtGit._
 import com.typesafe.sbt.git.ConsoleGitRunner
 
 object Versioning {

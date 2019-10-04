@@ -48,11 +48,11 @@ trait DatabaseSpec extends BeforeAndAfterAll {
 
     val schemaName = slickDbConfig.getString("catalog")
 
-    val flyway = new Flyway
-    flyway.setDataSource(url, user, password)
-    flyway.setSchemas(schemaName)
-    flyway.setLocations("classpath:db.migration")
-    flyway
+    Flyway.configure()
+      .dataSource(url, user, password)
+      .schemas(schemaName)
+      .locations("classpath:db.migration")
+      .load()
   }
 
   private def resetDatabase() = {

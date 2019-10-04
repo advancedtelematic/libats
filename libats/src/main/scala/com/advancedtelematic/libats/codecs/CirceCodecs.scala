@@ -69,16 +69,13 @@ trait CirceAts {
   implicit val namespaceEncoder = Encoder.encodeString.contramap[Namespace](_.get)
   implicit val namespaceDecoder = Decoder.decodeString.map(Namespace.apply)
 
-  implicit val hashMethodEncoder: Encoder[HashMethod] = Encoder.enumEncoder(HashMethod)
-  implicit val hashMethodDecoder: Decoder[HashMethod] = Decoder.enumDecoder(HashMethod)
-
   implicit val hashMethodKeyEncoder: KeyEncoder[HashMethod] = KeyEncoder[String].contramap(_.toString)
   implicit val hashMethodKeyDecoder: KeyDecoder[HashMethod] = KeyDecoder.instance { value =>
     Try(HashMethod.withName(value)).toOption
   }
 
-  implicit val checkSumEncoder: Encoder[Checksum] = deriveEncoder
-  implicit val checkSumDecoder: Decoder[Checksum] = deriveDecoder
+  implicit val hashMethodCodec: Codec[HashMethod] = Codec.codecForEnumeration(HashMethod)
+  implicit val checkSumCodec: Codec[Checksum] = deriveCodec
 }
 
 object CirceAts extends CirceAts
