@@ -1,0 +1,47 @@
+stages:
+  - veracode scan
+  - deps scan
+  - generate pages
+
+
+veracode scan:
+  # prepare and submit for static code analysis
+  stage: veracode scan
+  only:
+    variables:
+      - $VERACODE_API_ID
+  image: advancedtelematic/veracode:0.1.2
+  before_script:
+    - ./sbt package
+  script:
+    - run-veracode.sh
+  artifacts:
+    paths:
+      - /tmp/package.zip
+
+deps scan:
+  # perform dependencies CVE analysis
+  stage: deps scan
+  only:
+    - schedules
+  image: advancedtelematic/gitlab-jobs:0.2.0
+  script:
+    - ./sbt dependencyCheckAggregate
+    - mv target/scala-*/dependency-check-report.html ./depchk.html
+  artifacts:
+    paths:
+      - depchk.html
+
+pages:
+  stage: generate pages
+  only:
+    - schedules
+  dependencies:
+    - deps scan
+  script:
+    - mkdir -p public
+    - mv depchk.html public/index.html
+  artifacts:
+    paths:
+      - public
+    expire_in: 64 days
