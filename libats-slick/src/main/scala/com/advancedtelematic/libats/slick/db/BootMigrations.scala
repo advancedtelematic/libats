@@ -45,8 +45,13 @@ protected [db] object RunMigrations {
     val user = config.getString("database.properties.user")
     val password = config.getString("database.properties.password")
     val schemaO = Either.catchOnly[ConfigException.Missing](config.getString("database.catalog")).toOption
+    val schemaTable = Either.catchOnly[ConfigException.Missing](
+      config.getString("database.schema-table")
+    ).toOption.getOrElse(
+      ConfigFactory.load().getString("ats.database.schema-table")
+    )
 
-    val flywayConfig = Flyway.configure().dataSource(url, user, password)
+    val flywayConfig = Flyway.configure().dataSource(url, user, password).table(schemaTable)
     schemaO.fold(flywayConfig)(s => flywayConfig.schemas(s)).load()
   }
 }
