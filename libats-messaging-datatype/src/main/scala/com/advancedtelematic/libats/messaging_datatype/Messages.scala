@@ -9,8 +9,7 @@ import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Name
 import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceUpdateEvent, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, UserCreated}
-import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceInstallationReport
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceInstallationReport, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
@@ -54,6 +53,8 @@ object MessageCodecs {
   implicit val deviceInstallationReportCodec: Codec[DeviceInstallationReport] = deriveCodec
   implicit val updateTypeCodec: Codec[UpdateType] = Codec.codecForEnumeration(UpdateType)
   implicit val sourceUpdateIdCodec: Codec[SourceUpdateId] = deriveCodec
+  implicit val systemInfoCodec: Codec[SystemInfo] = deriveCodec
+  implicit val deviceSystemInfoChangedCodec: Codec[DeviceSystemInfoChanged] = deriveCodec
 
   // For backwards compatibility reasons we have a decoder that can parse DeviceUpdateReport without a statusCode.
   @deprecated("use data type from libtuf-server", "v0.1.1-21")
@@ -168,6 +169,10 @@ object Messages {
       rawReport: Option[String] = None
   ) extends DeviceUpdateEvent
 
+  final case class SystemInfo(product: Option[String])
+
+  final case class DeviceSystemInfoChanged(namespace: Namespace, uuid: DeviceId, newSystemInfo: Option[SystemInfo])
+
   @deprecated("Use DeviceUpdateCompleted", "0.2.1")
   final case class DeviceInstallationReport(namespace: Namespace, device: DeviceId,
                                             correlationId: CorrelationId,
@@ -175,6 +180,8 @@ object Messages {
                                             ecuReports: Map[EcuIdentifier, EcuInstallationReport],
                                             report: Option[Json],
                                             receivedAt: Instant)
+
+  implicit val deviceSystemInfoChangedMessageLike = MessageLike.derive[DeviceSystemInfoChanged](_.uuid.toString)
 
   implicit val userCreatedMessageLike = MessageLike[UserCreated](_.id)
 
