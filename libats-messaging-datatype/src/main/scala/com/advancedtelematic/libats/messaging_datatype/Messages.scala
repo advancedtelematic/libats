@@ -166,6 +166,8 @@ object Messages {
 
   final case class DeviceSystemInfoChanged(namespace: Namespace, uuid: DeviceId, newSystemInfo: Option[SystemInfo])
 
+  final case class CommitManifestUpdated(namespace: Namespace, commit: Commit, releaseBranch: String, metaUpdaterVersion: String)
+
   @deprecated("Use DeviceUpdateCompleted", "0.2.1")
   final case class DeviceInstallationReport(namespace: Namespace, device: DeviceId,
                                             correlationId: CorrelationId,
@@ -175,6 +177,8 @@ object Messages {
                                             receivedAt: Instant)
 
   implicit val deviceSystemInfoChangedMessageLike = MessageLike.derive[DeviceSystemInfoChanged](_.uuid.toString)
+
+  implicit val commitManifestUpdatedMessageLike = MessageLike.derive[CommitManifestUpdated](_.commit.value)
 
   implicit val userCreatedMessageLike = MessageLike[UserCreated](_.id)
 
