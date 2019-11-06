@@ -98,13 +98,6 @@ object Messages {
 
   case class BsDiffGenerationFailed(id: BsDiffRequestId, namespace: Namespace, error: Option[Json] = None)
 
-  final case class TreehubCommit(ns: Namespace,
-                                 commit: Commit,
-                                 refName: String,
-                                 description: String,
-                                 size: Int,
-                                 uri: String)
-
   final case class DeviceEventMessage(namespace: Namespace, event: Event)
 
   case class BandwidthUsage(id: UUID, namespace: Namespace, timestamp: Instant, byteCount: Long,
@@ -204,8 +197,6 @@ object Messages {
   implicit val bandwidthUsageMessageLike = MessageLike.derive[BandwidthUsage](_.id.toString)
 
   implicit val imageStorageMessageLike = MessageLike.derive[ImageStorageUsage](_.namespace.get)
-
-  implicit val treeHubCommitMessageLike = MessageLike.derive[TreehubCommit](_.commit.value)
 
   implicit val deviceEventMessageType = MessageLike[DeviceEventMessage](_.namespace.get)
 
