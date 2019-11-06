@@ -98,13 +98,6 @@ object Messages {
 
   case class BsDiffGenerationFailed(id: BsDiffRequestId, namespace: Namespace, error: Option[Json] = None)
 
-  final case class TreehubCommit(ns: Namespace,
-                                 commit: Commit,
-                                 refName: String,
-                                 description: String,
-                                 size: Int,
-                                 uri: String)
-
   final case class DeviceEventMessage(namespace: Namespace, event: Event)
 
   case class BandwidthUsage(id: UUID, namespace: Namespace, timestamp: Instant, byteCount: Long,
@@ -173,6 +166,8 @@ object Messages {
 
   final case class DeviceSystemInfoChanged(namespace: Namespace, uuid: DeviceId, newSystemInfo: Option[SystemInfo])
 
+  final case class CommitManifestUpdated(namespace: Namespace, commit: Commit, releaseBranch: String, metaUpdaterVersion: String)
+
   @deprecated("Use DeviceUpdateCompleted", "0.2.1")
   final case class DeviceInstallationReport(namespace: Namespace, device: DeviceId,
                                             correlationId: CorrelationId,
@@ -182,6 +177,8 @@ object Messages {
                                             receivedAt: Instant)
 
   implicit val deviceSystemInfoChangedMessageLike = MessageLike.derive[DeviceSystemInfoChanged](_.uuid.toString)
+
+  implicit val commitManifestUpdatedMessageLike = MessageLike.derive[CommitManifestUpdated](_.commit.value)
 
   implicit val userCreatedMessageLike = MessageLike[UserCreated](_.id)
 
@@ -204,8 +201,6 @@ object Messages {
   implicit val bandwidthUsageMessageLike = MessageLike.derive[BandwidthUsage](_.id.toString)
 
   implicit val imageStorageMessageLike = MessageLike.derive[ImageStorageUsage](_.namespace.get)
-
-  implicit val treeHubCommitMessageLike = MessageLike.derive[TreehubCommit](_.commit.value)
 
   implicit val deviceEventMessageType = MessageLike[DeviceEventMessage](_.namespace.get)
 
