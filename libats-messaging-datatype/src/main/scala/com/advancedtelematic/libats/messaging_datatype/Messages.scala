@@ -167,7 +167,7 @@ object Messages {
   final case class DeviceSystemInfoChanged(namespace: Namespace, uuid: DeviceId, newSystemInfo: Option[SystemInfo])
 
   final case class CommitManifestUpdated(namespace: Namespace, commit: Commit, releaseBranch: String,
-                                         metaUpdaterVersion: String, receivedAt: Instant = Instant.now())
+                                         metaUpdaterVersion: String/*, receivedAt: Instant = Instant.now()*/)
 
   final case class AktualizrConfigChanged(namespace: Namespace, uuid: DeviceId, pollingSec: Int,
                                           forceInstallCompletion: Boolean, installerType: String,
