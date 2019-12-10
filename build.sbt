@@ -158,6 +158,8 @@ lazy val libats_metrics_kafka = (project in file("libats-metrics-kafka"))
   .settings(commonSettings)
   .settings(Publish.settings)
   .dependsOn(libats_metrics)
+  .dependsOn(libats_metrics_prometheus)
+  .dependsOn(libats_messaging)
 
 lazy val libats_metrics_akka = (project in file("libats-metrics-akka"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
@@ -174,13 +176,6 @@ lazy val libats_metrics_prometheus = (project in file("libats-metrics-prometheus
   .settings(Publish.settings)
   .dependsOn(libats_metrics)
   .dependsOn(libats_http)
-
-lazy val libats_metrics_finagle = (project in file("libats-metrics-finagle"))
-  .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
-  .configs(commonConfigs: _*)
-  .settings(commonSettings)
-  .settings(libraryDependencies ++= Library.circe :+ Library.akkaStream)
-  .settings(Publish.settings).dependsOn(libats_metrics)
 
 lazy val libats_auth = (project in file("libats-auth"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
@@ -205,4 +200,4 @@ lazy val libats_root = (project in file("."))
   .settings(scalaVersion := "2.12.10")
   .aggregate(libats, libats_http, libats_http_tracing, libats_messaging, libats_messaging_datatype,
     libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka,
-    libats_metrics_finagle, libats_metrics_prometheus, libats_logging)
+    libats_metrics_prometheus, libats_logging)
