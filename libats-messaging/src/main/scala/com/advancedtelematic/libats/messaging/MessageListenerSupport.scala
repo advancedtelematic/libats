@@ -2,15 +2,14 @@ package com.advancedtelematic.libats.messaging
 
 import akka.actor.ActorRef
 import com.advancedtelematic.libats.http.BootApp
-import com.advancedtelematic.libats.http.monitoring.MetricsSupport
 import com.advancedtelematic.libats.messaging.MsgOperation.MsgOperation
 import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor.Subscribe
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
 
 trait MessageListenerSupport {
-  self: BootApp with MetricsSupport =>
+  self: BootApp =>
 
-  def startListener[T](op: MsgOperation[T], skipProcessingErrors: Boolean = false)
+  def startListener[T](op: MsgOperation[T], busListenerMonitor: ListenerMonitor, skipProcessingErrors: Boolean = false)
                       (implicit ml: MessageLike[T]): ActorRef = {
     val loggedOperation =
       if(skipProcessingErrors)
@@ -18,7 +17,7 @@ trait MessageListenerSupport {
       else
         MsgOperation.logFailed(op)(system.log, system.dispatcher)
 
-    val ref = system.actorOf(MessageListener.props[T](config, loggedOperation, metricRegistry),  ml.streamName + "-listener")
+    val ref = system.actorOf(MessageListener.props[T](config, loggedOperation, busListenerMonitor),  ml.streamName + "-listener")
     ref ! Subscribe
     ref
   }

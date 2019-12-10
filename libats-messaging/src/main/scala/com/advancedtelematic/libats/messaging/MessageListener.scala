@@ -1,5 +1,7 @@
 package com.advancedtelematic.libats.messaging
 
+import java.rmi.registry.Registry
+
 import akka.Done
 import akka.actor.{ActorSystem, Props}
 import akka.event.LoggingAdapter
@@ -34,11 +36,9 @@ object MsgOperation {
 }
 
 object MessageListener {
-  def props[T](config: Config, op: MsgOperation[T], metricRegistry: MetricRegistry)
+  def props[T](config: Config, op: MsgOperation[T], busMonitor: ListenerMonitor = LoggingListenerMonitor)
               (implicit system: ActorSystem, ex: ExecutionContext, ml: MessageLike[T]): Props = {
     val source = MessageBus.subscribeCommittable(config, op)
-    val monitor = new MetricsBusMonitor(metricRegistry, ml.streamName)
-
-    MessageBusListenerActor.props[T](source, monitor)(ml)
+    MessageBusListenerActor.props[T](source, busMonitor)(ml)
   }
 }

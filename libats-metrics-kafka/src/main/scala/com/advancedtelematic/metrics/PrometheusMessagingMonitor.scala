@@ -2,9 +2,15 @@ package com.advancedtelematic.metrics
 
 import akka.http.scaladsl.util.FastFuture
 import com.advancedtelematic.libats.messaging.ListenerMonitor
+import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import io.prometheus.client.{CollectorRegistry, Counter}
 
 import scala.concurrent.Future
+
+object PrometheusMessagingMonitor {
+  def apply[T : MessageLike](registry: CollectorRegistry = CollectorRegistry.defaultRegistry) =
+    new PrometheusMessagingMonitor(registry, implicitly[MessageLike[T]].streamName)
+}
 
 class PrometheusMessagingMonitor(registry: CollectorRegistry, queue: String) extends ListenerMonitor {
   private lazy val processed =
