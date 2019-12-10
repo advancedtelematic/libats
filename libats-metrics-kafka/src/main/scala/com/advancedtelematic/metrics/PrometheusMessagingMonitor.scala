@@ -12,19 +12,29 @@ object PrometheusMessagingMonitor {
     new PrometheusMessagingMonitor(registry, implicitly[MessageLike[T]].streamName)
 }
 
-class PrometheusMessagingMonitor(registry: CollectorRegistry, queue: String) extends ListenerMonitor {
+class PrometheusMessagingMonitor(registry: CollectorRegistry, streamName: String) extends ListenerMonitor {
   private lazy val processed =
-    Counter.build().name("bus-listener.processed").labelNames(queue).create().register[Counter](registry)
+    Counter.build().name("bus_listener_processed")
+      .help("bus listener processed")
+      .labelNames("stream_name")
+      .create().register[Counter](registry)
 
   private lazy val error =
-    Counter.build().name("bus-listener.error").labelNames(queue).create().register[Counter](registry)
+    Counter.build().name("bus_listener_error")
+      .help("bus listener error")
+      .labelNames("stream_name")
+      .create().register[Counter](registry)
 
   private lazy val restarts =
-    Counter.build().name("bus-listener.restarts").labelNames(queue).create().register[Counter](registry)
+    Counter.build()
+      .name("bus_listener_restarts")
+      .help("bus listener restarts")
+      .labelNames("stream_name")
+      .create().register[Counter](registry)
 
-  override def onProcessed: Future[Unit] = FastFuture.successful(processed.inc())
+  override def onProcessed: Future[Unit] = FastFuture.successful(processed.labels(streamName).inc())
 
-  override def onError(cause: Throwable): Future[Unit] = FastFuture.successful(error.inc())
+  override def onError(cause: Throwable): Future[Unit] = FastFuture.successful(error.labels(streamName).inc())
 
-  override def onFinished: Future[Unit] = FastFuture.successful(restarts.inc())
+  override def onFinished: Future[Unit] = FastFuture.successful(restarts.labels(streamName).inc())
 }
