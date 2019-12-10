@@ -158,6 +158,8 @@ lazy val libats_metrics_kafka = (project in file("libats-metrics-kafka"))
   .settings(commonSettings)
   .settings(Publish.settings)
   .dependsOn(libats_metrics)
+  .dependsOn(libats_metrics_prometheus)
+  .dependsOn(libats_messaging)
 
 lazy val libats_metrics_akka = (project in file("libats-metrics-akka"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
