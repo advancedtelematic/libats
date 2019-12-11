@@ -36,11 +36,11 @@ class MessageBusListenerActor[M](source: Source[M, NotUsed], monitor: ListenerMo
         log.warning("Listener already subscribed. Ignoring Subscribe message")
       case Failure(ex) =>
         log.error(ex, "Source/Listener died, subscribing again")
-        monitor.onError(ex)
+        Try(monitor.onError(ex))
         trySubscribeDelayed()
         context become idle
       case Done =>
-        monitor.onFinished
+        Try(monitor.onFinished)
         log.info("Source finished, stopping message listener actor")
         context.stop(self)
     }
