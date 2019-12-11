@@ -12,6 +12,6 @@ trait MonitoredBusListenerSupport {
 
   def startMonitoredListener[T : MessageLike](op: MsgOperation[T], registry: CollectorRegistry = CollectorRegistry.defaultRegistry,
                                               skipProcessingErrors: Boolean = false): ActorRef = {
-    startListener(op, PrometheusMessagingMonitor[T](registry), skipProcessingErrors)
+    startListener(op, PrometheusMessagingMonitor[T](), skipProcessingErrors)
   }
 }

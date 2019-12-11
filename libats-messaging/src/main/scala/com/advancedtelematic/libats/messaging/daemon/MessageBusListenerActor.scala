@@ -36,11 +36,11 @@ class MessageBusListenerActor[M](source: Source[M, NotUsed], monitor: ListenerMo
         log.warning("Listener already subscribed. Ignoring Subscribe message")
       case Failure(ex) =>
         log.error(ex, "Source/Listener died, subscribing again")
-        monitor.onError(ex)
+        Try(monitor.onError(ex))
         trySubscribeDelayed()
         context become idle
       case Done =>
-        monitor.onFinished
+        Try(monitor.onFinished)
         log.info("Source finished, stopping message listener actor")
         context.stop(self)
     }
@@ -55,7 +55,7 @@ class MessageBusListenerActor[M](source: Source[M, NotUsed], monitor: ListenerMo
   }
 
   private def monitorSafe: M => Future[M] = { msg =>
-    monitor.onProcessed.map(_ => msg).recover {
+    Future.fromTry(Try(monitor.onProcessed)).flatten.map(_ => msg).recover {
       case tx =>
         log.warning(s"Could not monitor onProcessed state: ${tx.getMessage}")
         msg
