@@ -55,7 +55,7 @@ class MessageBusListenerActor[M](source: Source[M, NotUsed], monitor: ListenerMo
   }
 
   private def monitorSafe: M => Future[M] = { msg =>
-    monitor.onProcessed.map(_ => msg).recover {
+    Future.fromTry(Try(monitor.onProcessed)).flatten.map(_ => msg).recover {
       case tx =>
         log.warning(s"Could not monitor onProcessed state: ${tx.getMessage}")
         msg
