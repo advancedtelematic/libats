@@ -12,8 +12,8 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
 import akka.stream.Materializer
 import com.advancedtelematic.libats.http.HealthCheck.{Down, HealthCheckResult, Up}
-import com.advancedtelematic.libats.http.monitoring.MetricsSupport
-import com.advancedtelematic.libats.http.{HealthCheck, HealthMetrics, HealthResource}
+import com.advancedtelematic.libats.http.{HealthCheck, HealthResource}
+import com.advancedtelematic.metrics.{MetricsRepresentation, MetricsSupport}
 import com.codahale.metrics.MetricRegistry
 import com.zaxxer.hikari.HikariPoolMXBean
 import io.circe.{HCursor, Json}
@@ -25,7 +25,7 @@ import io.circe.syntax._
 import scala.util.Failure
 import scala.util.control.NoStackTrace
 
-class DbHealthMetrics()(implicit db: Database, ec: ExecutionContext) extends HealthMetrics {
+class DbHealthMetrics()(implicit db: Database, ec: ExecutionContext) extends MetricsRepresentation {
   private lazy val mBeanServer = ManagementFactory.getPlatformMBeanServer
   // TODO: Use proper db name after upgrading slick (https://github.com/slick/slick/issues/1326)
   private lazy val poolName = new ObjectName("com.zaxxer.hikari:type=Pool (database)")
@@ -70,7 +70,7 @@ class DbHealthCheck()(implicit db: Database, ec: ExecutionContext) extends Healt
 object DbHealthResource {
   def apply(versionRepr: Map[String, Any] = Map.empty,
             healthChecks: Seq[HealthCheck] = Seq.empty,
-            healthMetrics: Seq[HealthMetrics] = Seq.empty,
+            healthMetrics: Seq[MetricsRepresentation] = Seq.empty,
             dependencies: Seq[HealthCheck] = Seq.empty,
             metricRegistry: MetricRegistry = MetricsSupport.metricRegistry)(implicit db: Database, ec: ExecutionContext) = {
     new HealthResource(versionRepr, new DbHealthCheck() +: healthChecks, new DbHealthMetrics() +: healthMetrics, dependencies, metricRegistry)

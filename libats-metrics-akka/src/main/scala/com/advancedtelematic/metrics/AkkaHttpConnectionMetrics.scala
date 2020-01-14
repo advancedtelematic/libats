@@ -7,7 +7,6 @@ import akka.http.scaladsl.settings.{ConnectionPoolSettings, ParserSettings, Rout
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import com.advancedtelematic.libats.http.BootApp
-import com.advancedtelematic.libats.http.monitoring.MetricsSupport
 import com.codahale.metrics.{Gauge, MetricRegistry}
 
 import scala.concurrent.ExecutionContextExecutor

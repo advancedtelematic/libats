@@ -3,7 +3,7 @@
  *  License: MPL-2.0
  */
 
-package com.advancedtelematic.libats.http.monitoring
+package com.advancedtelematic.metrics
 
 import com.codahale.metrics.MetricRegistry
 

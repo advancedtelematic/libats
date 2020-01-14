@@ -9,15 +9,14 @@ import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import akka.http.scaladsl.server.Directives
 import com.advancedtelematic.libats.codecs.CirceCodecs._
-import com.advancedtelematic.libats.http.HealthCheck.{HealthCheckResult}
-import com.advancedtelematic.libats.http.monitoring.{JvmMetrics, LoggerMetrics, MetricsSupport}
+import com.advancedtelematic.libats.http.HealthCheck.HealthCheckResult
+import com.advancedtelematic.metrics.{JvmMetrics, LoggerMetrics, MetricsRepresentation, MetricsSupport}
 import com.codahale.metrics.MetricRegistry
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.{Encoder, Json}
 import io.circe.syntax._
 import io.circe.generic.auto._
-
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -40,15 +39,10 @@ trait HealthCheck {
   def apply(logger: LoggingAdapter)(implicit ec: ExecutionContext): Future[HealthCheckResult]
 }
 
-trait HealthMetrics {
-  def metricsJson: Future[Json]
-
-  def urlPrefix: String
-}
 
 class HealthResource(versionRepr: Map[String, Any] = Map.empty,
                      healthChecks: Seq[HealthCheck] = Seq.empty,
-                     healthMetrics: Seq[HealthMetrics] = Seq.empty,
+                     healthMetrics: Seq[MetricsRepresentation] = Seq.empty,
                      dependencies: Seq[HealthCheck] = Seq.empty,
                      metricRegistry: MetricRegistry = MetricsSupport.metricRegistry
                     )(implicit val ec: ExecutionContext) {

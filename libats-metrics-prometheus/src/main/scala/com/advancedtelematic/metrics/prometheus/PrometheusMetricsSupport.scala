@@ -4,8 +4,8 @@ import java.io.StringWriter
 
 import akka.http.scaladsl.server.Route
 import com.advancedtelematic.libats.http.BootApp
-import com.advancedtelematic.libats.http.monitoring.MetricsSupport
 import akka.http.scaladsl.server.Directives._
+import com.advancedtelematic.metrics.MetricsSupport
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.dropwizard.DropwizardExports
 import io.prometheus.client.exporter.common.TextFormat

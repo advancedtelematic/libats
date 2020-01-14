@@ -1,10 +1,9 @@
-package com.advancedtelematic.libats.http.monitoring
+package com.advancedtelematic.metrics
 
 import akka.http.scaladsl.util.FastFuture
 import ch.qos.logback.classic.LoggerContext
-import com.advancedtelematic.libats.http.HealthMetrics
-import com.codahale.metrics.logback.InstrumentedAppender
 import com.codahale.metrics.{Metric, MetricFilter, MetricRegistry}
+import com.codahale.metrics.logback.InstrumentedAppender
 import io.circe.Json
 import io.circe.syntax._
 import org.slf4j.{Logger, LoggerFactory}
@@ -28,7 +27,7 @@ trait LoggerMetricsSupport {
   root.addAppender(metrics)
 }
 
-class LoggerMetrics(metricRegistry: MetricRegistry) extends HealthMetrics {
+class LoggerMetrics(metricRegistry: MetricRegistry) extends MetricsRepresentation {
 
   lazy val filter: MetricFilter = (name: String, _: Metric) => name.startsWith("log")
 
