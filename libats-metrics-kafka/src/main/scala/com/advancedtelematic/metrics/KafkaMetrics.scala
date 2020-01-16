@@ -12,7 +12,7 @@ import org.apache.kafka.common.metrics.{KafkaMetric, MetricsReporter}
   * Reports kafka metrics to dropwizard metrics.
   */
 class KafkaMetrics extends MetricsReporter {
-  import com.advancedtelematic.metrics.DropwizardMetrics.registry
+  import com.advancedtelematic.metrics.MetricsSupport.metricRegistry
 
   import scala.collection.JavaConverters._
 
@@ -30,20 +30,20 @@ class KafkaMetrics extends MetricsReporter {
     metrics.asScala
       .foreach(
         x =>
-          registry.register(metricName(x), NamedMetric(new Gauge[Double] {
+          metricRegistry.register(metricName(x), NamedMetric(new Gauge[Double] {
             override def getValue: Double = x.value()
           }, shortName(x), x.metricName().tags().asScala.toMap))
       )
   }
 
   override def metricRemoval(metric: KafkaMetric): Unit = {
-    registry.remove(metricName(metric))
+    metricRegistry.remove(metricName(metric))
   }
 
   override def close(): Unit = {}
 
   override def metricChange(metric: KafkaMetric): Unit = {
-    registry.register(
+    metricRegistry.register(
       metricName(metric),
       NamedMetric(new Gauge[Double] {
         override def getValue: Double = metric.value()

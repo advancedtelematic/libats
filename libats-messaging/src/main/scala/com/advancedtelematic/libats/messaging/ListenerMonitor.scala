@@ -1,7 +1,7 @@
 package com.advancedtelematic.libats.messaging
 
 import akka.http.scaladsl.util.FastFuture
-import com.advancedtelematic.libats.http.HealthMetrics
+import com.advancedtelematic.metrics.MetricsRepresentation
 import com.codahale.metrics.{Metric, MetricFilter, MetricRegistry}
 import io.circe.Json
 import org.slf4j.LoggerFactory
@@ -49,7 +49,7 @@ class MetricsBusMonitor(metrics: MetricRegistry, queue: String) extends Listener
   override def onFinished: Future[Unit] = FastFuture.successful(restarts.inc(1))
 }
 
-class BusListenerMetrics(metrics: MetricRegistry) extends HealthMetrics {
+class BusListenerMetrics(metrics: MetricRegistry) extends MetricsRepresentation {
   import scala.collection.JavaConverters._
 
   val filter = new MetricFilter {

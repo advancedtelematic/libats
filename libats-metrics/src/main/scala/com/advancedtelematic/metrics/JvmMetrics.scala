@@ -1,16 +1,37 @@
-package com.advancedtelematic.libats.http.monitoring
+package com.advancedtelematic.metrics
+
+import java.lang.management.ManagementFactory
+import java.util
+import java.util.Collections
 
 import akka.http.scaladsl.util.FastFuture
-import com.advancedtelematic.libats.http.HealthMetrics
-import com.advancedtelematic.metrics.OsMetricSet
+import com.codahale.metrics.{Gauge, Metric, MetricFilter, MetricRegistry, MetricSet}
 import com.codahale.metrics.jvm.{GarbageCollectorMetricSet, MemoryUsageGaugeSet, ThreadStatesGaugeSet}
-import com.codahale.metrics.{Metric, MetricFilter, MetricRegistry, MetricSet}
 import io.circe.Json
 import io.circe.syntax._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
+
+object OsMetricSet extends MetricSet {
+  val os = ManagementFactory.getOperatingSystemMXBean
+  override def getMetrics: util.Map[String, Metric] = {
+    os match {
+      case unix: com.sun.management.UnixOperatingSystemMXBean =>
+        import scala.collection.JavaConverters._
+        Map[String, Metric](
+          "cpu-load.system" -> new Gauge[Double] {
+            override def getValue: Double = unix.getSystemCpuLoad
+          },
+          "cpu-load.process" -> new Gauge[Double] {
+            override def getValue: Double = unix.getProcessCpuLoad
+          }
+        ).asJava
+      case _ => Collections.emptyMap[String, Metric]()
+    }
+  }
+}
 
 trait JvmMetricsSupport {
   self: MetricsSupport =>
@@ -30,7 +51,7 @@ trait JvmMetricsSupport {
   registerAll(metricRegistry, "jvm.thread", new ThreadStatesGaugeSet())
 }
 
-class JvmMetrics(metrics: MetricRegistry) extends HealthMetrics {
+class JvmMetrics(metrics: MetricRegistry) extends MetricsRepresentation {
   val filter = new MetricFilter {
     override def matches(name: String, metric: Metric): Boolean = name.startsWith("jvm")
   }
