@@ -72,9 +72,9 @@ object Errors {
       statusCode -> ErrorRepresentation(code, desc, None, uuid.some)
   }
 
-  private val onDecodingError: PF = {
-    case DecodingFailure(msg, _) =>
-      StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, msg)
+  private[http] val onDecodingError: PF = {
+    case df: DecodingFailure =>
+      StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, df.getMessage())
   }
 
   private val onJsonError: PF = {
