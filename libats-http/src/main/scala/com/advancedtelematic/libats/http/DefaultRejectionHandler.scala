@@ -31,10 +31,10 @@ object DefaultRejectionHandler {
     case MalformedRequestContentRejection(_, DeserializationException(RefinementError(_, msg))) =>
       complete(StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, msg))
   }.handle {
-    case MalformedRequestContentRejection(_, DecodingFailure(msg, _)) =>
-      complete(StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, msg))
+    case MalformedRequestContentRejection(_, df@DecodingFailure(_, _)) =>
+      complete(StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, df.getMessage))
   }.handle {
-    case MalformedQueryParamRejection(name, msg, _) ⇒
+    case MalformedQueryParamRejection(name, _, _) ⇒
       complete(StatusCodes.BadRequest -> ErrorRepresentation(ErrorCodes.InvalidEntity, "The query parameter '" + name + "' was malformed"))
   }.result().withFallback(RejectionHandler.default)
 }
