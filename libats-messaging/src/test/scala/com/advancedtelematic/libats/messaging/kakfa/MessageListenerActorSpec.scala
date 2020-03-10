@@ -35,7 +35,7 @@ class StorageListenerMonitor extends ListenerMonitor {
   override def onFinished: Future[Unit] = Future.successful(finished += 1)
 }
 
-class MessageListenerActorSpec extends TestKit(ActorSystem("KafkaClientSpec"))
+class MessageListenerActorSpec extends TestKit(ActorSystem("MessageListenerActorSpec"))
   with FunSuiteLike
   with Matchers
   with BeforeAndAfterAll
