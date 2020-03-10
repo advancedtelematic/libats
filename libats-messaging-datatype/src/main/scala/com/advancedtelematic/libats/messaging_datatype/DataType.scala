@@ -77,4 +77,8 @@ object DataType {
                          deviceTime: Instant,
                          receivedAt: Instant,
                          payload: Json)
+
+  sealed trait DirectorVersion
+  case object DirectorV1 extends DirectorVersion
+  case object DirectorV2 extends DirectorVersion
 }

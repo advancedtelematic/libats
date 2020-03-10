@@ -4,7 +4,7 @@ import akka.{Done, NotUsed}
 import akka.actor.{ActorSystem, Props}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
-import akka.testkit.TestKit
+import akka.testkit.{TestKit, TestProbe}
 import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor
 import com.advancedtelematic.libats.messaging.daemon.MessageBusListenerActor.Subscribe
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
@@ -35,7 +35,7 @@ class StorageListenerMonitor extends ListenerMonitor {
   override def onFinished: Future[Unit] = Future.successful(finished += 1)
 }
 
-class MessageListenerActorSpec extends TestKit(ActorSystem("KafkaClientSpec"))
+class MessageListenerActorSpec extends TestKit(ActorSystem("MessageListenerActorSpec"))
   with FunSuiteLike
   with Matchers
   with BeforeAndAfterAll
@@ -50,17 +50,18 @@ class MessageListenerActorSpec extends TestKit(ActorSystem("KafkaClientSpec"))
 
   val msg = MsgListenerSpecItem(1, "payload")
 
-  override implicit def patienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(100, Millis))
+  override implicit def patienceConfig = PatienceConfig(timeout = Span(10, Seconds), interval = Span(100, Millis))
 
   test("message listener source monitors message events") {
     val source: Source[MsgListenerSpecItem, NotUsed] = Source(List(msg))
     val monitor = new StorageListenerMonitor
-    val sink = Sink.foreach[MsgListenerSpecItem] { testActor ! _ }
+    val probe = TestProbe()
+    val sink = Sink.foreach[MsgListenerSpecItem] { probe.ref ! _ }
     val actor = system.actorOf(Props(new MessageBusListenerActor(source, monitor, sink)))
 
     actor ! Subscribe
 
-    expectMsgType[MsgListenerSpecItem]
+    probe.expectMsgType[MsgListenerSpecItem]
 
     monitor.error shouldBe 0
     monitor.finished shouldBe 1
@@ -69,9 +70,7 @@ class MessageListenerActorSpec extends TestKit(ActorSystem("KafkaClientSpec"))
 
   test("monitor receives errors on error") {
     val source: Source[MsgListenerSpecItem, NotUsed] = Source.failed(MsgListenerSpecError)
-
     val monitor = new StorageListenerMonitor
-
     val actor = system.actorOf(Props(new MessageBusListenerActor(source, monitor, Sink.ignore)))
 
     actor ! Subscribe
