@@ -159,7 +159,8 @@ object Messages {
       deviceUuid: DeviceId,
       result: InstallationResult,
       ecuReports: Map[EcuIdentifier, EcuInstallationReport],
-      rawReport: Option[String] = None
+      rawReport: Option[String] = None,
+      customInstallationReport: Option[Json] = None
   ) extends DeviceUpdateEvent
 
   final case class SystemInfo(product: Option[String])
