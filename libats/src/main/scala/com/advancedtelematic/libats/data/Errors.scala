@@ -20,6 +20,7 @@ object ErrorCodes {
   val MissingEntity = ErrorCode("missing_entity")
   val ConflictingEntity = ErrorCode("conflicting_entity")
   val TooManyElements = ErrorCode("too_many_elements")
+  val InternalServerError = ErrorCode("internal_server_error")
   val RemoteServiceError = ErrorCode("remote_service_error")
 }
 

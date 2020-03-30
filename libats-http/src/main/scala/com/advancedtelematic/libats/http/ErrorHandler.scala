@@ -121,26 +121,18 @@ object Errors {
 object ErrorHandler {
   import Directives._
 
-  private lazy val isProd =
-    Option(System.getenv("DEPLOY_ENV")).exists(env => env == "production" || env.isEmpty)
-
   def logError(log: LoggingAdapter, uri: Uri, error: Throwable): UUID = {
     val id = UUID.randomUUID()
     log.error(error, s"Request error $id ($uri)")
     id
   }
 
-  def errorRepr(id: UUID, error: Throwable): Json = {
-    if(isProd)
-      Json.obj(
-        "error_id" -> id.asJson,
-        "description" -> "an error occurred".asJson
-      )
-    else
-      Json.obj(
-        "error_id" -> id.asJson,
-        "description" ->  Json.fromString(Option(error.getMessage).getOrElse("<empty error description>"))
-      )
+  def errorRepr(id: UUID, error: Throwable): ErrorRepresentation = {
+    ErrorRepresentation(
+      ErrorCodes.InternalServerError,
+      description = Option(error.getMessage).getOrElse("an error occurred"),
+      errorId = id.some,
+    )
   }
 
   private def defaultHandler: ExceptionHandler =
@@ -149,7 +141,7 @@ object ErrorHandler {
         (extractLog & extractUri) { (log, uri) =>
           val errorId = logError(log, uri, e)
           val entity = errorRepr(errorId, e)
-          complete(HttpResponse(InternalServerError, entity = entity.noSpaces))
+          complete(InternalServerError -> entity.asJson)
         }
     }
 
