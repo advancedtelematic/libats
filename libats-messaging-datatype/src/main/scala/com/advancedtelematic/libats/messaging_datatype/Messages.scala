@@ -184,8 +184,8 @@ object Messages {
                                          metaUpdaterVersion: String, receivedAt: Instant = Instant.now())
 
   final case class AktualizrConfigChanged(namespace: Namespace, uuid: DeviceId, pollingSec: Int,
-                                          forceInstallCompletion: Boolean, installerType: String,
-                                          receivedAt: Instant)
+                                          secondaryPreinstallWaitSec: Option[Int], forceInstallCompletion: Boolean,
+                                          installerType: String, receivedAt: Instant)
 
   @deprecated("Use DeviceUpdateCompleted", "0.2.1")
   final case class DeviceInstallationReport(namespace: Namespace, device: DeviceId,
