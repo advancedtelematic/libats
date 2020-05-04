@@ -35,5 +35,6 @@ class ScopeDirectives(ns: AuthedNamespaceScope, theScope: String) {
   def get: Directive0 = Directives.get & checkReadonly
   def put: Directive0 = Directives.put & check
   def post: Directive0 = Directives.post & check
+  def patch: Directive0 = Directives.patch & check
 }
 
