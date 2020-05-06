@@ -24,12 +24,10 @@ services:
 test:
   image: advancedtelematic/gitlab-jobs:0.2.3
   stage: test
-  tags:
-    - docker-sock
   before_script:
     - mysql --protocol=TCP --host=mariadb --user=root --port 3306 -proot -e \ GRANT\ ALL\ PRIVILEGES\ ON\ \`libats_slick%\`.\*\ TO\ \'libats_slick\'@\'%\'\;
   script:
-    - sbt -sbt-dir ./.sbt -ivy ./.ivy2 clean test
+    - sbt -sbt-dir ./.sbt -ivy ./.ivy2 clean coverage test coverageReport sonarScan
   cache:
     paths:
       - .ivy2/
