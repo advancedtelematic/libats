@@ -15,3 +15,7 @@ addSbtPlugin("net.vonbuchholtz" % "sbt-dependency-check" % "1.3.3")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.9.2")
 
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.4.0")
+
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.0")
+
+addSbtPlugin("com.github.mwz" % "sbt-sonar" % "2.1.1")

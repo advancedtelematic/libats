@@ -62,8 +62,6 @@ val Library = new {
   )
 }
 
-onLoad in Global := { s => "dependencyUpdates" :: s }
-
 lazy val commonDeps =
   libraryDependencies ++= Library.circe ++ Seq(Library.refined, Library.scalatest) ++ Library.cats :+ Library.logback
 
@@ -75,13 +73,39 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.12.10",
   scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature", "-Ypartial-unification", "-Xexperimental"),
   resolvers ++= Seq(
-    "ATS Releases" at "http://nexus.advancedtelematic.com:8081/content/repositories/releases",
-    "ATS Snapshots" at "http://nexus.advancedtelematic.com:8081/content/repositories/snapshots",
-    "Central" at "http://nexus.advancedtelematic.com:8081/content/repositories/central",
-    "version99 Empty loggers" at "http://version99.qos.ch",
-  ).map(_.withAllowInsecureProtocol(true)),
+    "ATS Releases" at "https://nexus.ota.here.com/content/repositories/releases",
+    "ATS Snapshots" at "https://nexus.ota.here.com/content/repositories/snapshots",
+    "Central" at "https://nexus.ota.here.com/content/repositories/central",
+    "version99 Empty loggers" at "https://version99.qos.ch",
+  ),
   buildInfoOptions += BuildInfoOption.ToMap,
   buildInfoOptions += BuildInfoOption.BuildTime) ++ Versioning.settings
+
+lazy val sonarSettings = Seq(
+  sonarProperties ++= Map(
+    "sonar.projectName" -> "OTA Connect LibATS",
+    "sonar.projectKey" -> "ota-connect-libats",
+    "sonar.host.url" -> "http://sonar.in.here.com",
+    "sonar.links.issue" -> "https://saeljira.it.here.com/projects/OTA/issues",
+    "sonar.links.scm" -> "https://main.gitlab.in.here.com/olp/edge/ota/connect/back-end/libats-tuf",
+    "sonar.links.ci" -> "https://main.gitlab.in.here.com/olp/edge/ota/connect/back-end/libats/pipelines",
+    "sonar.language" -> "scala",
+    "sonar.projectVersion" -> version.value,
+    "sonar.modules" -> "libats,libats-http,libats-http-tracing,libats-slick,libats-messaging-datatype,libats-messaging,libats-metrics,libats-metrics-kafka,libats-metrics-akka,libats-metrics-prometheus,libats-auth,libats-logging",
+    "libats.sonar.projectName" -> "OTA Connect LibATS",
+    "libats-http.sonar.projectName" -> "OTA Connect LibATS-HTTP",
+    "libats-http-tracing.sonar.projectName" -> "OTA Connect LibATS-HTTP-Tracing",
+    "libats-slick.sonar.projectName" -> "OTA Connect LibATS-Slick",
+    "libats-messaging-datatype.sonar.projectName" -> "OTA Connect LibATS-Messaging-Datatype",
+    "libats-messaging.sonar.projectName" -> "OTA Connect LibATS-Messaging",
+    "libats-metrics.sonar.projectName" -> "OTA Connect LibATS-Metrics",
+    "libats-metrics-kafka.sonar.projectName" -> "OTA Connect LibATS-Metrics-Kafka",
+    "libats-metrics-akka.sonar.projectName" -> "OTA Connect LibATS-Metrics-Akka",
+    "libats-metrics-prometheus.sonar.projectName" -> "OTA Connect LibATS-Metrics-Prometheus",
+    "libats-auth.sonar.projectName" -> "OTA Connect LibATS-Auth",
+    "libats-logging.sonar.projectName" -> "OTA Connect LibATS-Logging"
+  )
+)
 
 lazy val libats = (project in file("libats"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
@@ -203,3 +227,17 @@ lazy val libats_root = (project in file("."))
   .aggregate(libats, libats_http, libats_http_tracing, libats_messaging, libats_messaging_datatype,
     libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka,
     libats_metrics_prometheus, libats_logging)
+  .settings(sonarSettings)
+  .settings(aggregate in sonarScan := false)
+    .settings(
+      // onLoad is scoped to Global because there's only one.
+      onLoad in Global := {
+        val old = (onLoad in Global).value
+        // compose the new transition on top of the existing one
+        // in case your plugins are using this hook.
+        startupTransition compose old
+    })
+
+lazy val startupTransition: State => State = { s: State =>
+  "dependencyUpdates" :: s
+}
