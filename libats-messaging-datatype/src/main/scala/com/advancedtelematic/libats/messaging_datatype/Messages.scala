@@ -9,7 +9,7 @@ import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Name
 import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceInstallationReport, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, NamespaceDirectorChanged, SystemInfo, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceInstallationReport, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
@@ -72,20 +72,6 @@ object MessageCodecs {
       resultCode = op_resultCode.getOrElse(if (operationResult.forall(_._2.isSuccess)) 0 else 19)
     } yield DeviceUpdateReport(namespace, device, updateId, timestampVersion, operationResult, resultCode)
   }
-
-
-  implicit val directorEncoder: Encoder[DirectorVersion] = Encoder.instance {
-    case DirectorV1 => Json.fromString("directorV1")
-    case DirectorV2 => Json.fromString("directorV2")
-  }
-
-  implicit val directorDecoder: Decoder[DirectorVersion] = Decoder.decodeString.map(_.toLowerCase).flatMap {
-    case "directorv1" => Decoder.const(DirectorV1)
-    case "directorv2" => Decoder.const(DirectorV2)
-    case other => Decoder.failedWithMessage("Invalid value for `director`: " + other)
-  }
-
-  implicit val namespaceDirectorChangedCodec: Codec[NamespaceDirectorChanged] = io.circe.generic.semiauto.deriveCodec
 }
 
 object Messages {
@@ -194,10 +180,6 @@ object Messages {
                                             ecuReports: Map[EcuIdentifier, EcuInstallationReport],
                                             report: Option[Json],
                                             receivedAt: Instant)
-
-  case class NamespaceDirectorChanged(namespace: Namespace, director: DirectorVersion)
-
-  implicit val namespaceDirectorChangedMessageLike = MessageLike[NamespaceDirectorChanged](_.namespace.get)
 
   implicit val deviceSystemInfoChangedMessageLike = MessageLike.derive[DeviceSystemInfoChanged](_.uuid.toString)
 
