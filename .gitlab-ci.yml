@@ -1,9 +1,8 @@
 stages:
   - test
   - publish
-  - veracode scan
-  - deps scan
-  - generate pages
+  - static scans
+  - publish pages
 
 variables:
   MYSQL_ROOT_PASSWORD: root
@@ -14,6 +13,8 @@ variables:
   KAFKA_HOST: kafka:9092
   KAFKA_ZOOKEEPER_CONNECT: kafka:2181
   VAULT_ADDR: "http://vault.sit-ota.aws.in.here.com"
+  # The same image have to be used by test and code coverage jobs:
+  TEST_IMAGE: advancedtelematic/gitlab-jobs:0.2.3
 
 services:
   - name: mariadb:10.2
@@ -22,16 +23,28 @@ services:
     alias: kafka
 
 test:
-  image: advancedtelematic/gitlab-jobs:0.2.3
+  image: $TEST_IMAGE
+  # Keep image in sync with code coverage job below
   stage: test
   before_script:
     - mysql --protocol=TCP --host=mariadb --user=root --port 3306 -proot -e \ GRANT\ ALL\ PRIVILEGES\ ON\ \`libats_slick%\`.\*\ TO\ \'libats_slick\'@\'%\'\;
   script:
-    - sbt -sbt-dir ./.sbt -ivy ./.ivy2 clean coverage test coverageReport sonarScan
+    - sbt -sbt-dir ./.sbt -ivy ./.ivy2 clean coverage test
+  artifacts:
+    paths:
+      - "libats*/target/scala-*/scoverage-data"
+      - "libats*/target/scala-*/src_managed"
   cache:
     paths:
       - .ivy2/
-      - .sbt
+      - .sbt/
+
+code coverage:
+  extends: .report_scala_coverage
+  needs: ["test"]
+  image: $TEST_IMAGE
+  before_script:
+    - sbt -sbt-dir ./.sbt -ivy ./.ivy2 coverageAggregate
 
 publish:
   stage: publish
@@ -54,46 +67,8 @@ publish:
       - .ivy2/
       - .sbt/
 
-veracode scan:
-  # prepare and submit for static code analysis
-  stage: veracode scan
-  only:
-    refs:
-      - schedules
-    variables:
-      - $VERACODE_API_ID
-  image: advancedtelematic/veracode:0.1.2
-  before_script:
-    - ./sbt package
-  script:
-    - run-veracode.sh
-  artifacts:
-    paths:
-      - /tmp/package.zip
 
-deps scan:
-  # perform dependencies CVE analysis
-  stage: deps scan
-  only:
-    - schedules
-  image: advancedtelematic/gitlab-jobs:0.2.0
-  script:
-    - ./sbt dependencyCheckAggregate
-    - mv target/scala-*/dependency-check-report.html ./depchk.html
-  artifacts:
-    paths:
-      - depchk.html
-
-pages:
-  stage: generate pages
-  only:
-    - schedules
-  dependencies:
-    - deps scan
-  script:
-    - mkdir -p public
-    - mv depchk.html public/index.html
-  artifacts:
-    paths:
-      - public
-    expire_in: 64 days
+include:
+  - project: olp/edge/ota/infra/security
+    ref: v0.0.7
+    file: /shared.yaml
