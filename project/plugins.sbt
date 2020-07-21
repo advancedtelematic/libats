@@ -14,6 +14,8 @@ addSbtPlugin("net.vonbuchholtz" % "sbt-dependency-check" % "1.3.3")
 
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.9.2")
 
+addSbtPlugin("com.typesafe.sbt" % "sbt-license-report" % "1.2.0")
+
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.4.0")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.0")
