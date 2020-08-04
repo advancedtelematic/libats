@@ -43,6 +43,7 @@ code coverage:
   extends: .report_scala_coverage
   needs: ["test"]
   image: $TEST_IMAGE
+  allow_failure: true
   before_script:
     - sbt -sbt-dir ./.sbt -ivy ./.ivy2 coverageAggregate
 

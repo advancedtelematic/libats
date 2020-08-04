@@ -4,6 +4,7 @@ import java.net.URI
 import java.time.Instant
 import java.util.UUID
 
+import cats.syntax.show._
 import com.advancedtelematic.libats.codecs.CirceValidatedGeneric
 import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Namespace}
 import com.advancedtelematic.libats.data.EcuIdentifier
@@ -181,6 +182,8 @@ object Messages {
                                             report: Option[Json],
                                             receivedAt: Instant)
 
+  final case class DeleteDeviceRequest(namespace: Namespace, uuid: DeviceId, timestamp: Instant = Instant.now())
+
   implicit val deviceSystemInfoChangedMessageLike = MessageLike.derive[DeviceSystemInfoChanged](_.uuid.toString)
 
   implicit val commitManifestUpdatedMessageLike = MessageLike.derive[CommitManifestUpdated](_.commit.value)
@@ -217,4 +220,6 @@ object Messages {
   implicit val deviceUpdateReportMessageLike = MessageLike[DeviceUpdateReport](_.device.toString)
 
   implicit val deviceInstallationReportMessageLike = MessageLike[DeviceInstallationReport](_.device.toString)
+
+  implicit val deleteDeviceRequestMessageLike = MessageLike.derive[DeleteDeviceRequest](_.uuid.show)
 }
