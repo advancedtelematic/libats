@@ -10,7 +10,7 @@ import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Name
 import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceInstallationReport, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, DeviceUpdateReport, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
@@ -48,31 +48,12 @@ object MessageCodecs {
   implicit val generatedBsDiffCodec: Codec[GeneratedBsDiff] = deriveCodec
   implicit val deltaGenerationFailedCodec: Codec[DeltaGenerationFailed] = deriveCodec
   implicit val bsDiffGenerationFailedCodec: Codec[BsDiffGenerationFailed] = deriveCodec
-  implicit val operationResultCodec: Codec[OperationResult] = deriveCodec
   implicit val installationResultCodec: Codec[InstallationResult] = deriveCodec
   implicit val ecuInstallationReportCodec: Codec[EcuInstallationReport] = deriveCodec
-  implicit val deviceInstallationReportCodec: Codec[DeviceInstallationReport] = deriveCodec
   implicit val updateTypeCodec: Codec[UpdateType] = Codec.codecForEnumeration(UpdateType)
   implicit val sourceUpdateIdCodec: Codec[SourceUpdateId] = deriveCodec
   implicit val systemInfoCodec: Codec[SystemInfo] = deriveCodec
   implicit val deviceSystemInfoChangedCodec: Codec[DeviceSystemInfoChanged] = deriveCodec
-
-  // For backwards compatibility reasons we have a decoder that can parse DeviceUpdateReport without a statusCode.
-  @deprecated("use data type from libtuf-server", "v0.1.1-21")
-  implicit val deviceUpdateReportEncoder: Encoder[DeviceUpdateReport] = deriveEncoder
-
-  @deprecated("use data type from libtuf-server", "v0.1.1-21")
-  implicit val deviceUpdateReportDecoder: Decoder[DeviceUpdateReport] = Decoder.instance { cursor =>
-    for {
-      namespace <- cursor.downField("namespace").as[Namespace]
-      device <- cursor.downField("device").as[DeviceId]
-      updateId <- cursor.downField("updateId").as[UpdateId]
-      timestampVersion <- cursor.downField("timestampVersion").as[Int]
-      operationResult <- cursor.downField("operationResult").as[Map[EcuIdentifier, OperationResult]]
-      op_resultCode <- cursor.downField("resultCode").as[Option[Int]]
-      resultCode = op_resultCode.getOrElse(if (operationResult.forall(_._2.isSuccess)) 0 else 19)
-    } yield DeviceUpdateReport(namespace, device, updateId, timestampVersion, operationResult, resultCode)
-  }
 }
 
 object Messages {
@@ -105,10 +86,6 @@ object Messages {
                             updateType: UpdateType, updateId: String)
 
   case class ImageStorageUsage(namespace: Namespace, timestamp: Instant, byteCount: Long)
-
-  @deprecated("use data type from libtuf_server", "v0.1.1-21")
-  case class DeviceUpdateReport(namespace: Namespace, device: DeviceId, updateId: UpdateId, timestampVersion: Int,
-                                operationResult: Map[EcuIdentifier, OperationResult], resultCode: Int)
 
   sealed trait DeviceUpdateEvent {
     def namespace: Namespace
@@ -174,14 +151,6 @@ object Messages {
                                           secondaryPreinstallWaitSec: Option[Int], forceInstallCompletion: Boolean,
                                           installerType: String, receivedAt: Instant)
 
-  @deprecated("Use DeviceUpdateCompleted", "0.2.1")
-  final case class DeviceInstallationReport(namespace: Namespace, device: DeviceId,
-                                            correlationId: CorrelationId,
-                                            result: InstallationResult,
-                                            ecuReports: Map[EcuIdentifier, EcuInstallationReport],
-                                            report: Option[Json],
-                                            receivedAt: Instant)
-
   final case class DeleteDeviceRequest(namespace: Namespace, uuid: DeviceId, timestamp: Instant = Instant.now())
 
   implicit val deviceSystemInfoChangedMessageLike = MessageLike.derive[DeviceSystemInfoChanged](_.uuid.toString)
@@ -215,11 +184,6 @@ object Messages {
   implicit val deviceEventMessageType = MessageLike[DeviceEventMessage](_.namespace.get)
 
   implicit val deviceUpdateEventType = MessageLike[DeviceUpdateEvent](_.namespace.get)
-
-  @deprecated("use data type from libtuf_server", "v0.1.1-21")
-  implicit val deviceUpdateReportMessageLike = MessageLike[DeviceUpdateReport](_.device.toString)
-
-  implicit val deviceInstallationReportMessageLike = MessageLike[DeviceInstallationReport](_.device.toString)
 
   implicit val deleteDeviceRequestMessageLike = MessageLike.derive[DeleteDeviceRequest](_.uuid.show)
 }
