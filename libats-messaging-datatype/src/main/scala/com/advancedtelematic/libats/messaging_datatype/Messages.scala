@@ -10,7 +10,7 @@ import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Name
 import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, EcuAndHardwareId, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
@@ -54,6 +54,7 @@ object MessageCodecs {
   implicit val sourceUpdateIdCodec: Codec[SourceUpdateId] = deriveCodec
   implicit val systemInfoCodec: Codec[SystemInfo] = deriveCodec
   implicit val deviceSystemInfoChangedCodec: Codec[DeviceSystemInfoChanged] = deriveCodec
+  implicit val ecuAndHardwareIdCodec: Codec[EcuAndHardwareId] = deriveCodec
 }
 
 object Messages {
@@ -153,6 +154,9 @@ object Messages {
 
   final case class DeleteDeviceRequest(namespace: Namespace, uuid: DeviceId, timestamp: Instant = Instant.now())
 
+  case class EcuAndHardwareId(ecuId: EcuIdentifier, hardwareId: String)
+  case class EcuReplaced(deviceId: DeviceId, former: EcuAndHardwareId, current: EcuAndHardwareId, when: Instant = Instant.now)
+
   implicit val deviceSystemInfoChangedMessageLike = MessageLike.derive[DeviceSystemInfoChanged](_.uuid.toString)
 
   implicit val commitManifestUpdatedMessageLike = MessageLike.derive[CommitManifestUpdated](_.commit.value)
@@ -186,4 +190,6 @@ object Messages {
   implicit val deviceUpdateEventType = MessageLike[DeviceUpdateEvent](_.namespace.get)
 
   implicit val deleteDeviceRequestMessageLike = MessageLike.derive[DeleteDeviceRequest](_.uuid.show)
+
+  implicit val ecuReplacedMsgLike = MessageLike.derive[EcuReplaced](_.deviceId.show)
 }
