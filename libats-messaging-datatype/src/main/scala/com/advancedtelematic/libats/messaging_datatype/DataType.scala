@@ -46,25 +46,6 @@ object DataType {
 
   final case class SourceUpdateId(value: String) extends AnyVal
 
-  @deprecated("use data type from libtuf-server", "0.0.1-109")
-  case class ValidTargetFilename()
-  @deprecated("use data type from libtuf-server", "v0.1.1-21")
-  type TargetFilename = Refined[String, ValidTargetFilename]
-
-  @deprecated("use data type from libtuf-server", "v0.1.1-21")
-  implicit val validTargetFilename: Validate.Plain[String, ValidTargetFilename] =
-    Validate.fromPredicate(
-      f => f.nonEmpty && f.length < 254,
-      _ => "TargetFilename cannot be empty or bigger than 254 chars",
-      ValidTargetFilename()
-    )
-
-  @deprecated("use data type from libtuf-server", "v0.1.1-21")
-  final case class OperationResult(target: TargetFilename, hashes: Map[HashMethod, Refined[String, ValidChecksum]],
-                                   length: Long, resultCode: Int, resultText: String) {
-    def isSuccess:Boolean = resultCode == 0 || resultCode == 1
-  }
-
   final case class InstallationResult(success: Boolean, code: ResultCode, description: ResultDescription)
 
   final case class EcuInstallationReport(result: InstallationResult, target: Seq[String], rawReport: Option[Array[Byte]] = None)
