@@ -10,7 +10,7 @@ import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Name
 import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, EcuAndHardwareId, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, EcuAndHardwareId, EcuReplaced, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
@@ -55,6 +55,7 @@ object MessageCodecs {
   implicit val systemInfoCodec: Codec[SystemInfo] = deriveCodec
   implicit val deviceSystemInfoChangedCodec: Codec[DeviceSystemInfoChanged] = deriveCodec
   implicit val ecuAndHardwareIdCodec: Codec[EcuAndHardwareId] = deriveCodec
+  implicit val ecuReplacedCodec: Codec[EcuReplaced] = deriveCodec
 }
 
 object Messages {
@@ -155,7 +156,7 @@ object Messages {
   final case class DeleteDeviceRequest(namespace: Namespace, uuid: DeviceId, timestamp: Instant = Instant.now())
 
   case class EcuAndHardwareId(ecuId: EcuIdentifier, hardwareId: String)
-  case class EcuReplaced(deviceId: DeviceId, former: EcuAndHardwareId, current: EcuAndHardwareId, when: Instant = Instant.now)
+  case class EcuReplaced(deviceUuid: DeviceId, former: EcuAndHardwareId, current: EcuAndHardwareId, eventTime: Instant = Instant.now)
 
   implicit val deviceSystemInfoChangedMessageLike = MessageLike.derive[DeviceSystemInfoChanged](_.uuid.toString)
 
@@ -191,5 +192,5 @@ object Messages {
 
   implicit val deleteDeviceRequestMessageLike = MessageLike.derive[DeleteDeviceRequest](_.uuid.show)
 
-  implicit val ecuReplacedMsgLike = MessageLike.derive[EcuReplaced](_.deviceId.show)
+  implicit val ecuReplacedMsgLike = MessageLike.derive[EcuReplaced](_.deviceUuid.show)
 }
