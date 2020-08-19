@@ -14,7 +14,7 @@ variables:
   KAFKA_ZOOKEEPER_CONNECT: kafka:2181
   VAULT_ADDR: "http://vault.sit-ota.aws.in.here.com"
   # The same image have to be used by test and code coverage jobs:
-  TEST_IMAGE: advancedtelematic/gitlab-jobs:0.2.3
+  TEST_IMAGE: advancedtelematic/gitlab-jobs:0.2.5
 
 services:
   - name: mariadb:10.2
@@ -51,7 +51,7 @@ publish:
   stage: publish
   tags:
     - docker-sock
-  image: advancedtelematic/gitlab-jobs:0.2.3
+  image: advancedtelematic/gitlab-jobs:0.2.5
   only:
     - master
   except:
@@ -73,5 +73,5 @@ include:
   - template: Secret-Detection.gitlab-ci.yml
   - template: License-Scanning.gitlab-ci.yml
   - project: olp/edge/ota/infra/security
-    ref: v0.0.7
+    ref: v0.0.9
     file: /shared.yaml
