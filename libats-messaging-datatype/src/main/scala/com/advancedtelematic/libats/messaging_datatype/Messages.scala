@@ -10,7 +10,7 @@ import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Name
 import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, EcuAndHardwareId, EcuReplaced, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, EcuAndHardwareId, EcuReplaced, EcuReplacement, EcuReplacementFailed, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
@@ -55,7 +55,18 @@ object MessageCodecs {
   implicit val systemInfoCodec: Codec[SystemInfo] = deriveCodec
   implicit val deviceSystemInfoChangedCodec: Codec[DeviceSystemInfoChanged] = deriveCodec
   implicit val ecuAndHardwareIdCodec: Codec[EcuAndHardwareId] = deriveCodec
-  implicit val ecuReplacedCodec: Codec[EcuReplaced] = deriveCodec
+  implicit val ecuReplacementCodec: Codec[EcuReplacement] = Codec.from(
+    Decoder.instance { c =>
+      c.get[Boolean]("success").flatMap {
+        case true => deriveDecoder[EcuReplaced].tryDecode(c)
+        case false => deriveDecoder[EcuReplacementFailed].tryDecode(c)
+      }
+    },
+    Encoder.instance {
+      case e: EcuReplaced => deriveEncoder[EcuReplaced].apply(e).mapObject(("success", Json.fromBoolean(true)) +: _)
+      case e: EcuReplacementFailed => deriveEncoder[EcuReplacementFailed].apply(e).mapObject(("success", Json.fromBoolean(false)) +: _)
+    }
+  )
 }
 
 object Messages {
@@ -155,8 +166,13 @@ object Messages {
 
   final case class DeleteDeviceRequest(namespace: Namespace, uuid: DeviceId, timestamp: Instant = Instant.now())
 
+  sealed trait EcuReplacement {
+    val deviceUuid: DeviceId
+    val eventTime: Instant
+  }
   case class EcuAndHardwareId(ecuId: EcuIdentifier, hardwareId: String)
-  case class EcuReplaced(deviceUuid: DeviceId, former: EcuAndHardwareId, current: EcuAndHardwareId, eventTime: Instant = Instant.now)
+  final case class EcuReplaced(deviceUuid: DeviceId, former: EcuAndHardwareId, current: EcuAndHardwareId, eventTime: Instant = Instant.now) extends EcuReplacement
+  final case class EcuReplacementFailed(deviceUuid: DeviceId, eventTime: Instant = Instant.now) extends EcuReplacement
 
   implicit val deviceSystemInfoChangedMessageLike = MessageLike.derive[DeviceSystemInfoChanged](_.uuid.toString)
 
@@ -192,5 +208,5 @@ object Messages {
 
   implicit val deleteDeviceRequestMessageLike = MessageLike.derive[DeleteDeviceRequest](_.uuid.show)
 
-  implicit val ecuReplacedMsgLike = MessageLike.derive[EcuReplaced](_.deviceUuid.show)
+  implicit val ecuReplacementMsgLike = MessageLike[EcuReplacement](_.deviceUuid.show)
 }
