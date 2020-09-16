@@ -125,4 +125,19 @@ class SlickExtensionsSpec extends FunSuite with Matchers with ScalaFutures with 
 
     f.futureValue shouldBe 1
   }
+
+  test("insertIfNotExists inserts the element if it does not exist") {
+    val b = Book(16, "Also sprach Zarathustra", None)
+    val a = books.insertIfNotExists(b) { _.filter(_.id === b.id) }
+    db.run(a).futureValue shouldBe ()
+    db.run(books.filter(_.id === b.id).result).futureValue should contain only b
+  }
+
+  test("insertIfNotExists does nothing and does not fail if the element does not exists") {
+    val b = Book(17, "Jenseits von Gut und Böse", None)
+    db.run(books += b).futureValue shouldBe 1
+    val a = books.insertIfNotExists(b) { _.filter(_.id === b.id) }
+    db.run(a).futureValue shouldBe ()
+    db.run(books.filter(_.id === b.id).result).futureValue should contain only b
+  }
 }
