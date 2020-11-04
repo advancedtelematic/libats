@@ -16,26 +16,28 @@ import org.slf4j.LoggerFactory
 
 import scala.util.control.NoStackTrace
 
-class JsonDeserializerException(msg: String) extends Exception(msg) with NoStackTrace
+class JsonDeserializerException(msg: String, cause: Throwable) extends Exception(msg, cause) with NoStackTrace
 
 class JsonDeserializer[T](decoder: Decoder[T], throwException: Boolean = false) extends Deserializer[T] {
   private lazy val _logger = LoggerFactory.getLogger(this.getClass)
 
 
   override def deserialize(topic: String, data: Array[Byte]): T = {
+
+    def processError(msg: String, exception: Exception) = {
+      if (throwException) {
+        throw new JsonDeserializerException(msg, exception)
+      } else {
+        _logger.error(msg, exception)
+        null.asInstanceOf[T]
+      }
+    }
+
     val buffer = ByteBuffer.wrap(data)
 
-    val msgXor = parseByteBuffer(buffer).flatMap(_.as[T](decoder))
-
-    msgXor match {
-      case Right(v) => v
-      case Left(ex) =>
-        if (throwException) {
-          throw new JsonDeserializerException(s"Could not parse msg from $topic: ${ex.getMessage}")
-        } else {
-          _logger.error(s"Could not parse msg from $topic", ex)
-          null.asInstanceOf[T]
-        }
+    parseByteBuffer(buffer) match {
+      case Right(json) => json.as[T](decoder).fold(processError(s"Could not decode ${json.noSpaces} from $topic", _), identity)
+      case Left(ex) => processError(s"Could not parse msg from $topic", ex)
     }
   }
 
