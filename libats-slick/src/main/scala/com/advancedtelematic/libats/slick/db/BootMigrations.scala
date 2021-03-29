@@ -6,10 +6,12 @@
 package com.advancedtelematic.libats.slick.db
 
 
+import akka.http.scaladsl.util.FastFuture
 import com.advancedtelematic.libats.http.BootApp
 import com.typesafe.config.Config
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
+
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -93,10 +95,11 @@ trait BootMigrations {
 
   private lazy val _log = LoggerFactory.getLogger(this.getClass)
 
-  private def migrateIfEnabled: Future[Unit] = Future {
-    if (appConfig.getBoolean("ats.database.migrate")) {
-      RunMigrations(dbConfig)
-    }
+  private def migrateIfEnabled: Future[Int] = {
+    if (appConfig.getBoolean("ats.database.migrate"))
+      Future { Future.fromTry(RunMigrations(dbConfig)) }.flatten
+    else
+      FastFuture.successful(0)
   }
 
   if(appConfig.getBoolean("ats.database.asyncMigrations")) {

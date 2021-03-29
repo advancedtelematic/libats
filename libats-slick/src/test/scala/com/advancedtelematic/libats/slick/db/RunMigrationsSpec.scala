@@ -1,6 +1,7 @@
 package com.advancedtelematic.libats.slick.db
 
 import com.advancedtelematic.libats.test.DatabaseSpec
+import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{FunSuite, Matchers}
@@ -31,4 +32,6 @@ class RunMigrationsSpec extends FunSuite with Matchers with ScalaFutures with Da
     RunMigrations(flywayConfig).get shouldBe 1
     RunMigrations.schemaIsCompatible(flywayConfig).get shouldBe true
   }
+
+  override protected def testDbConfig: Config = ConfigFactory.load().getConfig("ats.database")
 }

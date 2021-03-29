@@ -27,9 +27,7 @@ trait DatabaseSpec extends BeforeAndAfterAll {
     cleanSchemaName + "_" + className
   }
 
-  private lazy val config = ConfigFactory.load()
-
-  private lazy val testDbConfig: Config = config.getConfig("database")
+  protected def testDbConfig: Config // = config.getConfig("database")
 
   private [libats] lazy val slickDbConfig: Config = {
     val withSchemaName =

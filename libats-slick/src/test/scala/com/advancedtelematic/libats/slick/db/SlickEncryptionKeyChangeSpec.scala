@@ -1,12 +1,12 @@
 package com.advancedtelematic.libats.slick.db
 
 import java.security.Security
-
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.testkit.TestKitBase
 import com.advancedtelematic.libats.slick.db.SlickEncryptionKeyChange.Result
 import com.advancedtelematic.libats.test.{DatabaseSpec, LongTest}
+import com.typesafe.config.{Config, ConfigFactory}
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scalatest.concurrent.ScalaFutures
@@ -24,7 +24,7 @@ class SlickEncryptionKeyChangeSpec extends FunSuite
 
   implicit lazy val system = ActorSystem(this.getClass.getSimpleName)
 
-  implicit val mat = ActorMaterializer()
+  override protected def testDbConfig: Config = ConfigFactory.load().getConfig("ats.database")
 
   import system.dispatcher
 
