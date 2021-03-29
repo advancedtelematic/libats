@@ -12,5 +12,5 @@ object MetricsSupport {
 }
 
 trait MetricsSupport extends JvmMetricsSupport with LoggerMetricsSupport {
-  lazy val metricRegistry = MetricsSupport.metricRegistry
+  val metricRegistry: MetricRegistry
 }

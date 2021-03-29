@@ -5,6 +5,7 @@ import java.security.Security
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.Source
+import com.typesafe.config.ConfigFactory
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.LoggerFactory
 import slick.jdbc.MySQLProfile.api._
@@ -91,12 +92,11 @@ class SlickEncryptionKeyChange(idColumn: String,
 }
 
 
-object SlickEncryptionKeyChangeApp extends DatabaseConfig {
+object SlickEncryptionKeyChangeApp extends DatabaseSupport {
   implicit lazy val system = ActorSystem("SlickEncryptionKeyChangeApp")
 
-  implicit lazy val mat = ActorMaterializer()
-
-  implicit val _db = db
+  // TODO: Get the proper config scoped by ats.<project name>.database
+  override lazy val dbConfig = ConfigFactory.load().getConfig("database")
 
   Security.addProvider(new BouncyCastleProvider)
 

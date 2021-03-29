@@ -12,6 +12,8 @@ import scala.util.Try
 object NamespaceDirectives {
   import akka.http.scaladsl.server.Directives._
 
+  private lazy val config = ConfigFactory.load().getConfig("ats")
+
   lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   val NAMESPACE = "x-ats-namespace"

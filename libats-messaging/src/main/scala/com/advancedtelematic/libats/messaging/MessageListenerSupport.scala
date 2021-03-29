@@ -9,6 +9,8 @@ import com.advancedtelematic.libats.messaging_datatype.MessageLike
 trait MessageListenerSupport {
   self: BootApp =>
 
+  import system.dispatcher
+
   def startListener[T](op: MsgOperation[T], busListenerMonitor: ListenerMonitor, skipProcessingErrors: Boolean = false)
                       (implicit ml: MessageLike[T]): ActorRef = {
     val loggedOperation =
@@ -17,7 +19,7 @@ trait MessageListenerSupport {
       else
         MsgOperation.logFailed(op)(system.log, system.dispatcher)
 
-    val ref = system.actorOf(MessageListener.props[T](config, loggedOperation, busListenerMonitor),  ml.streamName + "-listener")
+    val ref = system.actorOf(MessageListener.props[T](appConfig, loggedOperation, busListenerMonitor),  ml.streamName + "-listener")
     ref ! Subscribe
     ref
   }

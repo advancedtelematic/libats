@@ -19,7 +19,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 
 import cats.implicits._
-import scala.util.Try
+
 
 protected [db] class SlickCrypto(salt: Array[Byte], password: String) {
   private lazy val pbeParameterSpec = new PBEParameterSpec(salt, 1000)

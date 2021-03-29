@@ -5,21 +5,21 @@
 
 package com.advancedtelematic.libats.slick.db
 
+
 import com.advancedtelematic.libats.http.BootApp
-import com.typesafe.config.{Config, ConfigException, ConfigFactory}
+import com.typesafe.config.Config
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
-
+import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
-import cats.implicits._
 
 protected [db] object RunMigrations {
   private lazy val _log = LoggerFactory.getLogger(this.getClass)
 
-  def schemaIsCompatible(config: Config): Try[Boolean] = Try {
-    val f = flyway(config)
+  def schemaIsCompatible(dbConfig: Config): Try[Boolean] = Try {
+    val f = flyway(dbConfig)
     val pendingCount = f.info().pending().length
 
     if(pendingCount > 0) {
@@ -29,10 +29,10 @@ protected [db] object RunMigrations {
       true
   }
 
-  def apply(config: Config): Try[Int] = Try {
+  def apply(dbconfig: Config): Try[Int] = Try {
     _log.info("Running migrations")
 
-    val f = flyway(config)
+    val f = flyway(dbconfig)
 
     val count = f.migrate()
     _log.info(s"Ran $count migrations")
@@ -40,68 +40,71 @@ protected [db] object RunMigrations {
     count
   }
 
-  private def flyway(config: Config): Flyway = {
-    val url = config.getString("database.url")
-    val user = config.getString("database.properties.user")
-    val password = config.getString("database.properties.password")
-    val schemaO = Either.catchOnly[ConfigException.Missing](config.getString("database.catalog")).toOption
-    val schemaTable = Either.catchOnly[ConfigException.Missing](
-      config.getString("database.schema-table")
-    ).toOption.getOrElse(
-      ConfigFactory.load().getString("ats.database.schema-table")
-    )
+  private def flyway(dbConfig: Config): Flyway = {
+    val url = dbConfig.getString("url")
+    val user = dbConfig.getString("properties.user")
+    val password = dbConfig.getString("properties.password")
 
-    val flywayConfig = Flyway.configure().dataSource(url, user, password).table(schemaTable)
-    schemaO.fold(flywayConfig)(s => flywayConfig.schemas(s)).load()
-  }
-}
+    val flywayConfig = Flyway.configure().dataSource(url, user, password)
 
-object RunMigrationsApp extends App {
-  private val log = LoggerFactory.getLogger(this.getClass)
-  lazy val config = ConfigFactory.load()
 
-  RunMigrations(config) match {
-    case Success(_) =>
-      System.exit(0)
-    case Failure(ex) =>
-      log.error("Could not run migrations", ex)
-      System.exit(1)
+    if(dbConfig.hasPath("flyway.locations")) {
+      val locations = dbConfig.getStringList("flyway.locations").asScala
+      flywayConfig.locations(locations:_*)
+    }
+
+    if(dbConfig.hasPath("flyway.schema-table")) {
+      flywayConfig.table(dbConfig.getString("flyway.schema-table"))
+    }
+
+    if (dbConfig.hasPath("catalog")) {
+      flywayConfig.schemas(dbConfig.getString("catalog"))
+    }
+
+    flywayConfig.load()
   }
 }
 
 trait CheckMigrations {
-  self: BootApp =>
+  self: BootApp with DatabaseSupport =>
 
-  if(!config.getBoolean("ats.database.skip_migration_check")) {
-    RunMigrations.schemaIsCompatible(config) match {
+  private lazy val _log = LoggerFactory.getLogger(this.getClass)
+
+  if(!appConfig.getBoolean("ats.database.skipMigrationCheck")) {
+    RunMigrations.schemaIsCompatible(dbConfig) match {
       case Success(false) =>
-        log.error("Outdated migrations, terminating")
+        _log.error("Outdated migrations, terminating")
         system.terminate()
       case Success(true) =>
-        log.info("Schema is up to date")
+        _log.info("Schema is up to date")
       case Failure(ex) =>
-        log.error("Could not check schema changes compatibility", ex)
+        _log.error("Could not check schema changes compatibility", ex)
         system.terminate()
     }
   } else
-    log.info("Skipping schema compatibility check due to configuration")
+    _log.info("Skipping schema compatibility check due to configuration")
 }
 
+
 trait BootMigrations {
-  self: BootApp =>
+  self: BootApp with DatabaseSupport =>
+
+  import system.dispatcher
+
+  private lazy val _log = LoggerFactory.getLogger(this.getClass)
 
   private def migrateIfEnabled: Future[Unit] = Future {
-    if (config.getBoolean("database.migrate")) {
-      RunMigrations(config)
+    if (appConfig.getBoolean("ats.database.migrate")) {
+      RunMigrations(dbConfig)
     }
   }
 
-  if(config.getBoolean("ats.database.asyncMigrations")) {
+  if(appConfig.getBoolean("ats.database.asyncMigrations")) {
     migrateIfEnabled.onComplete {
       case Success(_) =>
-        log.info("Finished running migrations")
+        _log.info("Finished running migrations")
       case Failure(ex) =>
-        log.error("Could not run migrations. Fatal error, shutting down", ex)
+        _log.error("Could not run migrations. Fatal error, shutting down", ex)
         system.terminate()
     }
   } else {
