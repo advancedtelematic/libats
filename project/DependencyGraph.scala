@@ -18,7 +18,7 @@ object DependencyGraph extends AutoPlugin {
   lazy val filter = ScopeFilter(inAnyProject, inAnyConfiguration)
 
   lazy val groupByProject: Def.Initialize[Task[ModuleGraph]] =
-    Def.task { (moduleGraph in thisProject).value }
+    Def.task { (Provided / moduleGraph).value }
 
   val dependencyGraphSettings = Seq (
     dependencyDotNodeLabel := { (_: String, name: String, c: String) =>
