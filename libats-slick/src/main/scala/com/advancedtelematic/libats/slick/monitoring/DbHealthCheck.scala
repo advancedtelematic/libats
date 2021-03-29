@@ -1,8 +1,8 @@
 package com.advancedtelematic.libats.slick.monitoring
 
 import java.lang.management.ManagementFactory
-
 import akka.actor.ActorSystem
+
 import javax.management.{JMX, ObjectName}
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.Http
@@ -21,14 +21,15 @@ import io.circe.{HCursor, Json}
 import scala.concurrent.{ExecutionContext, Future}
 import slick.jdbc.MySQLProfile.api._
 import io.circe.syntax._
+import slick.jdbc.hikaricp.HikariCPJdbcDataSource
 
 import scala.util.Failure
 import scala.util.control.NoStackTrace
 
 class DbHealthMetrics()(implicit db: Database, ec: ExecutionContext) extends MetricsRepresentation {
   private lazy val mBeanServer = ManagementFactory.getPlatformMBeanServer
-  // TODO: Use proper db name after upgrading slick (https://github.com/slick/slick/issues/1326)
-  private lazy val poolName = new ObjectName("com.zaxxer.hikari:type=Pool (database)")
+  private lazy val hikariDatasource = db.source.asInstanceOf[HikariCPJdbcDataSource]
+  private lazy val poolName = new ObjectName(s"com.zaxxer.hikari:type=Pool (${hikariDatasource.hconf.getPoolName})")
   private lazy val poolProxy = JMX.newMXBeanProxy(mBeanServer, poolName, classOf[HikariPoolMXBean])
 
 

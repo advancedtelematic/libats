@@ -21,7 +21,6 @@ object SlickExtensionsSpec {
     def title = column[String]("title")
     def code = column[Option[String]]("code")
 
-
     override def * = (id, title, code) <> ((Book.apply _).tupled, Book.unapply)
   }
 
