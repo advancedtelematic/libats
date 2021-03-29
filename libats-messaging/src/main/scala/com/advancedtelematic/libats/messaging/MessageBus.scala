@@ -56,13 +56,13 @@ object MessageBus {
 
   lazy val log = LoggerFactory.getLogger(this.getClass)
 
-  def subscribe[T](system: ActorSystem, config: Config, op: MsgOperation[T])
+  def subscribe[T](system: ActorSystem, config: Config, groupId: String, op: MsgOperation[T])
                   (implicit messageLike: MessageLike[T], ec: ExecutionContext): Source[T, NotUsed] = {
     config.getString("messaging.mode").toLowerCase().trim match {
       case "kafka" =>
         log.info("Starting messaging mode: Kafka")
         log.info(s"Using stream name: ${messageLike.streamName}")
-        KafkaClient.source(system, config)(messageLike)
+        KafkaClient.source(system, config, groupId)(messageLike)
       case "local" | "test" =>
         log.info("Using local event bus")
         LocalMessageBus.subscribe(system, config, op)
@@ -71,14 +71,14 @@ object MessageBus {
     }
   }
 
-  def subscribeCommittable[T, U](config: Config, op: MsgOperation[T])
+  def subscribeCommittable[T, U](config: Config, groupId: String, op: MsgOperation[T])
                                 (implicit messageLike: MessageLike[T], ec: ExecutionContext, system: ActorSystem): Source[T, NotUsed] = {
     config.getString("messaging.mode").toLowerCase().trim match {
       case "kafka" =>
         log.info("Starting messaging mode: Kafka")
         log.info(s"Using stream name: ${messageLike.streamName}")
 
-        KafkaClient.committableSource[T](config, op)
+        KafkaClient.committableSource[T](config, groupId, op)
 
       case "local" | "test" =>
         log.info("Using local event bus")

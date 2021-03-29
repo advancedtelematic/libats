@@ -46,9 +46,9 @@ object MsgOperation {
 }
 
 object MessageListener {
-  def props[T](config: Config, op: MsgOperation[T], busMonitor: ListenerMonitor = LoggingListenerMonitor)
+  def props[T](config: Config, op: MsgOperation[T], groupId: String, busMonitor: ListenerMonitor = LoggingListenerMonitor)
               (implicit system: ActorSystem, ex: ExecutionContext, ml: MessageLike[T]): Props = {
-    val source = MessageBus.subscribeCommittable(config, op)
+    val source = MessageBus.subscribeCommittable(config, groupId, op)
     MessageBusListenerActor.props[T](source, busMonitor)(ml)
   }
 }

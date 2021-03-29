@@ -53,7 +53,7 @@ class KafkaClientIntegrationSpec extends TestKit(ActorSystem("KafkaClientSpec"))
   test("can send-receive events from bus") {
     val testMsg = KafkaSpecMessage(2, Instant.now.toString)
 
-    val source = KafkaClient.committableSource[KafkaSpecMessage](system.settings.config, (_: KafkaSpecMessage) => FastFuture.successful(Done))
+    val source = KafkaClient.committableSource[KafkaSpecMessage](system.settings.config, "kafka-test", (_: KafkaSpecMessage) => FastFuture.successful(Done))
     val msgFuture = source.groupedWithin(10, 5.seconds).runWith(Sink.head)
 
     for {
@@ -73,7 +73,7 @@ class KafkaClientIntegrationSpec extends TestKit(ActorSystem("KafkaClientSpec"))
         |messaging.listener.batch.interval=5s
         |messaging.listener.batch.max=10
       """.stripMargin).withFallback(system.settings.config)
-    val source = KafkaClient.committableSource[KafkaSpecMessage](cfg, (_: KafkaSpecMessage) => FastFuture.successful(Done))
+    val source = KafkaClient.committableSource[KafkaSpecMessage](cfg, "kafka-test", (_: KafkaSpecMessage) => FastFuture.successful(Done))
 
     val msgFuture = source.runWith(Sink.head)
 
