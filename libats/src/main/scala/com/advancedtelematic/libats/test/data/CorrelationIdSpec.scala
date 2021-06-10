@@ -2,7 +2,7 @@ package com.advancedtelematic.libats.test.data
 
 import java.util.UUID
 
-import com.advancedtelematic.libats.data.DataType.{CampaignId, CorrelationId, MultiTargetUpdateId}
+import com.advancedtelematic.libats.data.DataType.{CorrelationCampaignId, CorrelationId, MultiTargetUpdateId}
 import org.scalatest.{EitherValues, Matchers, PropSpec}
 
 class CorrelationIdSpec extends PropSpec with Matchers with EitherValues {
@@ -15,7 +15,7 @@ class CorrelationIdSpec extends PropSpec with Matchers with EitherValues {
 
   property("should convert a CampaignId to string") {
     val uuid = "6a65f47f-5258-4adc-aa20-d8eda0d5a6e2"
-    val cid = CampaignId(UUID.fromString(uuid))
+    val cid = CorrelationCampaignId(UUID.fromString(uuid))
     cid.toString shouldBe "urn:here-ota:campaign:6a65f47f-5258-4adc-aa20-d8eda0d5a6e2"
   }
 
@@ -30,7 +30,7 @@ class CorrelationIdSpec extends PropSpec with Matchers with EitherValues {
     val uuid = "6a65f47f-5258-4adc-aa20-d8eda0d5a6e2"
     val s = s"urn:here-ota:campaign:$uuid"
     val cid = CorrelationId.fromString(s)
-    cid.right.value shouldBe CampaignId(UUID.fromString(uuid))
+    cid.right.value shouldBe CorrelationCampaignId(UUID.fromString(uuid))
   }
 
   property("should fail with an invalid correlationId string") {
