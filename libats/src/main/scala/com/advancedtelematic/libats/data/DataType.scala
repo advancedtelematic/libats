@@ -1,7 +1,8 @@
 package com.advancedtelematic.libats.data
 
-import java.util.UUID
+import cats.Show
 
+import java.util.UUID
 import com.advancedtelematic.libats.data.DataType.HashMethod.HashMethod
 import eu.timepit.refined.api.{Refined, Validate}
 import io.circe.{Decoder, Encoder}
@@ -34,12 +35,14 @@ object DataType {
     ValidationUtils.validHexValidation(ValidChecksum(), length = 64)
 
   sealed trait CorrelationId
-  final case class CampaignId(value: UUID) extends CorrelationId {
+  final case class CorrelationCampaignId(value: UUID) extends CorrelationId {
     override def toString: String = s"urn:here-ota:campaign:$value"
   }
+
   final case class MultiTargetUpdateId(value: UUID) extends CorrelationId {
     override def toString: String = s"urn:here-ota:mtu:$value"
   }
+
   final case class AutoUpdateId(value: UUID) extends CorrelationId {
     override def toString: String = s"urn:here-ota:auto-update:$value"
   }
@@ -51,7 +54,7 @@ object DataType {
       case CorrelationIdRe("mtu", uuid) =>
         Right(MultiTargetUpdateId(UUID.fromString(uuid)))
       case CorrelationIdRe("campaign", uuid) =>
-        Right(CampaignId(UUID.fromString(uuid)))
+        Right(CorrelationCampaignId(UUID.fromString(uuid)))
       case CorrelationIdRe("auto-update", uuid) =>
         Right(AutoUpdateId(UUID.fromString(uuid)))
       case x =>

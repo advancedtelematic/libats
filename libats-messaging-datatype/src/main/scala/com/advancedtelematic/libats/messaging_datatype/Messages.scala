@@ -1,19 +1,20 @@
 package com.advancedtelematic.libats.messaging_datatype
 
+import cats.syntax.show._
+import com.advancedtelematic.libats.codecs.CirceValidatedGeneric
+import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Namespace, ResultCode, ResultDescription}
+import com.advancedtelematic.libats.data.EcuIdentifier
+import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceStatus.DeviceStatus
+import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
+import com.advancedtelematic.libats.messaging_datatype.DataType._
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, CampaignUpdateEvent, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, EcuAndHardwareId, EcuReplaced, EcuReplacement, EcuReplacementFailed, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
+import io.circe.{Json, _}
+import io.circe.generic.semiauto._
+import io.circe.syntax._
+
 import java.net.URI
 import java.time.Instant
 import java.util.UUID
-
-import cats.syntax.show._
-import com.advancedtelematic.libats.codecs.CirceValidatedGeneric
-import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Namespace}
-import com.advancedtelematic.libats.data.EcuIdentifier
-import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
-import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, EcuAndHardwareId, EcuReplaced, EcuReplacement, EcuReplacementFailed, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
-import io.circe._
-import io.circe.generic.semiauto._
-import io.circe.syntax._
 
 object MessageCodecs {
   import com.advancedtelematic.libats.codecs.CirceCodecs._
@@ -55,6 +56,11 @@ object MessageCodecs {
   implicit val systemInfoCodec: Codec[SystemInfo] = deriveCodec
   implicit val deviceSystemInfoChangedCodec: Codec[DeviceSystemInfoChanged] = deriveCodec
   implicit val ecuAndHardwareIdCodec: Codec[EcuAndHardwareId] = deriveCodec
+  implicit val deviceStatusCodec: Codec[DeviceStatus] = Codec.codecForEnumeration(DeviceStatus)
+  implicit val resultCodeCodec: Codec[ResultCode] = deriveCodec
+  implicit val resultDescriptionCodec: Codec[ResultDescription] = deriveCodec
+  implicit val campaignUpdateEventCodec: Codec[CampaignUpdateEvent] = deriveCodec
+
   implicit val ecuReplacementCodec: Codec[EcuReplacement] = Codec.from(
     Decoder.instance { c =>
       c.get[Boolean]("success").flatMap {
@@ -174,6 +180,15 @@ object Messages {
   final case class EcuReplaced(deviceUuid: DeviceId, former: EcuAndHardwareId, current: EcuAndHardwareId, eventTime: Instant = Instant.now) extends EcuReplacement
   final case class EcuReplacementFailed(deviceUuid: DeviceId, eventTime: Instant = Instant.now) extends EcuReplacement
 
+  case class CampaignUpdateEvent(
+      namespace: Namespace,
+      deviceId: DeviceId,
+      campaignId: CampaignId,
+      deviceStatus: DeviceStatus,
+      resultCode: Option[ResultCode],
+      resultDescription: Option[ResultDescription],
+      updatedAt: Instant)
+
   implicit val deviceSystemInfoChangedMessageLike = MessageLike.derive[DeviceSystemInfoChanged](_.uuid.toString)
 
   implicit val commitManifestUpdatedMessageLike = MessageLike.derive[CommitManifestUpdated](_.commit.value)
@@ -209,4 +224,6 @@ object Messages {
   implicit val deleteDeviceRequestMessageLike = MessageLike.derive[DeleteDeviceRequest](_.uuid.show)
 
   implicit val ecuReplacementMsgLike = MessageLike[EcuReplacement](_.deviceUuid.show)
+
+  implicit val campaignUpdateEventMsgLike = MessageLike[CampaignUpdateEvent](_.campaignId.toString)
 }
