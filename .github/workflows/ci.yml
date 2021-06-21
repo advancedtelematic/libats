@@ -1,0 +1,33 @@
+name: Test
+on: [push]
+env:
+  SBT_OPTS: "-Dsbt.color=true -Dscala.color=true"
+  KAFKA_HOST: kafka:9092
+  KAFKA_ZOOKEEPER_CONNECT: kafka:2181
+jobs:
+  run-tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    container: uptane/ci:latest
+    services:
+      kafka:
+        image: spotify/kafka
+
+      db:
+        image: mariadb:10.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_USER: libats_slick
+          MYSQL_PASSWORD: libats_slick
+          MYSQL_DATABASE: libats_slick
+
+    env:
+      DB_URL: "jdbc:mariadb://db:3306/libats_slick"
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Coursier cache
+        uses: coursier/cache-action@v6
+      - run: until mysqladmin ping --protocol=TCP -h db -P 3306 -u root -proot; do echo waiting for mysql; sleep 1; done
+      - run: mysql --protocol=TCP --host=db --user=root --port 3306 -proot -e \ GRANT\ ALL\ PRIVILEGES\ ON\ \`libats_slick%\`.\*\ TO\ \'libats_slick\'@\'%\'\;
+      - run: sbt test

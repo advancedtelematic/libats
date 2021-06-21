@@ -68,8 +68,11 @@ lazy val commonDeps =
 lazy val commonConfigs = Seq.empty
 
 lazy val commonSettings = Seq(
-  organization := "com.advancedtelematic",
+  organization := "io.github.uptane",
+  organizationName := "uptane",
+  organizationHomepage := Some(url("https://uptane.github.io/")),
   licenses += ("MPL-2.0", url("http://mozilla.org/MPL/2.0/")),
+  description := "Common  library for uptane scala projects",
   scalaVersion := "2.12.10",
   scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature", "-Ypartial-unification", "-Xexperimental"),
   resolvers ++= Seq(
@@ -229,7 +232,7 @@ lazy val libats_root = (project in file("."))
     libats_metrics_prometheus, libats_logging)
   .settings(sonarSettings)
   .settings(aggregate in sonarScan := false)
-    .settings(
+  .settings(
       // onLoad is scoped to Global because there's only one.
       onLoad in Global := {
         val old = (onLoad in Global).value
