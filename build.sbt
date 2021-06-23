@@ -75,12 +75,6 @@ lazy val commonSettings = Seq(
   description := "Common  library for uptane scala projects",
   scalaVersion := "2.12.10",
   scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature", "-Ypartial-unification", "-Xexperimental"),
-  resolvers ++= Seq(
-    "ATS Releases" at "https://nexus.ota.here.com/content/repositories/releases",
-    "ATS Snapshots" at "https://nexus.ota.here.com/content/repositories/snapshots",
-    "Central" at "https://nexus.ota.here.com/content/repositories/central",
-    "version99 Empty loggers" at "https://version99.qos.ch",
-  ),
   buildInfoOptions += BuildInfoOption.ToMap,
   buildInfoOptions += BuildInfoOption.BuildTime) ++ Versioning.settings
 
@@ -206,15 +200,6 @@ lazy val libats_metrics_prometheus = (project in file("libats-metrics-prometheus
   .dependsOn(libats_metrics)
   .dependsOn(libats_http)
 
-lazy val libats_auth = (project in file("libats-auth"))
-  .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
-  .configs(commonConfigs: _*)
-  .settings(commonSettings)
-  .settings(commonDeps)
-  .settings(Publish.settings)
-  .settings(libraryDependencies += Library.akkaSlf4j)
-  .dependsOn(libats)
-
 lazy val libats_logging = (project in file("libats-logging"))
   .enablePlugins(BuildInfoPlugin, Versioning.Plugin)
   .configs(commonConfigs: _*)
@@ -228,7 +213,7 @@ lazy val libats_root = (project in file("."))
   .settings(Publish.disable)
   .settings(scalaVersion := "2.12.10")
   .aggregate(libats, libats_http, libats_http_tracing, libats_messaging, libats_messaging_datatype,
-    libats_slick, libats_auth, libats_metrics, libats_metrics_kafka, libats_metrics_akka,
+    libats_slick, libats_metrics, libats_metrics_kafka, libats_metrics_akka,
     libats_metrics_prometheus, libats_logging)
   .settings(sonarSettings)
   .settings(aggregate in sonarScan := false)
