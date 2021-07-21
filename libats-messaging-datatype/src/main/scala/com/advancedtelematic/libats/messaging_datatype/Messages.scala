@@ -57,7 +57,6 @@ object MessageCodecs {
   implicit val deviceSystemInfoChangedCodec: Codec[DeviceSystemInfoChanged] = deriveCodec
   implicit val ecuAndHardwareIdCodec: Codec[EcuAndHardwareId] = deriveCodec
   implicit val deviceStatusCodec: Codec[DeviceStatus] = Codec.codecForEnumeration(DeviceStatus)
-  implicit val resultDescriptionCodec: Codec[ResultDescription] = deriveCodec
   implicit val campaignUpdateEventCodec: Codec[CampaignUpdateEvent] = deriveCodec
 
   implicit val ecuReplacementCodec: Codec[EcuReplacement] = Codec.from(
