@@ -15,6 +15,7 @@ variables:
   VAULT_ADDR: "http://vault.sit-ota.aws.in.here.com"
   # The same image have to be used by test and code coverage jobs:
   TEST_IMAGE: advancedtelematic/gitlab-jobs:0.2.5
+  TEST_IMAGE_SONAR: advancedtelematic/gitlab-jobs-sonar:0.0.3
 
 services:
   - name: mariadb:10.2
@@ -34,6 +35,7 @@ test:
     paths:
       - "libats*/target/scala-*/scoverage-data"
       - "libats*/target/scala-*/src_managed"
+      - "libats*/target/scala-*/classes"
   cache:
     paths:
       - .ivy2/
@@ -42,10 +44,20 @@ test:
 code coverage:
   extends: .report_scala_coverage
   needs: ["test"]
-  image: $TEST_IMAGE
+  image: $TEST_IMAGE_SONAR
   allow_failure: true
-  before_script:
-    - sbt -sbt-dir ./.sbt -ivy ./.ivy2 coverageAggregate
+  script:
+    - sbt -Dsonar.login=$SONARQUBE_TOKEN -sbt-dir ./.sbt -ivy ./.ivy2 coverageReport sonarScan
+    # remove unneeded files just to copy all required directories in 'for' cycle
+    - rm -rf libats-metrics-finagle libats_dependencies.png
+    - for i in $(ls -d *libats* | grep -v /  | grep -v /) ; do mv $i/target/scala-*/scoverage-report/ $i-coverage ; done
+  artifacts:
+    expire_in: 3 weeks
+    paths:
+      - libats*-coverage
+    reports:
+       cobertura: 
+       - "libats*/target/scala-*/coverage-report/cobertura.xml"
 
 publish:
   stage: publish
@@ -74,5 +86,5 @@ include:
     file: "ITT-Secret-Detection.gitlab-ci.yml"
   - template: License-Scanning.gitlab-ci.yml
   - project: olp/edge/ota/infra/security
-    ref: v0.0.9
+    ref: v0.1.0
     file: /shared.yaml
