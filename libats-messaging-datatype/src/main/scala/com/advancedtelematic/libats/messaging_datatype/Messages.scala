@@ -7,7 +7,7 @@ import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceStatus.DeviceStatus
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.DataType._
-import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, CampaignUpdateEvent, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, EcuAndHardwareId, EcuReplaced, EcuReplacement, EcuReplacementFailed, GeneratedBsDiff, GeneratedDelta, SystemInfo, UserCreated}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{BsDiffGenerationFailed, BsDiffRequest, CampaignLaunched, CampaignUpdateEvent, DeltaGenerationFailed, DeltaRequest, DeviceEventMessage, DeviceSystemInfoChanged, DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, EcuAndHardwareId, EcuReplaced, EcuReplacement, EcuReplacementFailed, GeneratedBsDiff, GeneratedDelta, OSTreeTargetDelete, SystemInfo, UserCreated}
 import io.circe.{Json, _}
 import io.circe.generic.semiauto._
 import io.circe.syntax._
@@ -58,6 +58,7 @@ object MessageCodecs {
   implicit val ecuAndHardwareIdCodec: Codec[EcuAndHardwareId] = deriveCodec
   implicit val deviceStatusCodec: Codec[DeviceStatus] = Codec.codecForEnumeration(DeviceStatus)
   implicit val campaignUpdateEventCodec: Codec[CampaignUpdateEvent] = deriveCodec
+  implicit val osTreeTargetDeleteCodec: Codec[OSTreeTargetDelete] = deriveCodec
 
   implicit val ecuReplacementCodec: Codec[EcuReplacement] = Codec.from(
     Decoder.instance { c =>
@@ -186,6 +187,10 @@ object Messages {
       resultCode: Option[ResultCode],
       resultDescription: Option[ResultDescription],
       updatedAt: Instant)
+
+  final case class OSTreeTargetDelete(namespace: Namespace)
+
+  implicit val osTreeTargetDeleteMessageLike = MessageLike[OSTreeTargetDelete](_.namespace.get)
 
   implicit val deviceSystemInfoChangedMessageLike = MessageLike.derive[DeviceSystemInfoChanged](_.uuid.toString)
 
