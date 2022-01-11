@@ -8,7 +8,7 @@ val Library = new {
     val scalaTest = "3.0.8"
     val metricsV = "4.1.0"
     val cats = "2.0.0"
-    val logback = "1.2.3"
+    val logback = "1.2.10"
   }
 
   val logback = "ch.qos.logback" % "logback-classic" % Version.logback
