@@ -51,7 +51,17 @@ protected [db] object RunMigrations {
       ConfigFactory.load().getString("ats.database.schema-table")
     )
 
-    val flywayConfig = Flyway.configure().dataSource(url, user, password).table(schemaTable)
+    val ignoreMissingMigrations =
+      Either.catchOnly[ConfigException.Missing](config.getBoolean("database.flyway.ignoreMissingMigrations"))
+        .fold(_ => false, identity)
+
+    val flywayConfig =
+      Flyway
+        .configure()
+        .dataSource(url, user, password)
+        .table(schemaTable)
+        .ignoreMissingMigrations(ignoreMissingMigrations)
+
     schemaO.fold(flywayConfig)(s => flywayConfig.schemas(s)).load()
   }
 }
