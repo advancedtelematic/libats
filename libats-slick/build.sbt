@@ -10,6 +10,7 @@ libraryDependencies ++= {
     "org.flywaydb" % "flyway-core" % "6.0.8",
 
     "org.scalatest"     %% "scalatest" % scalaTestV % Provided,
+    "org.scalatestplus" %% "mockito-3-4" % "3.2.10.0" % Test,
 
     "org.mariadb.jdbc" % "mariadb-java-client" % "2.4.4" % Test,
 

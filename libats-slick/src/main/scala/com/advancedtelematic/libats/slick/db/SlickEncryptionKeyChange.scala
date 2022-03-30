@@ -1,10 +1,10 @@
 package com.advancedtelematic.libats.slick.db
 
 import java.security.Security
-
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Scheduler}
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.Source
+import com.advancedtelematic.libats.slick.db.DatabaseHelper.DatabaseWithRetry
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.LoggerFactory
 import slick.jdbc.MySQLProfile.api._
@@ -33,9 +33,11 @@ class SlickEncryptionKeyChange(idColumn: String,
 
   private val _log = LoggerFactory.getLogger(this.getClass)
 
+  implicit val scheduler: Scheduler = system.scheduler
+
   private def updateDb(id: String, newValue: String): Future[Int] = {
     val uq = sqlu"update `#$tableName` set #$column = $newValue where #$idColumn = $id"
-    db.run(uq)
+    db.runWithRetry(uq)
   }
 
   private def encryptOp(oldCrypto: SlickCrypto, newCrypto: SlickCrypto)(id: String, oldValue: String): Future[Try[String]] = {
