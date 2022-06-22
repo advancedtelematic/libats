@@ -56,8 +56,9 @@ code coverage:
     paths:
       - libats*-coverage
     reports:
-       cobertura: 
-       - "libats*/target/scala-*/coverage-report/cobertura.xml"
+      coverage_report:
+        coverage_format: cobertura
+        path: "libats*/target/scala-*/coverage-report/cobertura.xml"
 
 publish:
   stage: publish
@@ -86,5 +87,5 @@ include:
     file: "ITT-Secret-Detection.gitlab-ci.yml"
   - template: License-Scanning.gitlab-ci.yml
   - project: olp/edge/ota/infra/security
-    ref: v0.1.0
+    ref: v0.1.1
     file: /shared.yaml
