@@ -7,9 +7,8 @@ package com.advancedtelematic.libats.slick.db
 import java.sql.{BatchUpdateException, SQLException, SQLIntegrityConstraintViolationException, Timestamp}
 import java.time.Instant
 import java.util.UUID
-
 import akka.http.scaladsl.model.Uri
-import com.advancedtelematic.libats.data.PaginationResult
+import com.advancedtelematic.libats.data.{Limit, Offset, PaginationResult}
 import com.advancedtelematic.libats.http.Errors
 import com.advancedtelematic.libats.slick.db.SlickExtensions.MappedColumnExtensions
 import eu.timepit.refined.api.Refined
@@ -150,24 +149,24 @@ object SlickResultExtensions extends SlickResultExtensions
 
 trait SlickPagination {
   implicit class DBIOPaginateExtensions[E, U](action: Query[E, U, Seq]) {
-    def paginate(offset: Long, limit: Long): Query[E, U, Seq] =
+    def paginate(offset: Offset, limit: Limit): Query[E, U, Seq] =
       action
-        .drop(offset)
-        .take(limit)
+        .drop(offset.value)
+        .take(limit.value)
 
-    def paginateAndSort[T <% slick.lifted.Ordered](fn: E => T, offset: Long, limit: Long): Query[E, U, Seq] =
+    def paginateAndSort[T <% slick.lifted.Ordered](fn: E => T, offset: Offset, limit: Limit): Query[E, U, Seq] =
       action
         .sortBy(fn)
-        .drop(offset)
-        .take(limit)
+        .drop(offset.value)
+        .take(limit.value)
 
-    def paginateResult(offset: Long, limit: Long)(implicit ec: ExecutionContext): DBIO[PaginationResult[U]] = {
+    def paginateResult(offset: Offset, limit: Limit)(implicit ec: ExecutionContext): DBIO[PaginationResult[U]] = {
       val tot = action.length.result
       val pag = action.paginate(offset, limit).result
       tot.zip(pag).map{ case (total, values) => PaginationResult(values, total, offset, limit) }
     }
 
-    def paginateAndSortResult[T <% slick.lifted.Ordered](fn: E => T, offset: Long, limit: Long)
+    def paginateAndSortResult[T <% slick.lifted.Ordered](fn: E => T, offset: Offset, limit: Limit)
                                                         (implicit ec: ExecutionContext): DBIO[PaginationResult[U]] = {
       val tot = action.length.result
       val pag = action.paginateAndSort(fn, offset, limit).result
