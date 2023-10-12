@@ -74,15 +74,15 @@ object KafkaClient {
   }
 
 
-  def source[T](system: ActorSystem, config: Config)
-               (implicit ml: MessageLike[T]): Source[T, NotUsed] =
-    plainSource(config)(ml, system)
-
-  private def plainSource[T](config: Config)
-                            (implicit ml: MessageLike[T], system: ActorSystem): Source[T, NotUsed] = {
-    buildSource(config) { (cfgSettings: ConsumerSettings[Array[Byte], T], subscriptions) =>
-      val settings = cfgSettings.withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
-      Consumer.plainSource(settings, subscriptions).map(_.value()).filter(_ != null)
+  def source[T](config: Config, op: MsgOperation[T])
+               (implicit ml: MessageLike[T], ec: ExecutionContext, system: ActorSystem): Source[T, NotUsed] = {
+    buildSource(config) { (settings: ConsumerSettings[Array[Byte], T], subscriptions) =>
+      val handlerParallelism = config.getInt("messaging.listener.parallelism")
+      Consumer
+        .plainSource(settings, subscriptions)
+        .map(_.value())
+        .filter(_ != null)
+        .mapAsync(handlerParallelism)(msg => op(msg).map(_ => msg))
     }
   }
 
@@ -118,7 +118,8 @@ object KafkaClient {
       .withBootstrapServers(host)
       .withGroupId(groupId)
       .withClientId(s"consumer-$groupId")
-      .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
+      .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, config.getString("autoResetOffset"))
+      .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, config.getBoolean("enableAutoCommit").toString)
   }
 
   private def buildSource[T, M](config: Config)
