@@ -46,9 +46,9 @@ object MsgOperation {
 }
 
 object MessageListener {
-  def props[T](config: Config, op: MsgOperation[T], busMonitor: ListenerMonitor = LoggingListenerMonitor)
+  def props[T](config: Config, op: MsgOperation[T], busMonitor: ListenerMonitor = LoggingListenerMonitor, useCommittableSource: Boolean = true)
               (implicit system: ActorSystem, ex: ExecutionContext, ml: MessageLike[T]): Props = {
-    val source = MessageBus.subscribeCommittable(config, op)
+    val source = if (useCommittableSource) MessageBus.subscribeCommittable(config, op) else MessageBus.subscribe(config, op)
     MessageBusListenerActor.props[T](source, busMonitor)(ml)
   }
 }
